@@ -107,3 +107,7 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# compile-check ciktilari
+/tools/compile-check/obj/
+/tools/compile-check/bin/

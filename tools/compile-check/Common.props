@@ -1,0 +1,37 @@
+<Project>
+  <!-- Unity'yi açmadan derleme kontrolü. Unity'nin kendi referans kütüphanelerini kullanır.
+       ScriptAssemblies paket DLL'leri için projenin en az bir kez Unity'de açılmış olması gerekir. -->
+  <PropertyGroup>
+    <UnityEditorDir Condition="'$(UnityEditorDir)' == ''">C:\Program Files\Unity\Hub\Editor\6000.3.26f1\Editor</UnityEditorDir>
+    <RepoRoot Condition="'$(RepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..'))</RepoRoot>
+    <ScriptAssembliesDir Condition="'$(ScriptAssembliesDir)' == ''">$(RepoRoot)\Library\ScriptAssemblies</ScriptAssembliesDir>
+    <PackageCacheDir Condition="'$(PackageCacheDir)' == ''">$(RepoRoot)\Library\PackageCache</PackageCacheDir>
+    <ApiDir>$(UnityEditorDir)\Data\UnityReferenceAssemblies\unity-4.8-api</ApiDir>
+    <TargetFramework>net471</TargetFramework>
+    <FrameworkPathOverride>$(ApiDir)</FrameworkPathOverride>
+    <NoStdLib>true</NoStdLib>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>0169;0649;CS8032</NoWarn>
+    <DefineConstants>UNITY_6000_3_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_2021_3_OR_NEWER;UNITY_5_3_OR_NEWER;ENABLE_INPUT_SYSTEM;UNITY_STANDALONE_WIN;UNITY_STANDALONE</DefineConstants>
+    <OutputPath>$(MSBuildThisFileDirectory)bin\$(MSBuildProjectName)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(ApiDir)\mscorlib.dll" Private="false" />
+    <Reference Include="$(ApiDir)\System.dll" Private="false" />
+    <Reference Include="$(ApiDir)\System.Core.dll" Private="false" />
+    <Reference Include="$(ApiDir)\Facades\netstandard.dll" Private="false" />
+    <Reference Include="$(UnityEditorDir)\Data\Managed\UnityEngine\UnityEngine*.dll" Private="false" />
+    <Reference Include="$(ScriptAssembliesDir)\Unity.InputSystem.dll" Private="false" />
+    <Reference Include="$(ScriptAssembliesDir)\Unity.Cinemachine.dll" Private="false" />
+    <Reference Include="$(ScriptAssembliesDir)\Unity.RenderPipelines.Core.Runtime.dll" Private="false" />
+    <Reference Include="$(ScriptAssembliesDir)\Unity.RenderPipelines.Universal.Runtime.dll" Private="false" />
+    <Reference Include="$(ScriptAssembliesDir)\Unity.Mathematics.dll" Private="false" Condition="Exists('$(ScriptAssembliesDir)\Unity.Mathematics.dll')" />
+    <Reference Include="$(ScriptAssembliesDir)\UnityEngine.UI.dll" Private="false" Condition="Exists('$(ScriptAssembliesDir)\UnityEngine.UI.dll')" />
+  </ItemGroup>
+</Project>
