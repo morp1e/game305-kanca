@@ -43,6 +43,8 @@ namespace Game.Hook
 
         void Awake()
         {
+            if (tuning == null || input == null || body == null || sword == null || aimCamera == null)
+                Debug.LogError("[SwordHook] tuning, input, body, sword ve aimCamera atanmalı; kanca çalışmayacak.", this);
             groundFilter = new ContactFilter2D();
             groundFilter.SetLayerMask(LayerMask.GetMask("Ground"));
             groundFilter.useTriggers = false;

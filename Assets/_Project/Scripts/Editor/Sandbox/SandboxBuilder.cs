@@ -52,6 +52,9 @@ namespace Game.Editor.Sandbox
         {
             // Yeni sahne açılışı mevcut sahneyi kapatır; kaydedilmemiş iş varsa önce sor.
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            // Sahne önce açılır: NewScene kullanılmayan asset'leri boşaltır, ondan önce yüklenen
+            // tuning/olay referansları boşa düşer ve sahneye null olarak yazılır.
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             EnsureFolder(PixelDir); EnsureFolder(PaintedDir); EnsureFolder(TuningDir); EnsureFolder(EventDir);
             CreateGreyboxTextures();
             CreatePaintedTextures();
@@ -63,7 +66,7 @@ namespace Game.Editor.Sandbox
             var cameraTuning = GetOrCreate<CameraTuning>(TuningDir + "/CameraTuning.asset");
             var trauma = GetOrCreate<FloatEvent>(EventDir + "/Event_CameraTrauma.asset");
 
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            AssetDatabase.SaveAssets();
             var player = CreatePlayer(square, movement, hook, trauma);
             CreateCourse(square);
             CreateAnchors(circle);

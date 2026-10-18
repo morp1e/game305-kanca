@@ -36,6 +36,8 @@ namespace Game.Player
 
         void Awake()
         {
+            if (tuning == null) Debug.LogError("[PlayerMotor] tuning atanmamış, oyuncu hareket etmeyecek.", this);
+            if (input == null) Debug.LogError("[PlayerMotor] input atanmamış.", this);
             body = GetComponent<Rigidbody2D>();
             bodyCollider = GetComponent<Collider2D>();
             body.bodyType = RigidbodyType2D.Kinematic;
