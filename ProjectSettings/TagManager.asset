@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 2
+  serializedVersion: 3
   tags: []
   layers:
   - Default
@@ -11,12 +11,12 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Ground
+  - Player
+  - Anchor
+  - Hazard
+  - Enemy
+  - Sword
   - 
   - 
   - 
@@ -38,6 +38,23 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: BG_Far
+    uniqueID: 1310812455
+    locked: 0
+  - name: BG_Mid
+    uniqueID: 4214616041
+    locked: 0
+  - name: BG_Near
+    uniqueID: 3481839505
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: FG
+    uniqueID: 428224013
+    locked: 0
+  - name: UI_World
+    uniqueID: 3664091021
+    locked: 0
+  m_RenderingLayers:
+  - Default

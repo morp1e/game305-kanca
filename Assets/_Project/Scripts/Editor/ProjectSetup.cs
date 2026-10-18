@@ -29,6 +29,10 @@ namespace Game.Editor
             var pixel = CreateTexturePreset("Pixel", ConfigurePixel);
             var painted = CreateTexturePreset("Painted", ConfigurePainted);
             SetFolderDefaults(pixel, painted);
+            SetupLayers();
+
+            // Kılıç ve oyuncu cast'leri kendi collider'larının içinden başlar; kendine çarpmasın.
+            Physics2D.queriesStartInColliders = false;
 
             EditorBuildSettings.scenes = AssetDatabase.FindAssets("t:Scene", new[] { Root + "/Scenes" })
                 .Select(AssetDatabase.GUIDToAssetPath)
@@ -91,14 +95,71 @@ namespace Game.Editor
             return AssetDatabase.LoadAssetAtPath<Preset>(path);
         }
 
+        // Fizik katmanları (indeks sabit, kod LayerMask'larını isimle alır) ve çizim sırası.
+        static readonly (int index, string name)[] Layers =
+        {
+            (6, "Ground"), (7, "Player"), (8, "Anchor"), (9, "Hazard"), (10, "Enemy"), (11, "Sword"),
+        };
+
+        // Default oynanış katmanıdır; arka plan katmanları önüne, ön plan ve UI arkasına girer.
+        static readonly string[] SortingBefore = { "BG_Far", "BG_Mid", "BG_Near" };
+        static readonly string[] SortingAfter = { "FG", "UI_World" };
+
+        static void SetupLayers()
+        {
+            var tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+
+            var layers = tagManager.FindProperty("layers");
+            foreach (var (index, name) in Layers)
+            {
+                var slot = layers.GetArrayElementAtIndex(index);
+                if (string.IsNullOrEmpty(slot.stringValue) || slot.stringValue == name)
+                    slot.stringValue = name;
+                else
+                    Debug.LogWarning($"[ProjectSetup] Layer {index} dolu ('{slot.stringValue}'), '{name}' yazılmadı.");
+            }
+
+            var sorting = tagManager.FindProperty("m_SortingLayers");
+            bool Exists(string n)
+            {
+                for (int i = 0; i < sorting.arraySize; i++)
+                    if (sorting.GetArrayElementAtIndex(i).FindPropertyRelative("name").stringValue == n) return true;
+                return false;
+            }
+            int DefaultIndex()
+            {
+                for (int i = 0; i < sorting.arraySize; i++)
+                    if (sorting.GetArrayElementAtIndex(i).FindPropertyRelative("uniqueID").longValue == 0) return i;
+                return 0;
+            }
+            void Insert(int at, string n)
+            {
+                sorting.InsertArrayElementAtIndex(at);
+                var e = sorting.GetArrayElementAtIndex(at);
+                e.FindPropertyRelative("name").stringValue = n;
+                e.FindPropertyRelative("uniqueID").longValue = (uint)n.GetHashCode() | 1u;
+                e.FindPropertyRelative("locked").boolValue = false;
+            }
+            foreach (var n in SortingBefore)
+                if (!Exists(n)) Insert(DefaultIndex(), n);
+            foreach (var n in SortingAfter)
+                if (!Exists(n)) Insert(sorting.arraySize, n);
+
+            tagManager.ApplyModifiedProperties();
+        }
+
         static void SetFolderDefaults(Preset pixel, Preset painted)
         {
             var type = pixel.GetPresetType();
+            string pixelFilter = $"glob:\"{PixelDir}/**\"";
+            string paintedFilter = $"glob:\"{PaintedDir}/**\"";
+            // Tekrar çalıştırmada preset yeniden yaratılır; eski kayıt silinmiş preset'i gösterir,
+            // o yüzden kendi filtrelerimizi ve boşa düşmüş kayıtları atıp baştan ekliyoruz.
             var others = Preset.GetDefaultPresetsForType(type)
-                .Where(d => d.preset != pixel && d.preset != painted);
+                .Where(d => d.preset != null && d.filter != pixelFilter && d.filter != paintedFilter);
             var defaults = others
-                .Append(new DefaultPreset($"glob:\"{PixelDir}/**\"", pixel))
-                .Append(new DefaultPreset($"glob:\"{PaintedDir}/**\"", painted))
+                .Append(new DefaultPreset(pixelFilter, pixel))
+                .Append(new DefaultPreset(paintedFilter, painted))
                 .ToArray();
             Preset.SetDefaultPresetsForType(type, defaults);
         }
