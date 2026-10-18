@@ -111,3 +111,4 @@ InitTestScene*.unity*
 # compile-check ciktilari
 /tools/compile-check/obj/
 /tools/compile-check/bin/
+!/tools/compile-check/*.csproj

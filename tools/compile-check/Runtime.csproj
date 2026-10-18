@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Game.Runtime: UnityEditor referansı yok, oyun koduna editör API'si sızarsa burada patlar. -->
+  <Import Project="Common.props" />
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\Assets\_Project\Scripts\Runtime\**\*.cs" />
+  </ItemGroup>
+</Project>
