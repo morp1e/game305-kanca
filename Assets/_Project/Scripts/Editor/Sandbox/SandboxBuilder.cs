@@ -14,6 +14,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
+using Game.Level;
+using Game.Dialogue;
 
 namespace Game.Editor.Sandbox
 {
@@ -25,6 +28,8 @@ namespace Game.Editor.Sandbox
         const string PaintedDir = "Assets/_Project/Art/Painted/_Greybox";
         const string TuningDir = "Assets/_Project/Data/Tuning";
         const string EventDir = "Assets/_Project/Data/Events";
+        const string PrefabDir = "Assets/_Project/Prefabs";
+        const string TileDir = "Assets/_Project/Art/Pixel/_Greybox/Tiles";
 
         struct Block
         {
@@ -57,9 +62,12 @@ namespace Game.Editor.Sandbox
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             EnsureFolder(PixelDir); EnsureFolder(PaintedDir); EnsureFolder(TuningDir); EnsureFolder(EventDir);
             CreateGreyboxTextures();
+            // Pixel preset'i pivotu alt ortaya koyar (gerçek karakter çizimi için doğru). Gri kutular ise collider'larla
+            // ortalanmış genel şekiller; alt orta pivotla görsel collider'dan yarım boy yukarıda kalıyordu.
+            EnsureCenterPivot(PixelDir + "/greybox_square.png");
+            EnsureCenterPivot(PixelDir + "/greybox_circle.png");
             CreatePaintedTextures();
             var square = LoadSprite(PixelDir + "/greybox_square.png");
-            var circle = LoadSprite(PixelDir + "/greybox_circle.png");
             var backgrounds = new[] { LoadSprite(PaintedDir + "/bg_test_far.png"), LoadSprite(PaintedDir + "/bg_test_mid.png"), LoadSprite(PaintedDir + "/bg_test_near.png") };
             var movement = GetOrCreate<PlayerMovementTuning>(TuningDir + "/PlayerMovementTuning.asset");
             var hook = GetOrCreate<SwordHookTuning>(TuningDir + "/SwordHookTuning.asset");
@@ -67,16 +75,19 @@ namespace Game.Editor.Sandbox
             var trauma = GetOrCreate<FloatEvent>(EventDir + "/Event_CameraTrauma.asset");
 
             AssetDatabase.SaveAssets();
-            var player = CreatePlayer(square, movement, hook, trauma);
+            PrefabFactory.Build(movement, hook);
+            var playerRigPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "/PlayerRig.prefab");
+            var playerRig = (GameObject)PrefabUtility.InstantiatePrefab(playerRigPrefab);
+            playerRig.transform.position = new Vector3(3, 3, 0);
+            var player = playerRig.transform.Find("Player").gameObject;
             CreateCourse(square);
-            CreateAnchors(circle);
+            CreatePrefabInstances();
+            CreateAnchors();
             CreateBackgrounds(backgrounds);
             var camera = CreateCamera(player.transform, cameraTuning, trauma);
             // Kamera oyuncudan sonra kuruluyor; nişan kamerası burada bağlanır.
             Set(player.GetComponent<SwordHook>(), ("aimCamera", camera));
-            var respawn = player.AddComponent<RespawnBelow>();
-            Set(respawn, ("motor", player.GetComponent<PlayerMotor>()));
-            CreateHud(player.GetComponent<PlayerMotor>(), player.GetComponent<SwordHook>());
+            CreateHud(player.GetComponent<PlayerMotor>(), player.GetComponent<SwordHook>(), player.GetComponent<RespawnController>(), player.GetComponent<SwordVoice>());
             CreateGlobalLight();
             EnsureBuildScene();
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -136,6 +147,18 @@ namespace Game.Editor.Sandbox
             importer.SaveAndReimport();
         }
 
+        static void EnsureCenterPivot(string path)
+        {
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) return;
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            if (settings.spriteAlignment == (int)SpriteAlignment.Center) return;
+            settings.spriteAlignment = (int)SpriteAlignment.Center;
+            importer.SetTextureSettings(settings);
+            importer.SaveAndReimport();
+        }
+
         static Sprite LoadSprite(string path)
         {
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
@@ -152,47 +175,64 @@ namespace Game.Editor.Sandbox
             asset = ScriptableObject.CreateInstance<T>(); AssetDatabase.CreateAsset(asset, path); return asset;
         }
 
-        static void CreateCourse(Sprite sprite)
+        static void CreateCourse(Sprite unused)
         {
+            EnsureFolder(TileDir);
+            // Pixel klasör preset'i pivotu alt ortaya koyar (karakterin ayağı için). Karo hücreyi tam doldurmalı,
+            // bu yüzden karo için ortadan pivotlu ayrı bir doku kullanılır; çarpışma da sprite'tan değil ızgaradan gelir.
+            string tilePath = TileDir + "/greybox_tile.png";
+            WriteTexture(tilePath, 16, 16, (x, y) => Color.white);
+            EnsureCenterPivot(tilePath);
+            var tileSprite = AssetDatabase.LoadAssetAtPath<Sprite>(tilePath);
+
+            var tile = AssetDatabase.LoadAssetAtPath<Tile>(TileDir + "/tile_ground.asset");
+            if (tile == null)
+            {
+                tile = ScriptableObject.CreateInstance<Tile>();
+                AssetDatabase.CreateAsset(tile, TileDir + "/tile_ground.asset");
+            }
+            tile.sprite = tileSprite; tile.color = new Color(.48f, .5f, .53f); tile.colliderType = Tile.ColliderType.Grid;
+            EditorUtility.SetDirty(tile);
+            AssetDatabase.SaveAssets();
+            var grid = new GameObject("Grid"); grid.AddComponent<Grid>();
+            var ground = new GameObject("Ground"); ground.layer = LayerMask.NameToLayer("Ground"); ground.transform.SetParent(grid.transform, false);
+            var map = ground.AddComponent<Tilemap>(); ground.AddComponent<TilemapRenderer>();
+            // Karo başına kutu. CompositeCollider2D (Merge) Unity 6.3'te bu kurulumda hiç şekil üretmedi (TileProbe, 2026-10-18);
+            // birleştirme gerekirse önce PlayMode testiyle doğrulanmalı.
+            ground.AddComponent<TilemapCollider2D>();
             foreach (var block in Course)
             {
-                var go = new GameObject(block.name); go.layer = LayerMask.NameToLayer("Ground");
-                go.transform.position = new Vector3(block.rect.center.x, block.rect.center.y, 0);
-                go.transform.localScale = new Vector3(block.rect.width, block.rect.height, 1);
-                var renderer = go.AddComponent<SpriteRenderer>(); renderer.sprite = sprite; renderer.color = new Color(.48f, .5f, .53f);
-                var collider = go.AddComponent<BoxCollider2D>(); collider.size = Vector2.one;
+                int x0 = Mathf.RoundToInt(block.rect.xMin), y0 = Mathf.RoundToInt(block.rect.yMin);
+                int width = Mathf.RoundToInt(block.rect.width), height = Mathf.RoundToInt(block.rect.height);
+                for (int x = 0; x < width; x++) for (int y = 0; y < height; y++) map.SetTile(new Vector3Int(x0 + x, y0 + y, 0), tile);
             }
         }
 
-        static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, SwordHookTuning tuning, FloatEvent trauma)
+        static void CreatePrefabInstances()
         {
-            var player = new GameObject("Player"); player.layer = LayerMask.NameToLayer("Player"); player.transform.position = new Vector3(3, 3, 0);
-            var rb = player.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Dynamic; rb.gravityScale = 0f; rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-            var capsule = player.AddComponent<CapsuleCollider2D>(); capsule.direction = CapsuleDirection2D.Vertical; capsule.size = new Vector2(.8f, 1.8f);
-            var input = player.AddComponent<PlayerInputReader>(); var motor = player.AddComponent<PlayerMotor>(); var swordHook = player.AddComponent<SwordHook>();
-            var visual = new GameObject("Visual"); visual.transform.SetParent(player.transform, false); visual.transform.localScale = new Vector3(1, 2, 1);
-            visual.AddComponent<SpriteRenderer>().sprite = sprite; visual.GetComponent<SpriteRenderer>().color = new Color(.2f, .85f, .48f);
-            visual.AddComponent<PixelSnap>(); Set(motor, ("tuning", movement), ("input", input));
-            var sword = new GameObject("Sword"); sword.layer = LayerMask.NameToLayer("Sword");
-            var swordVisual = new GameObject("Visual"); swordVisual.transform.SetParent(sword.transform, false); swordVisual.transform.localScale = new Vector3(1.2f, .25f, 1);
-            swordVisual.AddComponent<SpriteRenderer>().sprite = sprite; swordVisual.GetComponent<SpriteRenderer>().color = new Color(.45f, .85f, 1);
-            swordVisual.AddComponent<PixelSnap>();
-            Set(swordHook, ("tuning", tuning), ("input", input), ("body", motor), ("sword", sword.transform), ("traumaEvent", trauma));
-            var reticle = new GameObject("Reticle"); reticle.AddComponent<SpriteRenderer>().sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PixelDir + "/greybox_circle.png");
-            reticle.GetComponent<SpriteRenderer>().sortingLayerName = "UI_World"; reticle.transform.localScale = Vector3.one * .5f;
-            Set(swordHook, ("reticle", reticle.transform));
-            return player;
+            InstantiatePrefab("Hazard_Spikes", new Vector3(24, 2.25f, 0), new Vector3(5, 1, 1));
+            InstantiatePrefab("Hazard_Spikes", new Vector3(16, 9, 0), new Vector3(3, 1, 1));
+            InstantiatePrefab("Checkpoint", new Vector3(4, 2.5f, 0));
+            InstantiatePrefab("Checkpoint", new Vector3(50, 2.5f, 0));
         }
 
-        static void CreateAnchors(Sprite sprite)
+        static void InstantiatePrefab(string name, Vector3 position, Vector3? scale = null)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "/" + name + ".prefab");
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            instance.transform.position = position;
+            if (scale.HasValue) instance.transform.localScale = scale.Value;
+        }
+
+        static void CreateAnchors()
         {
             Vector2[] points = { new Vector2(10, 8), new Vector2(20, 10), new Vector2(27, 13), new Vector2(35, 16), new Vector2(46, 16), new Vector2(45, 7), new Vector2(57, 12), new Vector2(65, 9), new Vector2(73, 14) };
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "/Anchor.prefab");
             foreach (var point in points)
             {
-                var go = new GameObject("Anchor_" + point.x.ToString("00") + "_" + point.y.ToString("00")); go.layer = LayerMask.NameToLayer("Anchor"); go.transform.position = point;
-                go.AddComponent<SpriteRenderer>().sprite = sprite;
-                var collider = go.AddComponent<CircleCollider2D>(); collider.isTrigger = true; collider.radius = .5f;
-                go.AddComponent<HookAnchor>();
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                instance.name = "Anchor_" + point.x.ToString("00") + "_" + point.y.ToString("00");
+                instance.transform.position = point;
             }
         }
 
@@ -219,13 +259,13 @@ namespace Game.Editor.Sandbox
             var cmObject = new GameObject("CM_Follow"); var cm = cmObject.AddComponent<CinemachineCamera>(); cm.Follow = player; cm.Lens.OrthographicSize = 8.4375f;
             var composer = cmObject.AddComponent<CinemachinePositionComposer>(); composer.Damping = new Vector3(.25f, .25f, 0);
             composer.Composition.DeadZone = new ScreenComposerSettings.DeadZoneSettings { Enabled = true, Size = new Vector2(.08f, .08f) };
-            cmObject.AddComponent<CinemachinePixelPerfect>(); var shake = cmObject.AddComponent<CameraShake>(); Set(shake, ("tuning", tuning), ("traumaEvent", trauma));
+            cmObject.AddComponent<CinemachinePixelPerfect>(); var shake = cmObject.AddComponent<CameraShake>(); Set(shake, ("tuning", tuning), ("traumaEvent", trauma), ("kickEvent", AssetDatabase.LoadAssetAtPath<Vector2Event>("Assets/_Project/Data/Events/Event_CameraKick.asset")));
             return camera;
         }
 
-        static void CreateHud(PlayerMotor motor, SwordHook hook)
+        static void CreateHud(PlayerMotor motor, SwordHook hook, RespawnController respawn, SwordVoice voice)
         {
-            var go = new GameObject("DebugHud"); var hud = go.AddComponent<DebugHud>(); Set(hud, ("motor", motor), ("swordHook", hook));
+            var go = new GameObject("DebugHud"); var hud = go.AddComponent<DebugHud>(); Set(hud, ("motor", motor), ("swordHook", hook), ("respawn", respawn), ("swordVoice", voice));
         }
 
         static void CreateGlobalLight()

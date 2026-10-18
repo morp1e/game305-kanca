@@ -29,6 +29,9 @@ namespace Game.Hook
 
         public event Action<HookState> StateChanged;
 
+        /// <summary>Kılıcın saplı olduğu anchor (Stuck/Pulling); yoksa null.</summary>
+        public HookAnchor ActiveAnchor => activeAnchor;
+
         readonly List<AimAssist.Candidate> aimCandidates = new List<AimAssist.Candidate>();
         readonly RaycastHit2D[] pullHits = new RaycastHit2D[8];
         HookAnchor activeAnchor;
@@ -212,6 +215,17 @@ namespace Game.Hook
             var direction = offset.normalized;
             sword.position += (Vector3)(direction * step);
             sword.right = direction;
+        }
+
+        /// <summary>Kılıcı anında ele alır, çekişi bırakır. Ölüm ve yeniden doğmada kullanılır.</summary>
+        public void ResetToHand()
+        {
+            if (body != null) body.ExternalControl = false;
+            SetActiveAnchor(null);
+            activeAnchor = null;
+            cooldownRemaining = 0f;
+            if (sword != null) sword.position = HandPosition();
+            ChangeState(HookState.InHand);
         }
 
         void EnterReturning()

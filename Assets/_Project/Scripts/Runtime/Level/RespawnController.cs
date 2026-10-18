@@ -1,6 +1,8 @@
 using Game.Core;
+using Game.Hook;
 using Game.Player;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Game.Level
 {
@@ -13,11 +15,89 @@ namespace Game.Level
         [SerializeField] PlayerMotor motor;
         [SerializeField] GameEvent deathEvent;
         [SerializeField] GameEvent respawnEvent;
+        [Tooltip("Ölümden sonra yeniden doğma süresi, saniye. Ö: oynayarak ayarlanacak.")]
+        [SerializeField] float respawnDelay = 0.6f;
+        [Tooltip("Bu yüksekliğin altına düşmek ölümü tetikler, u. Ö: bölüm tasarımına göre ayarlanacak.")]
+        [SerializeField] float killHeight = -20f;
+        [Tooltip("Ölüm ve yeniden doğma sırasında gizlenen görsel kök.")]
+        [SerializeField] GameObject visual;
 
         public Vector2 CurrentCheckpoint { get; private set; }
         public bool IsDead { get; private set; }
+        Checkpoint activeCheckpoint;
+        SwordHook hook;
+        float respawnAt;
 
-        public void Kill() { }
-        public void SetCheckpoint(Vector2 position) { }
+        void Awake()
+        {
+            if (motor == null) motor = GetComponent<PlayerMotor>();
+            hook = GetComponent<SwordHook>();
+            CurrentCheckpoint = motor != null ? motor.Position : transform.position;
+        }
+
+        void Update()
+        {
+            if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame) Kill();
+        }
+
+        void FixedUpdate()
+        {
+            if (!IsDead)
+            {
+                if (motor != null && motor.Position.y < killHeight) Kill();
+                return;
+            }
+
+            if (Time.time < respawnAt) return;
+            Respawn();
+        }
+
+        public void Kill()
+        {
+            if (IsDead) return;
+            IsDead = true;
+            respawnAt = Time.time + Mathf.Max(0f, respawnDelay);
+            if (deathEvent != null) deathEvent.Raise();
+            // Çekiş sürerken ölünürse kanca her adım kontrolü geri alır; önce kılıcı ele al.
+            if (hook != null) hook.ResetToHand();
+            if (motor != null)
+            {
+                motor.ExternalControl = true;
+                motor.Velocity = Vector2.zero;
+            }
+            if (visual != null) visual.SetActive(false);
+        }
+
+        public void SetCheckpoint(Vector2 position)
+        {
+            if (activeCheckpoint != null) activeCheckpoint.SetActive(false);
+            CurrentCheckpoint = position;
+            activeCheckpoint = null;
+        }
+
+        internal void SetCheckpoint(Checkpoint checkpoint, Vector2 position)
+        {
+            if (activeCheckpoint != null && activeCheckpoint != checkpoint)
+                activeCheckpoint.SetActive(false);
+            activeCheckpoint = checkpoint;
+            CurrentCheckpoint = position;
+            if (activeCheckpoint != null) activeCheckpoint.SetActive(true);
+        }
+
+        void Respawn()
+        {
+            if (motor != null)
+            {
+                var body = motor.GetComponent<Rigidbody2D>();
+                if (body != null) body.position = CurrentCheckpoint;
+                motor.transform.position = CurrentCheckpoint;
+                motor.Velocity = Vector2.zero;
+                motor.ExternalControl = false;
+            }
+            if (hook != null) hook.ResetToHand();
+            if (visual != null) visual.SetActive(true);
+            IsDead = false;
+            if (respawnEvent != null) respawnEvent.Raise();
+        }
     }
 }

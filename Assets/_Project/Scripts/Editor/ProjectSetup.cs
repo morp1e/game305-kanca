@@ -30,6 +30,7 @@ namespace Game.Editor
             var painted = CreateTexturePreset("Painted", ConfigurePainted);
             SetFolderDefaults(pixel, painted);
             SetupLayers();
+            EnsureTmpEssentials();
 
             // Kılıç ve oyuncu cast'leri kendi collider'larının içinden başlar; kendine çarpmasın.
             Physics2D.queriesStartInColliders = false;
@@ -146,6 +147,16 @@ namespace Game.Editor
                 if (!Exists(n)) Insert(sorting.arraySize, n);
 
             tagManager.ApplyModifiedProperties();
+        }
+
+        // Kılıcın konuşma balonu TextMeshPro kullanır; temel font ve ayar dosyaları projede olmalı.
+        static void EnsureTmpEssentials()
+        {
+            if (AssetDatabase.LoadAssetAtPath<Object>("Assets/TextMesh Pro/Resources/TMP Settings.asset") != null) return;
+            var package = Directory.GetFiles(Path.GetFullPath("Library/PackageCache"), "TMP Essential Resources.unitypackage", SearchOption.AllDirectories)
+                .FirstOrDefault();
+            if (package == null) { Debug.LogWarning("[ProjectSetup] TMP Essential Resources paketi bulunamadı."); return; }
+            AssetDatabase.ImportPackage(package, false);
         }
 
         static void SetFolderDefaults(Preset pixel, Preset painted)
