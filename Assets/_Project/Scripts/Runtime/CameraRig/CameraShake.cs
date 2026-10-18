@@ -13,6 +13,8 @@ namespace Game.CameraRig
     {
         [SerializeField] CameraTuning tuning;
         [SerializeField] FloatEvent traumaEvent;
+        /// <summary>Çekiş gibi yönlü kısa itkiler; değer itki yönüdür.</summary>
+        [SerializeField] Vector2Event kickEvent;
 
         public float Trauma { get; private set; }
 
@@ -29,12 +31,16 @@ namespace Game.CameraRig
             base.OnEnable();
             if (traumaEvent != null)
                 traumaEvent.Register(AddTrauma);
+            if (kickEvent != null)
+                kickEvent.Register(Kick);
         }
 
         void OnDisable()
         {
             if (traumaEvent != null)
                 traumaEvent.Unregister(AddTrauma);
+            if (kickEvent != null)
+                kickEvent.Unregister(Kick);
         }
 
         void Update()
