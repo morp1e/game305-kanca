@@ -167,7 +167,7 @@ namespace Game.Editor.Sandbox
         static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, SwordHookTuning tuning, FloatEvent trauma)
         {
             var player = new GameObject("Player"); player.layer = LayerMask.NameToLayer("Player"); player.transform.position = new Vector3(3, 3, 0);
-            var rb = player.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Kinematic; rb.useFullKinematicContacts = true; rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+            var rb = player.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Dynamic; rb.gravityScale = 0f; rb.interpolation = RigidbodyInterpolation2D.Interpolate;
             var capsule = player.AddComponent<CapsuleCollider2D>(); capsule.direction = CapsuleDirection2D.Vertical; capsule.size = new Vector2(.8f, 1.8f);
             var input = player.AddComponent<PlayerInputReader>(); var motor = player.AddComponent<PlayerMotor>(); var swordHook = player.AddComponent<SwordHook>();
             var visual = new GameObject("Visual"); visual.transform.SetParent(player.transform, false); visual.transform.localScale = new Vector3(1, 2, 1);

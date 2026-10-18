@@ -6,8 +6,10 @@ using UnityEngine;
 namespace Game.Player
 {
     /// <summary>
-    /// Kinematik gövde hareketi ve oyuncu zıplamasını yürütür.
-    /// Çalışma sırası 0: SwordHook (-10) Velocity'yi önce yazar, motor sonra hareket ettirir.
+    /// Oyuncu hareketi. Gövde Dynamic: çarpışmayı ve zeminden ayırmayı Unity'nin fizik motoru çözer,
+    /// biz yalnız hızı belirleriz (yerçekimi dahil, gravityScale 0). Kendi Kinematic çarpışma kodumuz
+    /// temas payı yüzünden birkaç saniye sonra zeminin içinden geçiyordu (PlayerPhysicsTests).
+    /// Çalışma sırası 0: SwordHook (-10) Velocity'yi önce yazar, motor sonra işler.
     /// </summary>
     [DefaultExecutionOrder(0)]
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
@@ -19,14 +21,20 @@ namespace Game.Player
         Rigidbody2D body;
         Collider2D bodyCollider;
         readonly List<RaycastHit2D> castHits = new List<RaycastHit2D>(8);
-        ContactFilter2D movementFilter;
+        ContactFilter2D solidFilter;
         ContactFilter2D groundFilter;
         readonly JumpGate jumpGate = new JumpGate();
         float variableJumpRemaining;
-        Vector2 gizmoGroundEnd;
 
         public Vector2 Position => body != null ? body.position : (Vector2)transform.position;
-        public Vector2 Velocity { get; set; }
+
+        /// <summary>Tek doğru kaynak gövdenin hızıdır; duvar ve tavan onu fizik adımında keser.</summary>
+        public Vector2 Velocity
+        {
+            get => body != null ? body.linearVelocity : Vector2.zero;
+            set { if (body != null) body.linearVelocity = value; }
+        }
+
         public bool IsGrounded { get; private set; }
         public Collider2D BodyCollider => bodyCollider != null ? bodyCollider : GetComponent<Collider2D>();
         public bool ExternalControl { get; set; }
@@ -38,32 +46,36 @@ namespace Game.Player
         {
             if (tuning == null) Debug.LogError("[PlayerMotor] tuning atanmamış, oyuncu hareket etmeyecek.", this);
             if (input == null) Debug.LogError("[PlayerMotor] input atanmamış.", this);
+
             body = GetComponent<Rigidbody2D>();
             bodyCollider = GetComponent<Collider2D>();
-            body.bodyType = RigidbodyType2D.Kinematic;
-            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            body.bodyType = RigidbodyType2D.Dynamic;
             body.gravityScale = 0f;
-            movementFilter = new ContactFilter2D();
-            movementFilter.SetLayerMask(LayerMask.GetMask("Ground"));
-            movementFilter.useTriggers = false;
-            groundFilter = new ContactFilter2D();
-            groundFilter.SetLayerMask(LayerMask.GetMask("Ground"));
-            groundFilter.useTriggers = false;
+            body.constraints = RigidbodyConstraints2D.FreezeRotation;
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            body.sleepMode = RigidbodySleepMode2D.NeverSleep;
+            // Sürtünme olursa duvara yaslanınca karakter yapışır.
+            bodyCollider.sharedMaterial = new PhysicsMaterial2D("PlayerNoFriction") { friction = 0f, bounciness = 0f };
+
+            solidFilter = new ContactFilter2D();
+            solidFilter.SetLayerMask(LayerMask.GetMask("Ground"));
+            solidFilter.useTriggers = false;
+            // Zemin = yukarı bakan yüzey. Duvara sürtünmek zeminde sayılmaz.
+            groundFilter = solidFilter;
+            groundFilter.SetNormalAngle(45f, 135f);
         }
 
         void FixedUpdate()
         {
             if (body == null || tuning == null || bodyCollider == null) return;
             float dt = Time.fixedDeltaTime;
-            IsGrounded = CheckGrounded(body.position);
+            IsGrounded = CheckGrounded();
 
             if (ExternalControl)
             {
-                // Zıplama basışı tüketilmez: çekiş bitip fırlama penceresi açılınca tampondan okunur.
+                // Hızı kanca belirler. Zıplama basışı tüketilmez: fırlama penceresi açılınca tampondan okunur.
                 jumpGate.Tick(dt, false, false, tuning.CoyoteTime, tuning.JumpBufferTime);
-                Vector2 externalEnd = MoveWithCollisions(body.position, Velocity * dt);
-                body.MovePosition(externalEnd);
-                IsGrounded = CheckGrounded(externalEnd);
                 return;
             }
 
@@ -82,11 +94,14 @@ namespace Game.Player
                 velocity = MovementMath.ApplyJump(velocity, fromLaunchWindow, tuning.JumpSpeed,
                     tuning.LaunchJumpBonus, tuning.JumpHBoost, moveX);
                 variableJumpRemaining = tuning.VarJumpTime;
+                IsGrounded = false;
             }
 
             bool jumpHeld = input != null && input.JumpHeld;
-            velocity.y = MovementMath.StepGravity(velocity.y, dt, jumpHeld,
-                tuning.Gravity, tuning.HalfGravThreshold, tuning.MaxFallSpeed);
+            // Yerdeyken yerçekimi uygulanmaz; uygulansa her adım zemine bastırıp temas titretir.
+            if (!IsGrounded)
+                velocity.y = MovementMath.StepGravity(velocity.y, dt, jumpHeld,
+                    tuning.Gravity, tuning.HalfGravThreshold, tuning.MaxFallSpeed);
             if (variableJumpRemaining > 0f)
             {
                 velocity.y = MovementMath.CutVariableJump(velocity.y, jumpHeld, variableJumpRemaining);
@@ -94,11 +109,8 @@ namespace Game.Player
                 variableJumpRemaining = Mathf.Max(0f, variableJumpRemaining - dt);
             }
 
+            if (velocity.y > 0f) TryCornerCorrection(velocity.y * dt);
             Velocity = velocity;
-            Vector2 end = MoveWithCollisions(body.position, Velocity * dt);
-            body.MovePosition(end);
-            IsGrounded = CheckGrounded(end);
-            if (IsGrounded && Velocity.y < 0f) Velocity = new Vector2(Velocity.x, 0f);
         }
 
         public void OpenLaunchJumpWindow(float seconds)
@@ -106,88 +118,41 @@ namespace Game.Player
             jumpGate.OpenLaunchWindow(seconds);
         }
 
-        // Tüm sorgular hesaplanan konumdan yapılır, gövde adım sonunda tek MovePosition ile taşınır.
-        // body.position'a doğrudan yazmak ışınlama sayılır ve interpolation'ı bozar.
-        int CastFrom(Vector2 position, Vector2 direction, float distance) =>
-            bodyCollider.Cast(position, body.rotation, direction, movementFilter, castHits, distance, true);
-
-        bool CheckGrounded(Vector2 position)
+        bool CheckGrounded()
         {
-            int count = bodyCollider.Cast(position, body.rotation, Vector2.down, groundFilter, castHits,
-                tuning.GroundCheckDistance, true);
-            gizmoGroundEnd = position + Vector2.down * tuning.GroundCheckDistance;
-            for (int i = 0; i < count; i++)
-                if (castHits[i].collider != null && castHits[i].distance <= tuning.GroundCheckDistance)
-                    return true;
-            return false;
+            // Yükselirken zemine değmek (platformun kenarından geçmek) iniş sayılmaz.
+            if (body.linearVelocity.y > 0.01f) return false;
+            if (body.IsTouching(groundFilter)) return true;
+            int count = body.Cast(Vector2.down, groundFilter, castHits, tuning.GroundCheckDistance);
+            return count > 0;
         }
 
-        Vector2 MoveWithCollisions(Vector2 position, Vector2 displacement)
+        /// <summary>Kafa bir köşeye birkaç piksel takılacaksa gövdeyi yana kaydırır (Celeste).</summary>
+        void TryCornerCorrection(float upwardDistance)
         {
-            Vector2 remaining = displacement;
-            float minimumDistance = Mathf.Max(tuning.MinimumMoveDistance, 0f);
-            for (int i = 0; i < tuning.SlideIterations && remaining.sqrMagnitude > minimumDistance * minimumDistance; i++)
-            {
-                float distance = remaining.magnitude;
-                Vector2 direction = remaining / distance;
-                RaycastHit2D hit = ClosestHit(CastFrom(position, direction, distance));
-                if (hit.collider == null || hit.distance >= distance)
-                    return position + remaining;
-
-                float travel = Mathf.Max(0f, hit.distance - tuning.CollisionSkin);
-                position += direction * travel;
-                remaining *= distance > 0f ? (distance - travel) / distance : 0f;
-
-                if (hit.normal.y < -tuning.CeilingNormalThreshold && remaining.y > 0f
-                    && TryCornerCorrection(ref position, remaining.y))
-                    continue;
-
-                float intoSurface = Vector2.Dot(remaining, hit.normal);
-                if (intoSurface < 0f) remaining -= hit.normal * intoSurface;
-                float velocityIntoSurface = Vector2.Dot(Velocity, hit.normal);
-                if (velocityIntoSurface < 0f) Velocity -= hit.normal * velocityIntoSurface;
-            }
-            return position;
-        }
-
-        RaycastHit2D ClosestHit(int count)
-        {
-            RaycastHit2D closest = default;
-            for (int i = 0; i < count; i++)
-                if (castHits[i].collider != null && (closest.collider == null || castHits[i].distance < closest.distance))
-                    closest = castHits[i];
-            return closest;
-        }
-
-        bool TryCornerCorrection(ref Vector2 position, float upwardDistance)
-        {
+            if (body.Cast(Vector2.up, solidFilter, castHits, upwardDistance) == 0) return;
             float step = 1f / Mathf.Max(tuning.PixelsPerUnit, 1f);
             int steps = Mathf.CeilToInt(tuning.CornerCorrectionPx);
             for (int i = 1; i <= steps; i++)
             {
                 for (int side = -1; side <= 1; side += 2)
                 {
-                    Vector2 offset = Vector2.right * (side * step * i);
-                    if (ClosestHit(CastFrom(position, offset.normalized, offset.magnitude)).collider != null) continue;
-                    Vector2 shifted = position + offset;
-                    if (ClosestHit(CastFrom(shifted, Vector2.up, upwardDistance)).collider == null)
-                    {
-                        position = shifted;
-                        return true;
-                    }
+                    Vector2 offset = new Vector2(side * step * i, 0f);
+                    if (body.Cast(offset.normalized, solidFilter, castHits, offset.magnitude) > 0) continue;
+                    Vector2 shifted = body.position + offset;
+                    if (bodyCollider.Cast(shifted, body.rotation, Vector2.up, solidFilter, castHits, upwardDistance, true) > 0) continue;
+                    body.position = shifted;
+                    return;
                 }
             }
-            return false;
         }
 
         void OnDrawGizmos()
         {
             Collider2D col = BodyCollider;
             if (col == null) return;
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireCube(col.bounds.center, col.bounds.size);
             Gizmos.color = IsGrounded ? Color.green : Color.yellow;
-            Gizmos.DrawLine(Position, gizmoGroundEnd);
+            Gizmos.DrawWireCube(col.bounds.center, col.bounds.size);
             Gizmos.color = Color.magenta;
             Gizmos.DrawLine(Position, Position + Velocity * (tuning != null ? tuning.VelocityGizmoSeconds : 0f));
         }

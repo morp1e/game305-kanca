@@ -17,7 +17,8 @@ namespace Game.Player
             float control = grounded ? 1f : airMultiplier;
             float accel = acceleration * control * deltaTime;
             float reduce = deceleration * control * deltaTime;
-            float direction = Mathf.Sign(input);
+            // Mathf.Sign(0) 1 döndürür; girdi yokken yön 0 olmalı, yoksa karakter kendi kendine sağa koşar.
+            float direction = input > 0f ? 1f : input < 0f ? -1f : 0f;
 
             if (Mathf.Abs(velocity) > maxSpeed)
             {

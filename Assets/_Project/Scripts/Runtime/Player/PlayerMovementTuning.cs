@@ -28,11 +28,7 @@ namespace Game.Player
         [Tooltip("Zemin için aşağı sorgu mesafesi, u. Ö: oynayarak ayarlanacak.")] [SerializeField] float groundCheckDistance = 0.08f;
         [Tooltip("Köşe düzeltme mesafesi, piksel. C: Celeste.")] [SerializeField] float cornerCorrectionPx = 4f;
         [Tooltip("Bir unit içindeki piksel sayısı. Ö: proje ölçeği.")] [SerializeField] float pixelsPerUnit = 16f;
-        [Tooltip("Süpürme çarpışma payı, u. Ö: oynayarak ayarlanacak.")] [SerializeField] float collisionSkin = 0.01f;
-        [Tooltip("Çarpışma normalinin tavan sayılması için gereken aşağı yön bileşeni. Ö: oynayarak ayarlanacak.")] [SerializeField] float ceilingNormalThreshold = 0.5f;
-        [Tooltip("Hareket Cast'ini atlamak için gereken en küçük mesafe, u. Ö: oynayarak ayarlanacak.")] [SerializeField] float minimumMoveDistance = 0.001f;
         [Tooltip("Hız gizmosunun gösterdiği süre, saniye. Ö: oynayarak ayarlanacak.")] [SerializeField] float velocityGizmoSeconds = 0.1f;
-        [Tooltip("Bir adımda izin verilen çarpışma-kayma yinelemesi. Ö: oynayarak ayarlanacak.")] [SerializeField] int slideIterations = 4;
 
         public float MaxRunSpeed => maxRunSpeed;
         public float RunAccel => runAccel;
@@ -51,10 +47,6 @@ namespace Game.Player
         public float GroundCheckDistance => groundCheckDistance;
         public float CornerCorrectionPx => cornerCorrectionPx;
         public float PixelsPerUnit => pixelsPerUnit;
-        public float CollisionSkin => collisionSkin;
-        public float CeilingNormalThreshold => ceilingNormalThreshold;
-        public float MinimumMoveDistance => minimumMoveDistance;
         public float VelocityGizmoSeconds => velocityGizmoSeconds;
-        public int SlideIterations => slideIterations;
     }
 }
