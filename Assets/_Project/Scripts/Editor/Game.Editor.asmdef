@@ -2,7 +2,10 @@
     "name": "Game.Editor",
     "rootNamespace": "Game.Editor",
     "references": [
-        "Game.Runtime"
+        "Game.Runtime",
+        "Unity.Cinemachine",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [
         "Editor"
