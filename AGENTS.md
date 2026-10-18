@@ -5,7 +5,8 @@ GAME305 grup projesi, Unity 6000.3.26f1 (6.3 LTS), URP 2D. Kanonik tasarım `doc
 - Editör sürümü sabittir: 6000.3.26f1. Paket veya editör yükseltmesi Özenç'in kararıdır.
 - İlke: kod davranışı tanımlar, ayarlar ScriptableObject'te, içerik prefab/Tilemap/asset'tedir. Koda sayı gömme.
 - Proje kodu `Assets/_Project/` altında; namespace `Game.<Alan>`; dosya başına bir sınıf; dosya ve klasör adları ASCII, boşluksuz.
-- Girdi `Update`'te okunur, `FixedUpdate`'te tüketilir. Oyuncu Kinematic Rigidbody2D + `Slide`/`Cast` ile hareket eder.
+- Girdi `Update`'te okunur, `FixedUpdate`'te tüketilir. Oyuncu Dynamic Rigidbody2D'dir: çarpışmayı fizik motoru çözer, kod yalnız hızı yazar (gravityScale 0, yerçekimi kodda).
+- Davranış değişikliği bitmiş sayılmadan önce derleme (`dotnet build tools/compile-check/All.csproj`) ve testler (`tools/test-headless.sh PlayMode`, `tools/test-headless.sh EditMode`) geçer. Yalnız derlenmiş kod çalışıyor sayılmaz.
 - Sahne sahipliği `docs/ekip-rehberi.md` §4'tedir. Başkasının sahnesini değiştirme; denemeyi Sandbox sahnesinde yap.
 - Unity YAML dosyalarını (`.unity`, `.prefab`, `.asset`) elle düzenlemekten kaçın; mümkünse editör veya editör script'iyle değiştir.
 - Commit biçimi: `tur(kapsam): açıklama` (feat, fix, art, docs, chore, test).

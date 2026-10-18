@@ -64,7 +64,7 @@ Preset Manager'da klasöre göre iki varsayılan preset:
 
 ## 4. Oyuncu kontrolcüsü
 
-- **Kinematic Rigidbody2D + kendi hareket kodumuz** (`Rigidbody2D.Slide` ve `Rigidbody2D.Cast`). Gerekçe: platform oyununda kontrol hissi hassas ayar ister ve kanca çekişi hızı doğrudan devralmalı. Unity, `Slide`'ı esas olarak Kinematic gövde için tarif ediyor.
+- **Dynamic Rigidbody2D, hızı biz yazarız** (gravityScale 0, yerçekimi ve tüm ivme kodda). Çarpışma ve zeminden ayırma fizik motorunda kalır. Gerekçe: kontrol hissi yine tamamen bizim kodumuzda, kanca çekişi hızı doğrudan devralır, ama temas payı ve tünelleme gibi hatalara açık kendi çarpışma kodumuzu taşımayız. 2026-10-18: ilk sürüm Kinematic + kendi Cast döngüsüyle yazılmıştı; gerçek fizik testlerinde kırılgan bulunup değiştirildi.
 - Yerçekimi, zemin teması, coyote time, jump buffer ve köşe düzeltme kodda yazılır, değerleri `PlayerMovementTuning` SO'sundadır.
 - **Girdi `Update`'te okunur, tampona yazılır, `FixedUpdate`'te tüketilir.** Input System, `FixedUpdate` içinde sorgulanınca editörde hata basıyor.
 - Kontrolcünün bir "hız devralma" modu olur: kanca çekişi sırasında yerçekimi ve oyuncu girdisi devre dışı kalır, hızı kanca sistemi belirler.
