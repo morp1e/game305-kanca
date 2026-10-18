@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a8e745bbd3846bcbcbd6f7a96498e4b, type: 3}
+  m_Name: SwordLines
+  m_EditorClassIdentifier: Game.Runtime::Game.Dialogue.SwordLineSet
+  cues:
+  - cue: 0
+    lines:
+    - "Hadi bakal\u0131m, kolunu savur."
+    - "\u0130lk at\u0131\u015F bedava. San\u0131r\u0131m."
+    - "Beni f\u0131rlat, kendini de\u011Fil."
+    chance: 1
+    cooldown: 0
+  - cue: 1
+    lines:
+    - "Tam isabet. Benden beklendi\u011Fi gibi."
+    - "Tuttum! \u015Eimdi s\u0131ra sende."
+    - "Duvara de\u011Fil, tam yerine."
+    chance: 1
+    cooldown: 0
+  - cue: 2
+    lines:
+    - "Iskalad\u0131k. Daha \xE7ok ben \u0131skalad\u0131m."
+    - "Geri geliyorum, surat\u0131n\u0131 asma."
+    - "Bir daha deneriz. Ben haz\u0131r\u0131m."
+    chance: 1
+    cooldown: 0
+  - cue: 3
+    lines:
+    - "U\xE7 bakal\u0131m, ben tutar\u0131m."
+    - "\u0130\u015Fte \u015Fimdi haval\u0131s\u0131n."
+    - "G\xFCzel kalk\u0131\u015F. \u0130ni\u015Fi konu\u015Furuz."
+    chance: 1
+    cooldown: 0
+  - cue: 4
+    lines:
+    - "Bir daha m\u0131? Kanat takal\u0131m bari."
+    - "Seri gidiyorsun. Ben de buraday\u0131m."
+    - Arka arkaya! Bunu sevdim.
+    chance: 1
+    cooldown: 0
+  - cue: 5
+    lines:
+    - "Ben iyiyim. Sen biraz da\u011F\u0131lm\u0131\u015Fs\u0131n."
+    - "D\xFC\u015Fmek de bir t\xFCr ilerleme."
+    - "Bir dahakine daha az \xF6l\xFCm, olur mu?"
+    chance: 1
+    cooldown: 0
+  - cue: 6
+    lines:
+    - "Yeniden buraday\u0131z. Bu kez dikkat."
+    - "D\xF6nd\xFCn. \xD6zlemi\u015F gibi yapay\u0131m."
+    - "Tamam, plan\u0131 bu kez uygula."
+    chance: 1
+    cooldown: 0
+  - cue: 7
+    lines:
+    - "Mola m\u0131? Benim de keskinli\u011Fim dinlensin."
+    - "Hareketsizli\u011Fin etkileyici."
+    - Bir yere mi gidiyorduk?
+    chance: 1
+    cooldown: 0
+  globalCooldown: 1.5
+  displayBaseSeconds: 0.8
+  displaySecondsPerCharacter: 0.035
+  charactersPerSecond: 28
+  idleSeconds: 8
+  chainWindow: 1.2
+  movementThreshold: 0.01
