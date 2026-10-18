@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da29589553094f91a38766a242599c9c, type: 3}
+  m_Name: SwordHookTuning
+  m_EditorClassIdentifier: Game.Runtime::Game.Hook.SwordHookTuning
+  throwSpeed: 40
+  maxRange: 10
+  swordRadius: 0.15
+  pullSpeed: 30
+  pullSpeedCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  maxPullTime: 0.6
+  arriveDistance: 0.5
+  exitSpeedMult: 0.667
+  exitUpMult: 0.75
+  keepFasterIncomingSpeed: 1
+  postLaunchJumpWindow: 0.1
+  hookCooldown: 0.2
+  recallSpeed: 50
+  impactFreeze: 0.05
+  pullShakeDuration: 0.2
+  traumaOnStick: 0.2
+  traumaOnBigImpact: 0.5
+  shakeExponent: 2
+  traumaDecay: 1
+  snapRadiusPx: 64
+  switchMargin: 0.15
+  throwOriginOffset: {x: 0.5, y: 0}
+  inputBufferTime: 0.1
