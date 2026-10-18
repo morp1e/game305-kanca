@@ -31,6 +31,7 @@
     <Reference Include="$(ScriptAssembliesDir)\Unity.Cinemachine.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.RenderPipelines.Core.Runtime.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.RenderPipelines.Universal.Runtime.dll" Private="false" />
+    <Reference Include="$(ScriptAssembliesDir)\Unity.RenderPipelines.Universal.2D.Runtime.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.Mathematics.dll" Private="false" Condition="Exists('$(ScriptAssembliesDir)\Unity.Mathematics.dll')" />
     <Reference Include="$(ScriptAssembliesDir)\UnityEngine.UI.dll" Private="false" Condition="Exists('$(ScriptAssembliesDir)\UnityEngine.UI.dll')" />
   </ItemGroup>
