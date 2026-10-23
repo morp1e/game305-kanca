@@ -56,8 +56,19 @@ namespace Game.Dialogue
             Make(SwordCue.ChainLaunch, "Bir daha mı? Kanat takalım bari.", "Seri gidiyorsun. Ben de buradayım.", "Arka arkaya! Bunu sevdim."),
             Make(SwordCue.Death, "Ben iyiyim. Sen biraz dağılmışsın.", "Düşmek de bir tür ilerleme.", "Bir dahakine daha az ölüm, olur mu?"),
             Make(SwordCue.Respawn, "Yeniden buradayız. Bu kez dikkat.", "Döndün. Özlemiş gibi yapayım.", "Tamam, planı bu kez uygula."),
-            Make(SwordCue.Idle, "Mola mı? Benim de keskinliğim dinlensin.", "Hareketsizliğin etkileyici.", "Bir yere mi gidiyorduk?")
+            Make(SwordCue.Idle, "Mola mı? Benim de keskinliğim dinlensin.", "Hareketsizliğin etkileyici.", "Bir yere mi gidiyorduk?"),
+            Make(SwordCue.HitLanded, "İşte böyle. Tam kıvamında.", "Bir çizik de benden.", "Güzel vuruş. Devam et."),
+            Make(SwordCue.SwingMissed, "Havayı kestik. Hava teşekkür etti.", "Biraz daha sola mı?", "Iskaladık. Tekrar dene.")
         };
+
+        public void EnsureCombatCues()
+        {
+            if (GetCue(SwordCue.HitLanded) != null && GetCue(SwordCue.SwingMissed) != null) return;
+            var expanded = new System.Collections.Generic.List<CueLines>(cues ?? Array.Empty<CueLines>());
+            if (GetCue(SwordCue.HitLanded) == null) expanded.Add(Make(SwordCue.HitLanded, "İşte böyle. Tam kıvamında.", "Bir çizik de benden.", "Güzel vuruş. Devam et."));
+            if (GetCue(SwordCue.SwingMissed) == null) expanded.Add(Make(SwordCue.SwingMissed, "Havayı kestik. Hava teşekkür etti.", "Biraz daha sola mı?", "Iskaladık. Tekrar dene."));
+            cues = expanded.ToArray();
+        }
 
         static CueLines Make(SwordCue cue, params string[] lines) => new CueLines { cue = cue, lines = lines, chance = 1f, cooldown = 0f };
     }

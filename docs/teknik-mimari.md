@@ -30,6 +30,7 @@ Assets/
     Art/
       Pixel/        (PPU 16, Point, sıkıştırma yok)
       Painted/      (PPU 64, Bilinear, BC7)
+      Tiles/        (PPU 128, Bilinear, BC7)
     Audio/
     Data/           (SO asset'leri: ayarlar, boss desenleri, olay kanalları)
     Prefabs/
@@ -54,6 +55,7 @@ Assets/
 Preset Manager'da klasöre göre iki varsayılan preset:
 - `Art/Pixel/`: Sprite, PPU 16, Filter Point, Compression None, mipmap kapalı, Mesh Full Rect, Wrap Clamp. Aseprite Importer'ın varsayılan PPU'su 100'dür, 16'ya çekilir.
 - `Art/Painted/`: Sprite, PPU 64, Filter Bilinear, BC7, mipmap kapalı, Max Size 4096.
+- `Art/Tiles/`: Sprite, PPU 128, Filter Bilinear, BC7, mipmap kapalı, Max Size 2048, pivot center. Kenney 18 px karolar geçici yer tutucudur.
 
 ## 3. Sahne düzeni ve çakışma önleme
 
@@ -69,13 +71,19 @@ Preset Manager'da klasöre göre iki varsayılan preset:
 - **Girdi `Update`'te okunur, tampona yazılır, `FixedUpdate`'te tüketilir.** Input System, `FixedUpdate` içinde sorgulanınca editörde hata basıyor.
 - Kontrolcünün bir "hız devralma" modu olur: kanca çekişi sırasında yerçekimi ve oyuncu girdisi devre dışı kalır, hızı kanca sistemi belirler.
 
+### Gövde ve kol rig'i
+- Oyuncu görseli gövde, sol elde kanca kolu ve sağ elde kılıç kolu olarak ayrı parçalardır. Kollar omuz pivotundan el ucuna uzanır; `PlayerArmRig` görseli her `Update`'te imlece yöneltir.
+- Bakış yönü hareketten bağımsız olarak imlecin gövde merkezine göre yatay tarafıdır. Merkez çevresindeki `facingDeadZone` içinde önceki yön korunur; hareket yönü yalnız rig yoksa `PlayerMotor` yedeğidir.
+- Sağa bakarken sol/kanca kolu gövdenin arkasında, sağ/kılıç kolu önündedir. Sola bakınca çizim sırası değişir. Sol yön aynalaması omuz X ofsetini ve kol açısını yansıtır; kol çizimi +X yönüne, pivot omuzda olacak şekilde yapılır.
+- `PlayerRigTuning.angleSnapDegrees` sıfır olduğunda serbest dönüş, 22,5 olduğunda 16 yön ve 45 olduğunda 8 yön verir. Piksel art sprite'larının serbest dönüşteki görünümü gözle değerlendirilecektir; karşılaştırma kamera probuyla birlikte §6'da yapılır.
+
 ## 5. Kılıç ve kanca sistemi
 
 ### Davranış
-1. Kılıç sağ elde yakın dövüş silahıdır; saldırı daha sonraki görevde yapılacaktır. Sol eldeki ayrı kanca fare imlecine doğru fırlatılır.
-2. Kanca, `GrappleHookTuning.hookableLayers` katmanlarındaki yüzeylere saplanır. `NonHookable` bileşeni taşıyan collider veya üst objesi kancayı geri döndürür.
+1. Kılıç sağ elde yakın dövüş silahıdır; sol fare saldırır. Süre, vuruş penceresi, yay, şekil ve hasar `SwordTuning` SO'dadır. Sol eldeki ayrı kanca sağ fareyle imlece doğru fırlatılır.
+2. Kanca, `GrappleHookTuning.hookableLayers` katmanlarındaki yüzeylere saplanır. `NonHookable` bileşeni taşıyan collider veya üst objesi kancayı geri döndürür. `pullableLayers` katmanındaki hafif `HookPullable` hedef oyuncuya sarılır; ağır hedef oyuncuyu kendine çeker ve hedef noktası takip edilir.
 3. Saplanınca karakter yüzeydeki temas noktasına doğru **çekilir**, yüzeye temas ettiğinde veya varış eşiğine geldiğinde son çekiş yönünde **fırlar**. Sallanma ve ip fiziği yoktur.
-4. Sağ fare basışı kancayı fırlatır; kanca Thrown, Stuck veya Pulling durumundayken sağ fareye yeniden basmak geri çağırır. Sol fare saldırı girdisi için ayrılmıştır.
+4. Sağ fare basışı kancayı fırlatır; kanca Thrown, Stuck, Pulling veya Reeling durumundayken sağ fareye yeniden basmak geri çağırır.
 
 ### Durum makinesi
 ```
@@ -84,11 +92,12 @@ Thrown  --(NonHookable / menzil sonu / geri çağırma)--> Returning -> InHand
 Stuck   --(sağ fareye yeniden basma)--> Returning
 Pulling --(tutunulan yüzeye temas / varış / engel / maxPullTime)--> Launch
 Pulling --(sağ fareye yeniden basma)--> Returning
+Thrown --(hafif HookPullable)--> Reeling --(varış / süre sonu)--> InHand
 ```
 İlk sürümde enum + switch. Durum sayısı artarsa durum sınıflarına geçilir.
 
 ### Kanca uçuşu
-Kancanın Rigidbody'si yoktur. Her `FixedUpdate`'te `Physics2D.CircleCast(konum, hookRadius, yön, throwSpeed*dt, hookableLayers)` atılır ve isabet noktasına konumlanır. Hızlı nesnede tünellemeyi önler, Continuous çarpışma modunun maliyeti olmaz. Menzil içinde isabet olmazsa kanca geri döner.
+Kancanın Rigidbody'si yoktur. Her `FixedUpdate`'te `Physics2D.CircleCast` atılır; sorgu `hookableLayers` ve `pullableLayers` maskelerini birleştirir. Hızlı nesnede tünellemeyi önler, Continuous çarpışma modunun maliyeti olmaz. Menzil içinde isabet olmazsa kanca geri döner.
 
 ### Çekiş ve fırlama (Celeste'in açık kaynak dash kodundan uyarlandı)
 - Çekiş sabit `pullSpeed` ile yapılır. İsteğe bağlı `pullSpeedCurve` (normalize mesafeye göre AnimationCurve, varsayılan düz) giriş ve çıkışı şekillendirir. `maxPullTime` emniyettir.
@@ -96,6 +105,7 @@ Kancanın Rigidbody'si yoktur. Her `FixedUpdate`'te `Physics2D.CircleCast(konum,
 - Tutunulan yüzeye `arriveDistance` kadar yaklaşınca çekiş biter: hız = `son çekiş yönü × pullSpeed × exitSpeedMult`, yukarı yöndeyse ayrıca `× exitUpMult`. Oyuncu collider'ı yüzeye daha önce değerse aynı fırlama başlar.
 - Fırlamadan sonra kısa bir `postLaunchJumpWindow` açılır: bu pencerede zıplamaya basılırsa ivme zıplamayla birleşir.
 - Çekiş sırasında önden `Rigidbody2D.Cast` atılır. Tutunulan yüzeye veya teğet yönü olmayan bir engele değince fırlama başlar; başka engelde hız yüzeye teğet yönlendirilir.
+- `pullableLayers` varsayılanı Enemy ve Default'tur. Hafif hedef oyuncunun eline doğru `lightPullSpeed` ile çekilir; oyuncu kontrolü sürer. Varışta veya `pullableMaxTime` sonunda hedef `pullableReleaseSpeed` ile bırakılır ve hasar alabilen hedefe `pullableStunDuration` sıfır hasarlı hit bilgisi gönderilir. Ağır hedef için oyuncu mevcut çekiş ve fırlama akışını kullanır; temas noktası her fizik adımında hedefi izler.
 
 ### Nişan
 Kanca, `PlayerInputReader.PointerWorld` ile alınan fare dünya konumuna doğru düz fırlatılır. Hedefe yapışma veya nişan yardımı uygulanmaz. Nişangâh ve çizgi imleci izler.
@@ -129,12 +139,28 @@ Birim: 1 unit = 1 kare. Kaynak: C = Celeste kodu (piksel/sn, 8 px = 1 kare olara
 | traumaOnStick / traumaOnBigImpact | 0,2 / 0,5 | 0-1 | E |
 | shakeExponent | 2 | | E |
 | traumaDecay | 1,0 | /s | Ö |
+| pullableLayers | Enemy + Default | katman maskesi | Ö |
+| lightPullSpeed | 8 | u/s | Ö |
+| pullableArriveDistance | 0,5 | u | Ö |
+| pullableMaxTime | 2 | s | Ö |
+| pullableReleaseSpeed | 1 | u/s | Ö |
+| pullableStunDuration | 0,2 | s | Ö |
 
 Celeste karakteri 8 px'lik karelerde koşuyor, bizim karelerimiz 16 px. Bu yüzden çevrilmiş değerler başlangıç noktasıdır, doğru değer değildir.
 
-### Sonraki özellikler
-- Gövde ve kollar ayrı parçalar olur; kollar My Friend Pedro'daki gibi imlece döner.
-- Kanca hafif düşman ve nesneleri oyuncuya çeker; ağır olanlarda oyuncu hedefe çekilir.
+### `SwordTuning` başlangıç değerleri
+Saldırı süresi 0,25 s ve saldırılar arası süre 0,4 s için Hollow Knight nail referans alındı (Ö). Diğer değerler oynayarak ayarlanacak.
+
+| Parametre | Başlangıç | Birim | Kaynak |
+|---|---:|---|---|
+| attackDuration | 0,25 | s | Ö, Hollow Knight referansı |
+| activeStart / activeEnd | 0,25 / 0,70 | normalize | Ö |
+| cooldown | 0,4 | s | Ö, Hollow Knight referansı |
+| swingArcDegrees | 100 | derece | Ö |
+| hitOffset / hitSize | (1, 0) / (1,4, 0,8) | u | Ö |
+| damage / knockback | 1 / 8 | can / dürtü | Ö |
+| hitstop / traumaOnHit | 0,05 / 0,2 | s / 0-1 | Ö |
+| inputBuffer | 0,12 | s | Ö |
 
 ## 6. Kamera ve karışık çözünürlük
 
@@ -150,7 +176,7 @@ Ekran çözünürlüğü politikası: 1080p ve 4K tam sayı ölçekte çalışı
 
 ## 7. Veri ve olaylar
 
-- Ayarlar SO'da: `PlayerMovementTuning`, `GrappleHookTuning`, `CameraTuning`, `BossPattern`.
+- Ayarlar SO'da: `PlayerMovementTuning`, `PlayerRigTuning`, `GrappleHookTuning`, `SwordTuning`, `TrainingDummyTuning`, `CameraTuning`, `BossPattern`.
 - Sistemler arası haberleşme SO olay kanallarıyla: `OnPlayerDamaged`, `OnHookStuck` vb. Böylece UI ve ses, oyuncu koduna doğrudan bağlanmaz.
 - SO'lar build'de **salt okunurdur**. Oyuncu ilerlemesi ayrı bir kayıt dosyasında tutulur.
 - Play modunda SO'da yapılan değişiklik kalıcıdır. Ayar yaparken işe yarar, ama yanlışlıkla değiştirilen değer commit'e girer. Commit'ten önce diff'e bakın.

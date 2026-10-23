@@ -9,6 +9,8 @@ namespace Game.Dialogue
         ChainLaunch,
         Death,
         Respawn,
-        Idle
+        Idle,
+        HitLanded,
+        SwingMissed
     }
 }

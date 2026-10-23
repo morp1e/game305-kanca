@@ -144,5 +144,61 @@ namespace Game.Tests
             Assert.That(hook.State, Is.EqualTo(HookState.InHand));
             Assert.That(motor.ExternalControl, Is.False);
         }
+
+        [UnityTest]
+        public IEnumerator RigCursorLeftSetsFacingLeftWhileMovingRight()
+        {
+            var rigObject = new GameObject("ArmRig");
+            var bodySprite = new GameObject("Body").transform; bodySprite.SetParent(player.transform, false);
+            var hookPivot = MakeArm("HookArm", player.transform);
+            var swordPivot = MakeArm("SwordArm", player.transform);
+            var armRig = rigObject.AddComponent<PlayerArmRig>();
+            SetField(armRig, "tuning", ScriptableObject.CreateInstance<PlayerRigTuning>());
+            SetField(armRig, "bodySprite", bodySprite);
+            SetField(armRig, "hookArmPivot", hookPivot);
+            SetField(armRig, "swordArmPivot", swordPivot);
+            SetField(armRig, "input", input);
+            SetField(armRig, "aimCamera", cameraObject.GetComponent<Camera>());
+            SetField(motor, "armRig", armRig);
+            input.SetMoveXOverride(1f);
+            PointAt(new Vector2(-4f, 1f));
+            for (int i = 0; i < 3; i++) yield return null;
+            Assert.That(input.MoveX, Is.EqualTo(1f));
+            Assert.That(motor.Facing, Is.EqualTo(-1));
+            Object.Destroy(rigObject);
+        }
+
+        [UnityTest]
+        public IEnumerator RigHookLaunchesFromHandTip()
+        {
+            var rigObject = new GameObject("ArmRig");
+            var bodySprite = new GameObject("Body").transform; bodySprite.SetParent(player.transform, false);
+            var hookPivot = MakeArm("HookArm", player.transform);
+            var swordPivot = MakeArm("SwordArm", player.transform);
+            hookPivot.localPosition = new Vector3(.4f, .5f, 0f);
+            hookPivot.Find("HandTip").localPosition = new Vector3(.8f, 0f, 0f);
+            var armRig = rigObject.AddComponent<PlayerArmRig>();
+            SetField(armRig, "tuning", ScriptableObject.CreateInstance<PlayerRigTuning>());
+            SetField(armRig, "bodySprite", bodySprite);
+            SetField(armRig, "hookArmPivot", hookPivot);
+            SetField(armRig, "swordArmPivot", swordPivot);
+            SetField(armRig, "input", input);
+            SetField(armRig, "aimCamera", cameraObject.GetComponent<Camera>());
+            SetField(hook, "armRig", armRig);
+            PointAt(new Vector2(8f, 1f));
+            yield return null;
+            Vector3 expected = hookPivot.Find("HandTip").position;
+            typeof(GrappleHook).GetMethod("FireHook", Private).Invoke(hook, null);
+            Assert.That(Vector2.Distance(hookVisual.transform.position, expected), Is.LessThan(.001f));
+            Object.Destroy(rigObject);
+        }
+
+        static Transform MakeArm(string name, Transform parent)
+        {
+            var pivot = new GameObject(name).transform; pivot.SetParent(parent, false);
+            var sprite = new GameObject("Sprite"); sprite.transform.SetParent(pivot, false); sprite.AddComponent<SpriteRenderer>();
+            var tip = new GameObject("HandTip"); tip.transform.SetParent(pivot, false); tip.transform.localPosition = Vector3.right;
+            return pivot;
+        }
     }
 }

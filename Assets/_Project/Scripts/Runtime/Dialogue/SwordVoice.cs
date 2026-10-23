@@ -1,4 +1,5 @@
 using Game.Core;
+using Game.Combat;
 using Game.Hook;
 using TMPro;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace Game.Dialogue
     {
         [SerializeField] SwordLineSet lines;
         [SerializeField] GrappleHook hook;
+        [SerializeField] SwordVoiceEvents swordEvents;
         [SerializeField, FormerlySerializedAs("sword")] Transform hookVisual;
         [SerializeField] GameEvent deathEvent;
         [SerializeField] GameEvent respawnEvent;
@@ -53,6 +55,7 @@ namespace Game.Dialogue
                 previousState = hook.State;
                 hook.StateChanged += OnHookStateChanged;
             }
+            if (swordEvents != null) { swordEvents.HitLanded += OnSwordHit; swordEvents.SwingMissed += OnSwordMiss; }
             if (deathEvent != null) deathEvent.Register(OnDeath);
             if (respawnEvent != null) respawnEvent.Register(OnRespawn);
         }
@@ -60,6 +63,7 @@ namespace Game.Dialogue
         void OnDisable()
         {
             if (hook != null) hook.StateChanged -= OnHookStateChanged;
+            if (swordEvents != null) { swordEvents.HitLanded -= OnSwordHit; swordEvents.SwingMissed -= OnSwordMiss; }
             if (deathEvent != null) deathEvent.Unregister(OnDeath);
             if (respawnEvent != null) respawnEvent.Unregister(OnRespawn);
         }
@@ -97,6 +101,8 @@ namespace Game.Dialogue
 
         void OnDeath() => Speak(SwordCue.Death);
         void OnRespawn() => Speak(SwordCue.Respawn);
+        void OnSwordHit() => Speak(SwordCue.HitLanded);
+        void OnSwordMiss() => Speak(SwordCue.SwingMissed);
 
         void Speak(SwordCue cue)
         {

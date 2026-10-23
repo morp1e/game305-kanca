@@ -16,3 +16,6 @@ PresetManager:
     - m_Preset: {fileID: 2655988077585873504, guid: 597614929efbaa9418352d95f741c2fe, type: 2}
       m_Filter: glob:"Assets/_Project/Art/Painted/**"
       m_Disabled: 0
+    - m_Preset: {fileID: 2655988077585873504, guid: dd073df181798224cb6f6adb89d74906, type: 2}
+      m_Filter: glob:"Assets/_Project/Art/Tiles/**"
+      m_Disabled: 0

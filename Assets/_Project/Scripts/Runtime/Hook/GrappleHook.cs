@@ -1,5 +1,6 @@
 using System;
 using Game.Core;
+using Game.Combat;
 using Game.Input;
 using Game.Player;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace Game.Hook
         [SerializeField] GrappleHookTuning tuning;
         [SerializeField] PlayerInputReader input;
         [SerializeField] PlayerMotor body;
+        [SerializeField] PlayerArmRig armRig;
         [SerializeField, FormerlySerializedAs("sword")] Transform hookVisual;
         [SerializeField] Camera aimCamera;
         [SerializeField] FloatEvent traumaEvent;
@@ -27,6 +29,7 @@ namespace Game.Hook
 
         readonly RaycastHit2D[] pullHits = new RaycastHit2D[8];
         Collider2D activeSurface;
+        HookPullable activePullable;
         Vector2 throwDirection;
         Vector2 pullDirection;
         float flightDistance;
@@ -59,7 +62,7 @@ namespace Game.Hook
             if (input.ConsumeThrow(tuning.inputBufferTime))
             {
                 if (State == HookState.InHand && cooldownRemaining <= 0f) FireHook();
-                else if (State == HookState.Thrown || State == HookState.Stuck || State == HookState.Pulling) EnterReturning();
+                else if (State != HookState.InHand && State != HookState.Returning) EnterReturning();
             }
 
             switch (State)
@@ -68,6 +71,7 @@ namespace Game.Hook
                 case HookState.Thrown: TickThrown(dt); break;
                 case HookState.Stuck: TickStuck(dt); break;
                 case HookState.Pulling: TickPulling(dt); break;
+                case HookState.Reeling: TickReeling(dt); break;
                 case HookState.Launch: TickLaunch(); break;
                 case HookState.Returning: TickReturning(dt); break;
             }
@@ -76,7 +80,8 @@ namespace Game.Hook
         void TickInHand()
         {
             hookVisual.position = HandPosition();
-            hookVisual.right = Vector2.right * bodyFacing();
+            if (armRig != null && armRig.HookHandTip != null) hookVisual.right = armRig.HookHandTip.right;
+            else hookVisual.right = Vector2.right * bodyFacing();
         }
 
         void FireHook()
@@ -95,12 +100,14 @@ namespace Game.Hook
         void TickThrown(float dt)
         {
             var distance = Mathf.Min(tuning.throwSpeed * dt, Mathf.Max(0f, tuning.maxRange - flightDistance));
-            var hit = Physics2D.CircleCast(hookVisual.position, tuning.hookRadius, throwDirection, distance, tuning.hookableLayers);
+            var hit = Physics2D.CircleCast(hookVisual.position, tuning.hookRadius, throwDirection, distance, tuning.hookableLayers | tuning.pullableLayers);
             if (hit.collider != null)
             {
                 hookVisual.position = hit.point;
                 if (hit.collider.GetComponentInParent<NonHookable>() != null) EnterReturning();
-                else Stick(hit);
+                else if ((tuning.pullableLayers.value & (1 << hit.collider.gameObject.layer)) != 0 && hit.collider.GetComponentInParent<HookPullable>() is HookPullable pullable) StickPullable(hit, pullable);
+                else if ((tuning.hookableLayers.value & (1 << hit.collider.gameObject.layer)) != 0) Stick(hit);
+                else EnterReturning();
                 return;
             }
 
@@ -112,6 +119,7 @@ namespace Game.Hook
 
         void Stick(RaycastHit2D hit)
         {
+            activePullable = null;
             activeSurface = hit.collider;
             ActivePoint = hit.point;
             ActiveNormal = hit.normal;
@@ -123,9 +131,60 @@ namespace Game.Hook
             ChangeState(HookState.Stuck);
         }
 
+        void StickPullable(RaycastHit2D hit, HookPullable pullable)
+        {
+            activePullable = pullable;
+            activeSurface = hit.collider;
+            ActivePoint = hit.point;
+            ActiveNormal = hit.normal;
+            hookVisual.position = ActivePoint;
+            if (pullable.WeightClass == HookWeightClass.Light)
+            {
+                body.ExternalControl = false;
+                pullElapsed = 0f;
+                ChangeState(HookState.Reeling);
+            }
+            else
+            {
+                freezeRemaining = tuning.impactFreeze;
+                body.ExternalControl = true;
+                body.Velocity = Vector2.zero;
+                ChangeState(HookState.Stuck);
+            }
+        }
+
+        void TickReeling(float dt)
+        {
+            var target = activePullable != null ? activePullable.Body : null;
+            if (target == null) { EnterReturning(); return; }
+            ActivePoint = target.position;
+            hookVisual.position = ActivePoint;
+            hookVisual.right = (Vector2)target.position - body.Position;
+            pullElapsed += dt;
+            Vector2 delta = HandPosition() - target.position;
+            if (delta.magnitude <= tuning.pullableArriveDistance || pullElapsed >= tuning.pullableMaxTime)
+            {
+                target.linearVelocity = delta.sqrMagnitude > 0f ? -delta.normalized * tuning.pullableReleaseSpeed : Vector2.zero;
+                var components = target.GetComponentsInParent<MonoBehaviour>();
+                for (int i = 0; i < components.Length; i++)
+                    if (components[i] is IDamageable damageable) { damageable.TakeHit(new HitInfo(0f, Vector2.zero, 0f, this, tuning.pullableStunDuration)); break; }
+                activePullable = null; activeSurface = null;
+                cooldownRemaining = tuning.hookCooldown;
+                ChangeState(HookState.InHand);
+                return;
+            }
+            float speed = activePullable.PullSpeedOverride > 0f ? activePullable.PullSpeedOverride : tuning.lightPullSpeed;
+            target.linearVelocity = delta.normalized * speed;
+        }
+
         void TickStuck(float dt)
         {
             if (activeSurface == null) { EnterReturning(); return; }
+            if (activePullable != null && activePullable.Body != null)
+            {
+                ActivePoint = activePullable.Body.position;
+                hookVisual.position = ActivePoint;
+            }
             body.ExternalControl = true;
             body.Velocity = Vector2.zero;
             freezeRemaining -= dt;
@@ -141,6 +200,11 @@ namespace Game.Hook
         void TickPulling(float dt)
         {
             if (activeSurface == null) { ChangeState(HookState.Launch); return; }
+            if (activePullable != null && activePullable.Body != null)
+            {
+                ActivePoint = activePullable.Body.position;
+                hookVisual.position = ActivePoint;
+            }
             body.ExternalControl = true;
             var offset = ActivePoint - body.Position;
             var remaining = offset.magnitude;
@@ -189,6 +253,7 @@ namespace Game.Hook
             body.ExternalControl = false;
             body.OpenLaunchJumpWindow(tuning.postLaunchJumpWindow);
             activeSurface = null;
+            activePullable = null;
             cooldownRemaining = tuning.hookCooldown;
             ChangeState(HookState.InHand);
         }
@@ -217,6 +282,7 @@ namespace Game.Hook
         {
             if (body != null) body.ExternalControl = false;
             activeSurface = null;
+            activePullable = null;
             cooldownRemaining = 0f;
             if (hookVisual != null) hookVisual.position = HandPosition();
             ChangeState(HookState.InHand);
@@ -226,6 +292,7 @@ namespace Game.Hook
         {
             body.ExternalControl = false;
             activeSurface = null;
+            activePullable = null;
             ChangeState(HookState.Returning);
         }
 
@@ -245,6 +312,7 @@ namespace Game.Hook
         Vector2 HandPosition()
         {
             if (body == null || tuning == null) return transform.position;
+            if (armRig != null && armRig.HookHandTip != null) return armRig.HookHandTip.position;
             return body.Position + new Vector2(tuning.throwOriginOffset.x * bodyFacing(), tuning.throwOriginOffset.y);
         }
 

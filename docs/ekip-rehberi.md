@@ -64,6 +64,8 @@ Unity'de en çok iş, iki kişinin aynı sahneyi aynı anda değiştirmesiyle ka
 | `Sandbox/Sandbox_Ozenc` | Özenç |
 | `Sandbox/Sandbox_Efe` | Efe |
 
+`Sandbox_Ozenc` sahnesi elle Tile Palette ile düzenlenen kişisel test bölümüdür; `Sandbox_Hook` otomatik üretilir.
+
 Sahibi olmadığın bir sahneyi değiştireceksen önce sahibine yaz. Denemeleri kendi Sandbox sahnende yap. Prefab ve ayar dosyalarını (SO) değiştirmek serbesttir, ama aynı prefab üzerinde aynı anda iki kişi çalışmıyorsa.
 
 ## 5. Görev panosu

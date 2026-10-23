@@ -17,6 +17,9 @@ namespace Game.Hook
         [Tooltip("Kancanın tutunabildiği katmanlar. Ö: Ground.")]
         // GetMask ScriptableObject kurucusunda çağrılamaz; 1 << 6 = Ground (TagManager).
         public LayerMask hookableLayers = 1 << 6;
+        [Tooltip("Kancayla çekilebilen Enemy (10) ve Default (0) katmanları.")]
+        // 1 << 10 = Enemy, 1 << 0 = Default. GetMask asset alanı başlatıcısında çağrılamaz.
+        public LayerMask pullableLayers = (1 << 10) | (1 << 0);
         [Tooltip("Çekiş hızı, u/s. C: Celeste 240 px/s ÷ 8.")]
         public float pullSpeed = 30f;
         [Tooltip("Normalize çekiş ilerlemesine göre hız. Ö: düz 1.")]
@@ -53,5 +56,10 @@ namespace Game.Hook
         public Vector2 throwOriginOffset = new Vector2(0.5f, 0f);
         [Tooltip("Fırlatma girdisi tamponu, s. Ö: oynayarak ayarlanacak.")]
         public float inputBufferTime = 0.1f;
+        [Tooltip("Hafif hedefe çekiş hızı, u/s. Ö: oynayarak ayarlanacak.")] public float lightPullSpeed = 8f;
+        [Tooltip("Hafif hedef varış mesafesi, u. Ö: oynayarak ayarlanacak.")] public float pullableArriveDistance = 0.5f;
+        [Tooltip("Hafif hedefe çekiş azami süresi, s. Ö: oynayarak ayarlanacak.")] public float pullableMaxTime = 2f;
+        [Tooltip("Hafif hedef varışındaki bırakma hızı, u/s. Ö: oynayarak ayarlanacak.")] public float pullableReleaseSpeed = 1f;
+        [Tooltip("Hafif hedef varışındaki sıfır hasarlı sersemletme süresi, s. Ö: oynayarak ayarlanacak.")] public float pullableStunDuration = 0.2f;
     }
 }

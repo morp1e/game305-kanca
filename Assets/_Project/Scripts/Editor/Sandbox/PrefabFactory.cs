@@ -1,5 +1,6 @@
 using System;
 using Game.Core;
+using Game.Combat;
 using Game.Dialogue;
 using Game.Feedback;
 using Game.Hook;
@@ -24,10 +25,11 @@ namespace Game.Editor.Sandbox
         {
             var movement = AssetDatabase.LoadAssetAtPath<PlayerMovementTuning>(DataDir + "/Tuning/PlayerMovementTuning.asset");
             var hook = AssetDatabase.LoadAssetAtPath<GrappleHookTuning>(DataDir + "/Tuning/GrappleHookTuning.asset");
-            Build(movement, hook);
+            var armTuning = Tuning(DataDir + "/Tuning/PlayerRigTuning.asset");
+            Build(movement, hook, armTuning);
         }
 
-        public static void Build(PlayerMovementTuning movement, GrappleHookTuning tuning)
+        public static void Build(PlayerMovementTuning movement, GrappleHookTuning tuning, PlayerRigTuning armTuning)
         {
             EnsureFolder(PrefabDir); EnsureFolder(DataDir + "/Events"); EnsureFolder(DataDir + "/Dialogue");
             EnsureFolder(DataDir + "/Tuning");
@@ -38,8 +40,12 @@ namespace Game.Editor.Sandbox
             var kick = Event<Vector2Event>(DataDir + "/Events/Event_CameraKick.asset");
             var lines = Event<SwordLineSet>(DataDir + "/Dialogue/SwordLines.asset");
             var trauma = AssetDatabase.LoadAssetAtPath<FloatEvent>(DataDir + "/Events/Event_CameraTrauma.asset");
+            var swordTuning = Event<SwordTuning>(DataDir + "/Tuning/SwordTuning.asset");
+            var dummyTuning = Event<TrainingDummyTuning>(DataDir + "/Tuning/TrainingDummyTuning.asset");
+            lines.EnsureCombatCues(); EditorUtility.SetDirty(lines);
             var rig = new GameObject("PlayerRig");
-            var player = CreatePlayer(square, movement, tuning, trauma);
+            if (armTuning == null) armTuning = Tuning(DataDir + "/Tuning/PlayerRigTuning.asset");
+            var player = CreatePlayer(square, movement, tuning, armTuning, trauma);
             player.transform.SetParent(rig.transform, false);
             player.transform.localPosition = Vector3.zero;
             var hookVisual = CreateHookVisual(square); hookVisual.transform.SetParent(rig.transform, false);
@@ -53,27 +59,50 @@ namespace Game.Editor.Sandbox
             var feedback = player.AddComponent<HookFeedback>();
             Set(feedback, ("hook", hook), ("hookVisual", hookVisual.transform), ("kickEvent", kick));
             var voice = player.AddComponent<SwordVoice>();
-            Set(voice, ("lines", lines), ("hook", hook), ("hookVisual", hookVisual.transform), ("deathEvent", death), ("respawnEvent", respawn));
+            var voiceEvents = player.AddComponent<SwordVoiceEvents>();
+            Set(voice, ("lines", lines), ("hook", hook), ("swordEvents", voiceEvents), ("hookVisual", hookVisual.transform), ("deathEvent", death), ("respawnEvent", respawn));
+            var attack = player.AddComponent<SwordAttack>();
+            Set(attack, ("tuning", swordTuning), ("input", player.GetComponent<PlayerInputReader>()), ("armRig", player.GetComponent<PlayerArmRig>()), ("body", player.GetComponent<PlayerMotor>()), ("traumaEvent", trauma), ("voiceEvents", voiceEvents));
             SavePrefab(player, PrefabDir + "/Player.prefab");
             SavePrefab(rig, PrefabDir + "/PlayerRig.prefab");
             UnityEngine.Object.DestroyImmediate(rig);
 
             CreateHazardPrefab(square);
             CreateCheckpointPrefab(square);
+            CreateTargetPrefab(square, "TrainingDummy", true, false, dummyTuning);
+            CreateTargetPrefab(square, "HeavyDummy", true, true, dummyTuning);
+            CreateTargetPrefab(square, "Crate", false, false, dummyTuning);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
 
-        static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, GrappleHookTuning tuning, FloatEvent trauma)
+        static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, GrappleHookTuning tuning, PlayerRigTuning armTuning, FloatEvent trauma)
         {
             var player = new GameObject("Player"); player.layer = LayerMask.NameToLayer("Player");
             var rb = player.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Dynamic; rb.gravityScale = 0f; rb.interpolation = RigidbodyInterpolation2D.Interpolate;
             var capsule = player.AddComponent<CapsuleCollider2D>(); capsule.direction = CapsuleDirection2D.Vertical; capsule.size = new Vector2(.8f, 1.8f);
             var input = player.AddComponent<PlayerInputReader>(); var motor = player.AddComponent<PlayerMotor>(); var hook = player.AddComponent<GrappleHook>();
-            var visual = new GameObject("Visual"); visual.transform.SetParent(player.transform, false); visual.transform.localScale = new Vector3(1, 2, 1);
+            var visualRoot = new GameObject("Visual"); visualRoot.transform.SetParent(player.transform, false);
+            var visual = new GameObject("Body"); visual.transform.SetParent(visualRoot.transform, false); visual.transform.localScale = new Vector3(1, 2, 1);
             visual.AddComponent<SpriteRenderer>().sprite = sprite;
-            Set(motor, ("tuning", movement), ("input", input)); Set(hook, ("tuning", tuning), ("input", input), ("body", motor), ("traumaEvent", trauma));
+            var hookArm = CreateArm("HookArm", sprite, new Color(.25f, .85f, .95f), armTuning.armLength);
+            hookArm.transform.SetParent(visualRoot.transform, false);
+            var swordArm = CreateArm("SwordArm", sprite, new Color(1f, .72f, .22f), armTuning.armLength);
+            swordArm.transform.SetParent(visualRoot.transform, false);
+            var armRig = player.AddComponent<PlayerArmRig>();
+            Set(armRig, ("tuning", armTuning), ("bodySprite", visual.transform), ("hookArmPivot", hookArm.transform), ("swordArmPivot", swordArm.transform), ("input", input));
+            Set(motor, ("tuning", movement), ("input", input), ("armRig", armRig));
+            Set(hook, ("tuning", tuning), ("input", input), ("body", motor), ("armRig", armRig), ("traumaEvent", trauma));
             return player;
+        }
+
+        static GameObject CreateArm(string name, Sprite sprite, Color color, float length)
+        {
+            var pivot = new GameObject(name);
+            var arm = new GameObject("Sprite"); arm.transform.SetParent(pivot.transform, false); arm.transform.localPosition = new Vector3(length * .5f, 0f, 0f); arm.transform.localScale = new Vector3(length, .2f, 1f);
+            var renderer = arm.AddComponent<SpriteRenderer>(); renderer.sprite = sprite; renderer.color = color;
+            var hand = new GameObject("HandTip"); hand.transform.SetParent(pivot.transform, false); hand.transform.localPosition = new Vector3(length, 0f, 0f);
+            return pivot;
         }
 
         static GameObject CreateHookVisual(Sprite sprite)
@@ -106,11 +135,40 @@ namespace Game.Editor.Sandbox
             go.AddComponent<Checkpoint>(); SavePrefab(go, PrefabDir + "/Checkpoint.prefab"); UnityEngine.Object.DestroyImmediate(go);
         }
 
+        static void CreateTargetPrefab(Sprite sprite, string name, bool damageable, bool heavy, TrainingDummyTuning dummyTuning)
+        {
+            var go = new GameObject(name) { layer = damageable ? LayerMask.NameToLayer("Enemy") : 0 };
+            var renderer = go.AddComponent<SpriteRenderer>(); renderer.sprite = sprite;
+            renderer.color = name == "Crate" ? new Color(.58f, .42f, .28f) : heavy ? new Color(.45f, .55f, .62f) : new Color(.75f, .48f, .42f);
+            go.transform.localScale = name == "Crate" ? new Vector3(1.1f, 1.1f, 1f) : heavy ? new Vector3(1.5f, 2f, 1f) : new Vector3(1f, 1.6f, 1f);
+            var rb = go.AddComponent<Rigidbody2D>(); rb.gravityScale = 0f; rb.bodyType = heavy ? RigidbodyType2D.Kinematic : RigidbodyType2D.Dynamic;
+            if (heavy) rb.mass = 100f;
+            go.AddComponent<BoxCollider2D>();
+            var pullable = go.AddComponent<HookPullable>();
+            var serialized = new SerializedObject(pullable);
+            serialized.FindProperty("weightClass").enumValueIndex = heavy ? 1 : 0;
+            serialized.FindProperty("body").objectReferenceValue = rb;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            if (damageable)
+            {
+                var dummy = go.AddComponent<TrainingDummy>();
+                var dummySerialized = new SerializedObject(dummy); dummySerialized.FindProperty("tuning").objectReferenceValue = dummyTuning; dummySerialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+            SavePrefab(go, PrefabDir + "/" + name + ".prefab"); UnityEngine.Object.DestroyImmediate(go);
+        }
+
         static T Event<T>(string path) where T : ScriptableObject
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(path);
             if (asset != null) return asset;
             asset = ScriptableObject.CreateInstance<T>(); AssetDatabase.CreateAsset(asset, path); return asset;
+        }
+
+        static PlayerRigTuning Tuning(string path)
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<PlayerRigTuning>(path);
+            if (asset != null) return asset;
+            asset = ScriptableObject.CreateInstance<PlayerRigTuning>(); AssetDatabase.CreateAsset(asset, path); return asset;
         }
 
         static void SavePrefab(GameObject go, string path)

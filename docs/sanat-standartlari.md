@@ -45,6 +45,10 @@ Oranları korumak için bu sayıların dışına çıkmayın. Daha büyük bir �
 
 ## 3. Piksel art kuralları
 
+### 3.0 Karo standardı
+- Seviye karoları `Art/Tiles/` altında 128×128 px boyanır; bir karo 1 Unity unit'tir. Sprite, PPU 128, Filter Bilinear, BC7, mipmap kapalı, Max Size 2048 ve pivot center kullanılır.
+- Kenney 18 px karolar geçici yer tutucudur.
+
 ### 3.1 Genel
 - **Kenar yumuşatma (anti-aliasing) yok.** Her piksel ya tam dolu ya tam boştur. Yarı saydam piksel, bulanıklaştırma ve yumuşak fırça kullanılmaz.
 - **Ortak palet.** Piksel katmanındaki her şey aynı paletten çizilir. Palet dosyası (`.gpl` veya `.png` şerit) ilk karakter çiziminden sonra sabitlenecek. *(geçici)*
@@ -61,6 +65,8 @@ Oranları korumak için bu sayıların dışına çıkmayın. Daha büyük bir �
 - Saldırı ve fırlatma gibi animasyonlarda **vuruşun ya da fırlatmanın gerçekleştiği kareyi** teslim notunda belirtin. Kod o kareye bağlanacak.
 
 **İlk turda gereken oyuncu animasyonları (başlangıç önerisi, kare sayıları değişebilir):**
+
+Oyuncu gövdesi ve kollar ayrı teslim edilir: gövde animasyon sheet'i kolsuz çizilir. Her kol ayrı sprite olur; sağa bakar yönde, omuzda pivot ve karşı uçta el olacak biçimde çizilir.
 
 | Animasyon | Tag | Kare | Döngü | Not |
 |---|---|---|---|---|

@@ -69,13 +69,14 @@ namespace Game.Editor.Sandbox
             CreatePaintedTextures();
             var square = LoadSprite(PixelDir + "/greybox_square.png");
             var backgrounds = new[] { LoadSprite(PaintedDir + "/bg_test_far.png"), LoadSprite(PaintedDir + "/bg_test_mid.png"), LoadSprite(PaintedDir + "/bg_test_near.png") };
-            var movement = GetOrCreate<PlayerMovementTuning>(TuningDir + "/PlayerMovementTuning.asset");
-            var hook = GetOrCreate<GrappleHookTuning>(TuningDir + "/GrappleHookTuning.asset");
-            var cameraTuning = GetOrCreate<CameraTuning>(TuningDir + "/CameraTuning.asset");
-            var trauma = GetOrCreate<FloatEvent>(EventDir + "/Event_CameraTrauma.asset");
+            var movement = SharedSandboxSetup.GetMovementTuning();
+            var hook = SharedSandboxSetup.GetHookTuning();
+            var armTuning = SharedSandboxSetup.GetArmTuning();
+            var cameraTuning = SharedSandboxSetup.GetCameraTuning();
+            var trauma = SharedSandboxSetup.GetTraumaEvent();
 
             AssetDatabase.SaveAssets();
-            PrefabFactory.Build(movement, hook);
+            PrefabFactory.Build(movement, hook, armTuning);
             var playerRigPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "/PlayerRig.prefab");
             var playerRig = (GameObject)PrefabUtility.InstantiatePrefab(playerRigPrefab);
             playerRig.transform.position = new Vector3(3, 3, 0);
@@ -84,11 +85,13 @@ namespace Game.Editor.Sandbox
             CreatePrefabInstances();
             CreateNonHookableObstacle(square);
             CreateBackgrounds(backgrounds);
-            var camera = CreateCamera(player.transform, cameraTuning, trauma);
+            var camera = SharedSandboxSetup.CreateCamera(player.transform, cameraTuning, trauma);
             // Kamera oyuncudan sonra kuruluyor; nişan kamerası burada bağlanır.
-            Set(player.GetComponent<GrappleHook>(), ("aimCamera", camera));
-            CreateHud(player.GetComponent<PlayerMotor>(), player.GetComponent<GrappleHook>(), player.GetComponent<RespawnController>(), player.GetComponent<SwordVoice>());
-            CreateGlobalLight();
+            SharedSandboxSetup.Set(player.GetComponent<GrappleHook>(), ("aimCamera", camera));
+            SharedSandboxSetup.Set(player.GetComponent<Game.Combat.SwordAttack>(), ("aimCamera", camera));
+            SharedSandboxSetup.Set(player.GetComponent<PlayerArmRig>(), ("aimCamera", camera));
+            SharedSandboxSetup.CreateHud(player.GetComponent<PlayerMotor>(), player.GetComponent<GrappleHook>(), player.GetComponent<RespawnController>(), player.GetComponent<SwordVoice>());
+            SharedSandboxSetup.CreateGlobalLight();
             EnsureBuildScene();
             EditorSceneManager.SaveScene(scene, ScenePath);
             Selection.activeGameObject = player;
@@ -168,13 +171,6 @@ namespace Game.Editor.Sandbox
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
-        static T GetOrCreate<T>(string path) where T : ScriptableObject
-        {
-            var asset = AssetDatabase.LoadAssetAtPath<T>(path);
-            if (asset != null) return asset;
-            asset = ScriptableObject.CreateInstance<T>(); AssetDatabase.CreateAsset(asset, path); return asset;
-        }
-
         static void CreateCourse(Sprite unused)
         {
             EnsureFolder(TileDir);
@@ -210,18 +206,13 @@ namespace Game.Editor.Sandbox
 
         static void CreatePrefabInstances()
         {
-            InstantiatePrefab("Hazard_Spikes", new Vector3(24, 2.25f, 0), new Vector3(5, 1, 1));
-            InstantiatePrefab("Hazard_Spikes", new Vector3(16, 9, 0), new Vector3(3, 1, 1));
-            InstantiatePrefab("Checkpoint", new Vector3(4, 2.5f, 0));
-            InstantiatePrefab("Checkpoint", new Vector3(50, 2.5f, 0));
-        }
-
-        static void InstantiatePrefab(string name, Vector3 position, Vector3? scale = null)
-        {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "/" + name + ".prefab");
-            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            instance.transform.position = position;
-            if (scale.HasValue) instance.transform.localScale = scale.Value;
+            SharedSandboxSetup.InstantiatePrefab("Hazard_Spikes", new Vector3(24, 2.25f, 0), new Vector3(5, 1, 1));
+            SharedSandboxSetup.InstantiatePrefab("Hazard_Spikes", new Vector3(16, 9, 0), new Vector3(3, 1, 1));
+            SharedSandboxSetup.InstantiatePrefab("Checkpoint", new Vector3(4, 2.5f, 0));
+            SharedSandboxSetup.InstantiatePrefab("Checkpoint", new Vector3(50, 2.5f, 0));
+            SharedSandboxSetup.InstantiatePrefab("TrainingDummy", new Vector3(7, 2f, 0));
+            SharedSandboxSetup.InstantiatePrefab("HeavyDummy", new Vector3(12, 2f, 0));
+            SharedSandboxSetup.InstantiatePrefab("Crate", new Vector3(17, 1f, 0));
         }
 
         static void CreateNonHookableObstacle(Sprite sprite)
@@ -241,52 +232,8 @@ namespace Game.Editor.Sandbox
             {
                 var go = new GameObject("Background_" + names[i]); var renderer = go.AddComponent<SpriteRenderer>(); renderer.sprite = sprites[i]; renderer.sortingLayerName = names[i];
                 go.transform.position = new Vector3(40, 8, 10 + i); go.transform.localScale = new Vector3(5.2f, 4.5f, 1);
-                var parallax = go.AddComponent<ParallaxLayer>(); Set(parallax, ("factor", new Vector2(factors[i], factors[i])));
+            var parallax = go.AddComponent<ParallaxLayer>(); SharedSandboxSetup.Set(parallax, ("factor", new Vector2(factors[i], factors[i])));
             }
-        }
-
-        static Camera CreateCamera(Transform player, CameraTuning tuning, FloatEvent trauma)
-        {
-            var cameraObject = new GameObject("Main Camera"); cameraObject.tag = "MainCamera";
-            var camera = cameraObject.AddComponent<Camera>(); camera.orthographic = true; camera.orthographicSize = 8.4375f; camera.backgroundColor = new Color(.035f, .04f, .08f); camera.clearFlags = CameraClearFlags.SolidColor;
-            // Seçenek (a): upscale render texture kapalı, boyalı katman bulanıklaşmasın (docs/teknik-mimari.md bölüm 6).
-            var pixelPerfect = cameraObject.AddComponent<PixelPerfectCamera>();
-            pixelPerfect.assetsPPU = 16; pixelPerfect.refResolutionX = 480; pixelPerfect.refResolutionY = 270;
-            pixelPerfect.gridSnapping = PixelPerfectCamera.GridSnapping.None; pixelPerfect.cropFrame = PixelPerfectCamera.CropFrame.None;
-            cameraObject.AddComponent<CinemachineBrain>();
-            var cmObject = new GameObject("CM_Follow"); var cm = cmObject.AddComponent<CinemachineCamera>(); cm.Follow = player; cm.Lens.OrthographicSize = 8.4375f;
-            var composer = cmObject.AddComponent<CinemachinePositionComposer>(); composer.Damping = new Vector3(.25f, .25f, 0);
-            composer.Composition.DeadZone = new ScreenComposerSettings.DeadZoneSettings { Enabled = true, Size = new Vector2(.08f, .08f) };
-            cmObject.AddComponent<CinemachinePixelPerfect>(); var shake = cmObject.AddComponent<CameraShake>(); Set(shake, ("tuning", tuning), ("traumaEvent", trauma), ("kickEvent", AssetDatabase.LoadAssetAtPath<Vector2Event>("Assets/_Project/Data/Events/Event_CameraKick.asset")));
-            return camera;
-        }
-
-        static void CreateHud(PlayerMotor motor, GrappleHook hook, RespawnController respawn, SwordVoice voice)
-        {
-            var go = new GameObject("DebugHud"); var hud = go.AddComponent<DebugHud>(); Set(hud, ("motor", motor), ("grappleHook", hook), ("respawn", respawn), ("swordVoice", voice));
-        }
-
-        static void CreateGlobalLight()
-        {
-            var light = new GameObject("Global Light 2D").AddComponent<Light2D>();
-            light.lightType = Light2D.LightType.Global;
-            light.intensity = 1f;
-        }
-
-        static void Set(UnityEngine.Object target, params (string name, object value)[] values)
-        {
-            var serialized = new SerializedObject(target);
-            foreach (var item in values)
-            {
-                var property = serialized.FindProperty(item.name);
-                if (property == null) { Debug.LogWarning($"[SandboxBuilder] {target.GetType().Name}.{item.name} alanı bulunamadı."); continue; }
-                if (item.value is UnityEngine.Object obj) property.objectReferenceValue = obj;
-                else if (item.value is Vector2 vector) property.vector2Value = vector;
-                else if (item.value is int integer) property.intValue = integer;
-                else if (item.value is float number) property.floatValue = number;
-                else if (item.value is bool boolean) property.boolValue = boolean;
-            }
-            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         static void EnsureFolder(string path)
@@ -302,9 +249,7 @@ namespace Game.Editor.Sandbox
 
         static void EnsureBuildScene()
         {
-            var scenes = EditorBuildSettings.scenes.ToList();
-            if (!scenes.Any(s => s.path == ScenePath)) scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
-            EditorBuildSettings.scenes = scenes.ToArray();
+            SharedSandboxSetup.EnsureBuildScene(ScenePath);
         }
     }
 }

@@ -31,6 +31,8 @@
     <Reference Include="$(ScriptAssembliesDir)\Unity.Cinemachine.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.TextMeshPro.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.2D.Tilemap.Extras.dll" Private="false" />
+    <Reference Include="$(ScriptAssembliesDir)\Unity.2D.Sprite.Editor.dll" Private="false" />
+    <Reference Include="$(ScriptAssembliesDir)\Unity.2D.Tilemap.Editor.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.RenderPipelines.Core.Runtime.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.RenderPipelines.Universal.Runtime.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.RenderPipelines.Universal.2D.Runtime.dll" Private="false" />

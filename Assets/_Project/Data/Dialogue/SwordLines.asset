@@ -69,6 +69,20 @@ MonoBehaviour:
     - Bir yere mi gidiyorduk?
     chance: 1
     cooldown: 0
+  - cue: 8
+    lines:
+    - "\u0130\u015Fte b\xF6yle. Tam k\u0131vam\u0131nda."
+    - "Bir \xE7izik de benden."
+    - "G\xFCzel vuru\u015F. Devam et."
+    chance: 1
+    cooldown: 0
+  - cue: 9
+    lines:
+    - "Havay\u0131 kestik. Hava te\u015Fekk\xFCr etti."
+    - "Biraz daha sola m\u0131?"
+    - "Iskalad\u0131k. Tekrar dene."
+    chance: 1
+    cooldown: 0
   globalCooldown: 1.5
   displayBaseSeconds: 0.8
   displaySecondsPerCharacter: 0.035

@@ -17,6 +17,7 @@ namespace Game.Player
     {
         [SerializeField] PlayerMovementTuning tuning;
         [SerializeField] PlayerInputReader input;
+        [SerializeField] PlayerArmRig armRig;
 
         Rigidbody2D body;
         Collider2D bodyCollider;
@@ -40,7 +41,8 @@ namespace Game.Player
         public bool ExternalControl { get; set; }
 
         /// <summary>-1 sol, +1 sağ. Görsel ve kılıç yönü için.</summary>
-        public int Facing { get; private set; } = 1;
+        public int Facing => armRig != null ? armRig.Facing : movementFacing;
+        int movementFacing = 1;
 
         void Awake()
         {
@@ -80,7 +82,7 @@ namespace Game.Player
             }
 
             float moveX = input != null ? input.MoveX : 0f;
-            if (moveX != 0f) Facing = moveX < 0f ? -1 : 1;
+            if (moveX != 0f) movementFacing = moveX < 0f ? -1 : 1;
             bool jumpPressed = input != null && input.ConsumeJump(tuning.JumpBufferTime);
             jumpGate.Tick(dt, IsGrounded, jumpPressed, tuning.CoyoteTime, tuning.JumpBufferTime);
 

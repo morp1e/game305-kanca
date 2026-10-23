@@ -72,6 +72,8 @@ Kullanılan her hazır içerik (font, ses, müzik, doku, Asset Store paketi) iç
 
 Unity Asset Store içeriği yalnız esaslı özgün içerikle birlikte, ürünün esaslı kısmını oluşturmayacak biçimde kullanılabilir. Tek başına dağıtılamaz.
 
+Kullanılan içerik: Kenney, Pixel Platformer pack, CC0 1.0 Universal. Atıf zorunlu değildir; nezaket kredisi olarak Kenney'e teşekkür ederiz. Dosyalar: `Assets/ThirdParty/Kenney_PixelPlatformer/`.
+
 ### 3.5 Yaş ve içerik tanımı
 IARC derecelendirmesi yalnız katılımcı mağazalar üzerinden alınabiliyor. itch.io için zorunluluk bulunamadı. GDD'de basit bir içerik tanımı yer alır: şiddet seviyesi, ışık parlaması ve yanıp sönme uyarısı vb.
 

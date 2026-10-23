@@ -6,6 +6,7 @@ namespace Game.Hook
         Thrown,
         Stuck,
         Pulling,
+        Reeling, // Hafif hedef kancayla oyuncuya doğru gelir.
         Launch,
         Returning,
     }

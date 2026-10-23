@@ -23,6 +23,7 @@ namespace Game.Tests
         {
             AssetDatabase.DeleteAsset("Assets/_Project/Art/Pixel/_test_import.png");
             AssetDatabase.DeleteAsset("Assets/_Project/Art/Painted/_test_import.png");
+            AssetDatabase.DeleteAsset("Assets/_Project/Art/Tiles/_test_import.png");
         }
 
         [Test]
@@ -43,6 +44,17 @@ namespace Game.Tests
             Assert.AreEqual(64f, ti.spritePixelsPerUnit);
             Assert.AreEqual(FilterMode.Bilinear, ti.filterMode);
             Assert.AreEqual(4096, ti.maxTextureSize);
+        }
+
+        [Test]
+        public void TilesFolder_GetsTileSettings()
+        {
+            var ti = ImportTemp("Assets/_Project/Art/Tiles");
+            Assert.AreEqual(TextureImporterType.Sprite, ti.textureType);
+            Assert.AreEqual(128f, ti.spritePixelsPerUnit);
+            Assert.AreEqual(FilterMode.Bilinear, ti.filterMode);
+            Assert.AreEqual(2048, ti.maxTextureSize);
+            Assert.IsFalse(ti.mipmapEnabled);
         }
     }
 }

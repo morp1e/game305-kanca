@@ -21,6 +21,15 @@ namespace Game.Input
         public bool JumpHeld { get; private set; }
         /// <summary>İmlecin ekran konumu (piksel).</summary>
         public Vector2 PointerScreen { get; private set; }
+        Vector2? pointerWorldOverride;
+        float? moveXOverride;
+
+        /// <summary>Testlerde fare konumunu kamera girdisinden bağımsız belirler.</summary>
+        public void SetPointerWorldOverride(Vector2? worldPoint) => pointerWorldOverride = worldPoint;
+        /// <summary>Testlerde yatay hareket girdisini belirler.</summary>
+        public void SetMoveXOverride(float? value) => moveXOverride = value;
+        /// <summary>PlayMode testlerinde saldırı basışını tamponlar.</summary>
+        public void TriggerAttackForTest() => attackPressedAt = Now;
 
         /// <summary>Basışlar ve tüketim aynı saatle ölçülür; Update ile FixedUpdate arasında kayma olmaz.</summary>
         static double Now => Time.realtimeSinceStartupAsDouble;
@@ -57,7 +66,7 @@ namespace Game.Input
 
         void Update()
         {
-            MoveX = Mathf.Clamp(move.ReadValue<float>(), -1f, 1f);
+            MoveX = Mathf.Clamp(moveXOverride ?? move.ReadValue<float>(), -1f, 1f);
             JumpHeld = jump.IsPressed();
             PointerScreen = point.ReadValue<Vector2>();
 
@@ -76,6 +85,7 @@ namespace Game.Input
 
         public Vector2 PointerWorld(Camera cam)
         {
+            if (pointerWorldOverride.HasValue) return pointerWorldOverride.Value;
             if (cam == null) return Vector2.zero;
             var p = new Vector3(PointerScreen.x, PointerScreen.y, -cam.transform.position.z);
             return cam.ScreenToWorldPoint(p);

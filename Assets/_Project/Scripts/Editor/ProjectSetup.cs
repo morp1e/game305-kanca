@@ -16,6 +16,7 @@ namespace Game.Editor
         const string PresetDir = Root + "/Settings/Presets";
         const string PixelDir = Root + "/Art/Pixel";
         const string PaintedDir = Root + "/Art/Painted";
+        const string TilesDir = Root + "/Art/Tiles";
 
         [MenuItem("Tools/Kanca/Projeyi Kur")]
         public static void Run()
@@ -28,7 +29,8 @@ namespace Game.Editor
             Directory.CreateDirectory(PresetDir);
             var pixel = CreateTexturePreset("Pixel", ConfigurePixel);
             var painted = CreateTexturePreset("Painted", ConfigurePainted);
-            SetFolderDefaults(pixel, painted);
+            var tiles = CreateTexturePreset("Tiles", ConfigureTiles);
+            SetFolderDefaults(pixel, painted, tiles);
             SetupLayers();
             EnsureTmpEssentials();
 
@@ -74,6 +76,23 @@ namespace Game.Editor
             ti.wrapMode = TextureWrapMode.Clamp;
             ti.maxTextureSize = 4096;
             ti.alphaIsTransparency = true;
+        }
+
+        static void ConfigureTiles(TextureImporter ti)
+        {
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;
+            ti.spritePixelsPerUnit = 128;
+            ti.filterMode = FilterMode.Bilinear;
+            ti.textureCompression = TextureImporterCompression.CompressedHQ;
+            ti.mipmapEnabled = false;
+            ti.wrapMode = TextureWrapMode.Clamp;
+            ti.maxTextureSize = 2048;
+            ti.alphaIsTransparency = true;
+            var settings = new TextureImporterSettings();
+            ti.ReadTextureSettings(settings);
+            settings.spriteAlignment = (int)SpriteAlignment.Center;
+            ti.SetTextureSettings(settings);
         }
 
         // Preset bir importer örneğinden üretilir; bunun için geçici bir doku içe aktarılır.
@@ -159,18 +178,20 @@ namespace Game.Editor
             AssetDatabase.ImportPackage(package, false);
         }
 
-        static void SetFolderDefaults(Preset pixel, Preset painted)
+        static void SetFolderDefaults(Preset pixel, Preset painted, Preset tiles)
         {
             var type = pixel.GetPresetType();
             string pixelFilter = $"glob:\"{PixelDir}/**\"";
             string paintedFilter = $"glob:\"{PaintedDir}/**\"";
+            string tilesFilter = $"glob:\"{TilesDir}/**\"";
             // Tekrar çalıştırmada preset yeniden yaratılır; eski kayıt silinmiş preset'i gösterir,
             // o yüzden kendi filtrelerimizi ve boşa düşmüş kayıtları atıp baştan ekliyoruz.
             var others = Preset.GetDefaultPresetsForType(type)
-                .Where(d => d.preset != null && d.filter != pixelFilter && d.filter != paintedFilter);
+                .Where(d => d.preset != null && d.filter != pixelFilter && d.filter != paintedFilter && d.filter != tilesFilter);
             var defaults = others
                 .Append(new DefaultPreset(pixelFilter, pixel))
                 .Append(new DefaultPreset(paintedFilter, painted))
+                .Append(new DefaultPreset(tilesFilter, tiles))
                 .ToArray();
             Preset.SetDefaultPresetsForType(type, defaults);
         }
