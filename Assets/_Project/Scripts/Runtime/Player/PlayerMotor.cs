@@ -9,7 +9,7 @@ namespace Game.Player
     /// Oyuncu hareketi. Gövde Dynamic: çarpışmayı ve zeminden ayırmayı Unity'nin fizik motoru çözer,
     /// biz yalnız hızı belirleriz (yerçekimi dahil, gravityScale 0). Kendi Kinematic çarpışma kodumuz
     /// temas payı yüzünden birkaç saniye sonra zeminin içinden geçiyordu (PlayerPhysicsTests).
-    /// Çalışma sırası 0: SwordHook (-10) Velocity'yi önce yazar, motor sonra işler.
+    /// Çalışma sırası 0: GrappleHook (-10) Velocity'yi önce yazar, motor sonra işler.
     /// </summary>
     [DefaultExecutionOrder(0)]
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]

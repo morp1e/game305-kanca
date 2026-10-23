@@ -69,54 +69,51 @@ Preset Manager'da klasöre göre iki varsayılan preset:
 - **Girdi `Update`'te okunur, tampona yazılır, `FixedUpdate`'te tüketilir.** Input System, `FixedUpdate` içinde sorgulanınca editörde hata basıyor.
 - Kontrolcünün bir "hız devralma" modu olur: kanca çekişi sırasında yerçekimi ve oyuncu girdisi devre dışı kalır, hızı kanca sistemi belirler.
 
-## 5. Kılıç-kanca sistemi
+## 5. Kılıç ve kanca sistemi
 
 ### Davranış
-1. Oyuncu fareyle nişan alır, kılıcı fırlatır.
-2. Kılıç yalnız **kanca noktalarına (anchor)** saplanır. Başka yüzeye çarparsa sekip geri döner.
-3. Saplanınca karakter kılıca doğru **çekilir**, varışta ivmeyle **fırlar**. Sallanma ve ip yoktur.
-4. Kılıç fırlatılmışken elde değildir, geri çağrılabilir.
+1. Kılıç sağ elde yakın dövüş silahıdır; saldırı daha sonraki görevde yapılacaktır. Sol eldeki ayrı kanca fare imlecine doğru fırlatılır.
+2. Kanca, `GrappleHookTuning.hookableLayers` katmanlarındaki yüzeylere saplanır. `NonHookable` bileşeni taşıyan collider veya üst objesi kancayı geri döndürür.
+3. Saplanınca karakter yüzeydeki temas noktasına doğru **çekilir**, yüzeye temas ettiğinde veya varış eşiğine geldiğinde son çekiş yönünde **fırlar**. Sallanma ve ip fiziği yoktur.
+4. Sağ fare basışı kancayı fırlatır; kanca Thrown, Stuck veya Pulling durumundayken sağ fareye yeniden basmak geri çağırır. Sol fare saldırı girdisi için ayrılmıştır.
 
 ### Durum makinesi
 ```
 InHand -> Thrown -> Stuck -> Pulling -> Launch -> InHand
-Thrown  --(anchor dışı çarpma / menzil sonu / geri çağırma)--> Returning -> InHand
-Stuck   --(geri çağırma)--> Returning
-Pulling --(engel / iptal / maxPullTime)--> Launch veya Returning
+Thrown  --(NonHookable / menzil sonu / geri çağırma)--> Returning -> InHand
+Stuck   --(sağ fareye yeniden basma)--> Returning
+Pulling --(tutunulan yüzeye temas / varış / engel / maxPullTime)--> Launch
+Pulling --(sağ fareye yeniden basma)--> Returning
 ```
 İlk sürümde enum + switch. Durum sayısı artarsa durum sınıflarına geçilir.
 
-### Kılıç uçuşu
-Kılıcın Rigidbody'si yoktur. Her `FixedUpdate`'te `Physics2D.CircleCast(konum, swordRadius, yön, throwSpeed*dt, Anchor|Ground)` atılır ve isabet noktasına konumlanır. Hızlı nesnede tünellemeyi önler, Continuous çarpışma modunun maliyeti olmaz.
+### Kanca uçuşu
+Kancanın Rigidbody'si yoktur. Her `FixedUpdate`'te `Physics2D.CircleCast(konum, hookRadius, yön, throwSpeed*dt, hookableLayers)` atılır ve isabet noktasına konumlanır. Hızlı nesnede tünellemeyi önler, Continuous çarpışma modunun maliyeti olmaz. Menzil içinde isabet olmazsa kanca geri döner.
 
 ### Çekiş ve fırlama (Celeste'in açık kaynak dash kodundan uyarlandı)
 - Çekiş sabit `pullSpeed` ile yapılır. İsteğe bağlı `pullSpeedCurve` (normalize mesafeye göre AnimationCurve, varsayılan düz) giriş ve çıkışı şekillendirir. `maxPullTime` emniyettir.
 - Oyuncu çekiş yönünde zaten daha hızlıysa o hız korunur.
-- Anchor'a `arriveDistance` kadar yaklaşınca çekiş biter: hız = `yön × pullSpeed × exitSpeedMult`, yukarı yöndeyse ayrıca `× exitUpMult`.
+- Tutunulan yüzeye `arriveDistance` kadar yaklaşınca çekiş biter: hız = `son çekiş yönü × pullSpeed × exitSpeedMult`, yukarı yöndeyse ayrıca `× exitUpMult`. Oyuncu collider'ı yüzeye daha önce değerse aynı fırlama başlar.
 - Fırlamadan sonra kısa bir `postLaunchJumpWindow` açılır: bu pencerede zıplamaya basılırsa ivme zıplamayla birleşir.
-- Çekiş sırasında önden `Rigidbody2D.Cast` atılır. Engel varsa çekiş durur ya da hız yüzeye teğet yönlendirilir.
+- Çekiş sırasında önden `Rigidbody2D.Cast` atılır. Tutunulan yüzeye veya teğet yönü olmayan bir engele değince fırlama başlar; başka engelde hız yüzeye teğet yönlendirilir.
 
-### Nişan yardımı (fare)
-İmleç zorla kaydırılmaz. Yalnız hedef seçimi ve nişangâh kilidi yapılır:
-1. `Physics2D.OverlapCircle` ile oyuncudan `maxRange` içindeki anchor'lar toplanır.
-2. Oyuncudan her adaya `Physics2D.Raycast` atılır. Arada engel varsa aday elenir.
-3. Skor: `centeredness = 1 - clamp01(ekranMesafesi(imleç, anchor) / snapRadiusPx)`, artı menzil terimi. Skoru 0 olan aday seçilmez.
-4. Histerezis: yeni aday mevcut hedefi ancak `switchMargin` farkla geçerse seçilir. Hedef kareden kareye titremez.
-5. Hedef yoksa kılıç imleç yönüne serbest fırlatılır.
+### Nişan
+Kanca, `PlayerInputReader.PointerWorld` ile alınan fare dünya konumuna doğru düz fırlatılır. Hedefe yapışma veya nişan yardımı uygulanmaz. Nişangâh ve çizgi imleci izler.
 
 ### Juice
 - Saplanma anında 50 ms donma (hitstop). `Time.timeScale` yerine oyun mantığında yerel donma kullanılır.
 - Çekiş yönünde 0,2 sn yönlü sarsıntı.
 - Kamera sarsıntısı trauma modeliyle: saplanma +0,2, büyük çarpma +0,5, sarsıntı = trauma², Perlin gürültüsü.
 
-### `SwordHookTuning` başlangıç değerleri
+### `GrappleHookTuning` başlangıç değerleri
 Birim: 1 unit = 1 kare. Kaynak: C = Celeste kodu (piksel/sn, 8 px = 1 kare olarak çevrildi), E = Eiserloh GDC 2016, Ö = bizim tahminimiz, oynayarak ayarlanacak.
 
 | Parametre | Başlangıç | Birim | Kaynak |
 |---|---|---|---|
 | throwSpeed | 40 | u/s | Ö |
 | maxRange | 10 | u | Ö |
-| swordRadius | 0,15 | u | Ö |
+| hookRadius | 0,15 | u | Ö |
+| hookableLayers | Ground | katman maskesi | Ö |
 | pullSpeed | 30 | u/s | C (240 ÷ 8) |
 | pullSpeedCurve | düz 1 | eğri | Ö |
 | maxPullTime | 0,6 | s | Ö |
@@ -132,10 +129,12 @@ Birim: 1 unit = 1 kare. Kaynak: C = Celeste kodu (piksel/sn, 8 px = 1 kare olara
 | traumaOnStick / traumaOnBigImpact | 0,2 / 0,5 | 0-1 | E |
 | shakeExponent | 2 | | E |
 | traumaDecay | 1,0 | /s | Ö |
-| snapRadiusPx | 64 | ekran px | Ö |
-| switchMargin | 0,15 | skor | Ö |
 
 Celeste karakteri 8 px'lik karelerde koşuyor, bizim karelerimiz 16 px. Bu yüzden çevrilmiş değerler başlangıç noktasıdır, doğru değer değildir.
+
+### Sonraki özellikler
+- Gövde ve kollar ayrı parçalar olur; kollar My Friend Pedro'daki gibi imlece döner.
+- Kanca hafif düşman ve nesneleri oyuncuya çeker; ağır olanlarda oyuncu hedefe çekilir.
 
 ## 6. Kamera ve karışık çözünürlük
 
@@ -151,8 +150,8 @@ Ekran çözünürlüğü politikası: 1080p ve 4K tam sayı ölçekte çalışı
 
 ## 7. Veri ve olaylar
 
-- Ayarlar SO'da: `PlayerMovementTuning`, `SwordHookTuning`, `CameraTuning`, `BossPattern`.
-- Sistemler arası haberleşme SO olay kanallarıyla: `OnPlayerDamaged`, `OnAnchorStuck` vb. Böylece UI ve ses, oyuncu koduna doğrudan bağlanmaz.
+- Ayarlar SO'da: `PlayerMovementTuning`, `GrappleHookTuning`, `CameraTuning`, `BossPattern`.
+- Sistemler arası haberleşme SO olay kanallarıyla: `OnPlayerDamaged`, `OnHookStuck` vb. Böylece UI ve ses, oyuncu koduna doğrudan bağlanmaz.
 - SO'lar build'de **salt okunurdur**. Oyuncu ilerlemesi ayrı bir kayıt dosyasında tutulur.
 - Play modunda SO'da yapılan değişiklik kalıcıdır. Ayar yaparken işe yarar, ama yanlışlıkla değiştirilen değer commit'e girer. Commit'ten önce diff'e bakın.
 

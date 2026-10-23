@@ -1,14 +1,15 @@
 using Game.Core;
 using Game.Hook;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Game.Feedback
 {
     /// <summary>Kancanın görsel geri bildirimi: nişan çizgisi, kılıç izi ve çekiş itkisi.</summary>
     public class HookFeedback : MonoBehaviour
     {
-        [SerializeField] SwordHook hook;
-        [SerializeField] Transform sword;
+        [SerializeField] GrappleHook hook;
+        [SerializeField, FormerlySerializedAs("sword")] Transform hookVisual;
         [SerializeField] LineRenderer aimLine;
         [SerializeField] TrailRenderer trail;
         [SerializeField] Vector2Event kickEvent;
@@ -20,17 +21,11 @@ namespace Game.Feedback
         float trailTime = 0.12f;
         [SerializeField, Tooltip("Nişan çizgisinin kalınlığı, 1/16 unit. Ö")]
         float aimWidth = 1f / 16f;
-        [SerializeField, Tooltip("Anchor nabzının en büyük ölçeği. Ö")]
-        float pulseScale = 1.15f;
-        [SerializeField, Tooltip("Anchor nabzının frekansı, Hz. Ö")]
-        float pulseFrequency = 6f;
         [SerializeField, Tooltip("Kesikli doku genişliği, piksel. Ö")]
         int dashTextureWidth = 8;
         [SerializeField, Tooltip("Kesikli doku içindeki çizgi uzunluğu, piksel. Ö")]
         int dashLength = 4;
 
-        HookAnchor pulsingAnchor;
-        Vector3 pulsingAnchorScale;
         Texture2D dashTexture;
         Material generatedMaterial;
 
@@ -52,7 +47,6 @@ namespace Game.Feedback
         void OnDisable()
         {
             if (hook != null) hook.StateChanged -= OnStateChanged;
-            RestorePulsingAnchor();
         }
 
         void OnDestroy()
@@ -64,11 +58,10 @@ namespace Game.Feedback
         void Update()
         {
             UpdateAimLine();
-            UpdateAnchorPulse();
-            if (trail != null && sword != null)
+            if (trail != null && hookVisual != null)
             {
-                trail.transform.position = sword.position;
-                trail.transform.rotation = sword.rotation;
+                trail.transform.position = hookVisual.position;
+                trail.transform.rotation = hookVisual.rotation;
             }
         }
 
@@ -76,10 +69,10 @@ namespace Game.Feedback
         {
             if (state == HookState.Thrown && trail != null) trail.Clear();
             ApplyTrailState();
-            // Yön saplanılan anchor'dan alınır; nişan hedefi çekiş sırasında değişebilir ya da boş olabilir.
-            if (state == HookState.Pulling && kickEvent != null && hook.ActiveAnchor != null)
+            // Yön saplanılan yüzey noktasından alınır.
+            if (state == HookState.Pulling && kickEvent != null)
             {
-                var direction = (hook.ActiveAnchor.Point - (Vector2)transform.position).normalized;
+                var direction = (hook.ActivePoint - (Vector2)transform.position).normalized;
                 kickEvent.Raise(direction);
             }
         }
@@ -122,7 +115,7 @@ namespace Game.Feedback
         void ConfigureTrail()
         {
             trail.time = trailTime;
-            trail.widthMultiplier = SwordThickness();
+            trail.widthMultiplier = HookThickness();
             trail.widthCurve = HookFeedbackMath.TrailWidth;
             var gradient = new Gradient();
             gradient.SetKeys(
@@ -132,11 +125,11 @@ namespace Game.Feedback
             trail.emitting = false;
         }
 
-        float SwordThickness()
+        float HookThickness()
         {
-            if (sword != null)
+            if (hookVisual != null)
             {
-                var sprite = sword.GetComponentInChildren<SpriteRenderer>();
+                var sprite = hookVisual.GetComponentInChildren<SpriteRenderer>();
                 if (sprite != null) return sprite.bounds.size.y;
             }
             return aimWidth;
@@ -149,7 +142,7 @@ namespace Game.Feedback
 
         void UpdateAimLine()
         {
-            if (aimLine == null || hook == null || hook.State != HookState.InHand || sword == null || hook.AimTarget == null)
+            if (aimLine == null || hook == null || hook.State != HookState.InHand || hookVisual == null)
             {
                 if (aimLine != null) aimLine.enabled = false;
                 return;
@@ -158,32 +151,8 @@ namespace Game.Feedback
             aimLine.enabled = true;
             aimLine.startColor = aimColor;
             aimLine.endColor = aimColor;
-            aimLine.SetPosition(0, sword.position);
-            aimLine.SetPosition(1, hook.AimTarget.Point);
-        }
-
-        void UpdateAnchorPulse()
-        {
-            var target = hook != null ? hook.AimTarget : null;
-            if (target != pulsingAnchor)
-            {
-                RestorePulsingAnchor();
-                if (target != null)
-                {
-                    pulsingAnchor = target;
-                    pulsingAnchorScale = target.transform.localScale;
-                }
-            }
-
-            if (pulsingAnchor == null) return;
-            var pulse = HookFeedbackMath.PulseMultiplier(Time.time, pulseFrequency, pulseScale);
-            pulsingAnchor.transform.localScale = pulsingAnchorScale * pulse;
-        }
-
-        void RestorePulsingAnchor()
-        {
-            if (pulsingAnchor != null) pulsingAnchor.transform.localScale = pulsingAnchorScale;
-            pulsingAnchor = null;
+            aimLine.SetPosition(0, hookVisual.position);
+            aimLine.SetPosition(1, hook.AimPoint);
         }
     }
 }

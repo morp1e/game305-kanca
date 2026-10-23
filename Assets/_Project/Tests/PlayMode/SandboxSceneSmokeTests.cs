@@ -38,8 +38,8 @@ namespace Game.Tests
             var motor = Object.FindAnyObjectByType<PlayerMotor>();
             Assert.That(motor, Is.Not.Null, "sahnede PlayerMotor yok");
             Assert.That(motor.IsGrounded, Is.True, $"oyuncu zeminde değil, y={motor.Position.y:F2}");
-            Assert.That(Object.FindAnyObjectByType<SwordHook>().State, Is.EqualTo(HookState.InHand));
-            Assert.That(Object.FindObjectsByType<HookAnchor>(FindObjectsSortMode.None).Length, Is.GreaterThan(3), "anchor yok");
+            Assert.That(Object.FindAnyObjectByType<GrappleHook>().State, Is.EqualTo(HookState.InHand));
+            Assert.That(Object.FindAnyObjectByType<NonHookable>(), Is.Not.Null, "NonHookable deneme engeli yok");
 
             var respawn = motor.GetComponent<RespawnController>();
             Assert.That(respawn, Is.Not.Null, "oyuncuda RespawnController yok");

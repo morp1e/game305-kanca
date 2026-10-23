@@ -70,7 +70,7 @@ namespace Game.Editor.Sandbox
             var square = LoadSprite(PixelDir + "/greybox_square.png");
             var backgrounds = new[] { LoadSprite(PaintedDir + "/bg_test_far.png"), LoadSprite(PaintedDir + "/bg_test_mid.png"), LoadSprite(PaintedDir + "/bg_test_near.png") };
             var movement = GetOrCreate<PlayerMovementTuning>(TuningDir + "/PlayerMovementTuning.asset");
-            var hook = GetOrCreate<SwordHookTuning>(TuningDir + "/SwordHookTuning.asset");
+            var hook = GetOrCreate<GrappleHookTuning>(TuningDir + "/GrappleHookTuning.asset");
             var cameraTuning = GetOrCreate<CameraTuning>(TuningDir + "/CameraTuning.asset");
             var trauma = GetOrCreate<FloatEvent>(EventDir + "/Event_CameraTrauma.asset");
 
@@ -82,12 +82,12 @@ namespace Game.Editor.Sandbox
             var player = playerRig.transform.Find("Player").gameObject;
             CreateCourse(square);
             CreatePrefabInstances();
-            CreateAnchors();
+            CreateNonHookableObstacle(square);
             CreateBackgrounds(backgrounds);
             var camera = CreateCamera(player.transform, cameraTuning, trauma);
             // Kamera oyuncudan sonra kuruluyor; nişan kamerası burada bağlanır.
-            Set(player.GetComponent<SwordHook>(), ("aimCamera", camera));
-            CreateHud(player.GetComponent<PlayerMotor>(), player.GetComponent<SwordHook>(), player.GetComponent<RespawnController>(), player.GetComponent<SwordVoice>());
+            Set(player.GetComponent<GrappleHook>(), ("aimCamera", camera));
+            CreateHud(player.GetComponent<PlayerMotor>(), player.GetComponent<GrappleHook>(), player.GetComponent<RespawnController>(), player.GetComponent<SwordVoice>());
             CreateGlobalLight();
             EnsureBuildScene();
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -224,16 +224,14 @@ namespace Game.Editor.Sandbox
             if (scale.HasValue) instance.transform.localScale = scale.Value;
         }
 
-        static void CreateAnchors()
+        static void CreateNonHookableObstacle(Sprite sprite)
         {
-            Vector2[] points = { new Vector2(10, 8), new Vector2(20, 10), new Vector2(27, 13), new Vector2(35, 16), new Vector2(46, 16), new Vector2(45, 7), new Vector2(57, 12), new Vector2(65, 9), new Vector2(73, 14) };
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "/Anchor.prefab");
-            foreach (var point in points)
-            {
-                var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-                instance.name = "Anchor_" + point.x.ToString("00") + "_" + point.y.ToString("00");
-                instance.transform.position = point;
-            }
+            var obstacle = new GameObject("NonHookable_Obstacle") { layer = LayerMask.NameToLayer("Ground") };
+            obstacle.transform.position = new Vector3(57f, 4f, 0f);
+            obstacle.transform.localScale = new Vector3(1.5f, 2f, 1f);
+            obstacle.AddComponent<SpriteRenderer>().sprite = sprite;
+            obstacle.AddComponent<BoxCollider2D>();
+            obstacle.AddComponent<NonHookable>();
         }
 
         static void CreateBackgrounds(Sprite[] sprites)
@@ -263,9 +261,9 @@ namespace Game.Editor.Sandbox
             return camera;
         }
 
-        static void CreateHud(PlayerMotor motor, SwordHook hook, RespawnController respawn, SwordVoice voice)
+        static void CreateHud(PlayerMotor motor, GrappleHook hook, RespawnController respawn, SwordVoice voice)
         {
-            var go = new GameObject("DebugHud"); var hud = go.AddComponent<DebugHud>(); Set(hud, ("motor", motor), ("swordHook", hook), ("respawn", respawn), ("swordVoice", voice));
+            var go = new GameObject("DebugHud"); var hud = go.AddComponent<DebugHud>(); Set(hud, ("motor", motor), ("grappleHook", hook), ("respawn", respawn), ("swordVoice", voice));
         }
 
         static void CreateGlobalLight()

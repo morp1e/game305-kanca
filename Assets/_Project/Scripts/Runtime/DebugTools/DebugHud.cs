@@ -4,6 +4,7 @@ using Game.Dialogue;
 using Game.Player;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace Game.DebugTools
 {
@@ -11,7 +12,7 @@ namespace Game.DebugTools
     public class DebugHud : MonoBehaviour
     {
         [SerializeField] PlayerMotor motor;
-        [SerializeField] SwordHook swordHook;
+        [SerializeField, FormerlySerializedAs("swordHook")] GrappleHook grappleHook;
         [SerializeField] RespawnController respawn;
         [SerializeField] SwordVoice swordVoice;
 
@@ -38,12 +39,11 @@ namespace Game.DebugTools
         {
             if (!visible || motor == null) return;
             Vector2 velocity = motor.Velocity;
-            string target = swordHook != null && swordHook.AimTarget != null ? swordHook.AimTarget.name : "yok";
-            string state = swordHook != null ? swordHook.State.ToString() : "yok";
+            string state = grappleHook != null ? grappleHook.State.ToString() : "yok";
             string dead = respawn != null ? respawn.IsDead.ToString() : "yok";
             string line = swordVoice != null ? swordVoice.CurrentLine ?? "yok" : "yok";
             string content = $"FPS {fps:0}\nHız X {velocity.x:0.00}  Y {velocity.y:0.00}  |v| {velocity.magnitude:0.00}\n" +
-                $"IsGrounded {motor.IsGrounded}  ExternalControl {motor.ExternalControl}\nSwordHook {state}  AimTarget {target}\nIsDead {dead}  SwordVoice {line}";
+                $"IsGrounded {motor.IsGrounded}  ExternalControl {motor.ExternalControl}\nGrappleHook {state}\nIsDead {dead}  SwordVoice {line}";
             GUI.Box(new Rect(12, 12, 420, 112), content);
         }
     }

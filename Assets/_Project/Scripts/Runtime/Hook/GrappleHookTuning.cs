@@ -1,17 +1,22 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Game.Hook
 {
     /// <summary>Kanca uçuşu ve çekişi için ayarlar.</summary>
-    [CreateAssetMenu(menuName = "Kanca/Tuning/Sword Hook", fileName = "SwordHookTuning")]
-    public class SwordHookTuning : ScriptableObject
+    [CreateAssetMenu(menuName = "Kanca/Tuning/Grapple Hook", fileName = "GrappleHookTuning")]
+    public class GrappleHookTuning : ScriptableObject
     {
         [Tooltip("Fırlatma hızı, u/s. Ö: oynayarak ayarlanacak.")]
         public float throwSpeed = 40f;
         [Tooltip("En uzun fırlatma menzili, u. Ö: oynayarak ayarlanacak.")]
         public float maxRange = 10f;
-        [Tooltip("Kılıç CircleCast yarıçapı, u. Ö: oynayarak ayarlanacak.")]
-        public float swordRadius = 0.15f;
+        [Tooltip("Kanca CircleCast yarıçapı, u. Ö: oynayarak ayarlanacak.")]
+        [FormerlySerializedAs("swordRadius")]
+        public float hookRadius = 0.15f;
+        [Tooltip("Kancanın tutunabildiği katmanlar. Ö: Ground.")]
+        // GetMask ScriptableObject kurucusunda çağrılamaz; 1 << 6 = Ground (TagManager).
+        public LayerMask hookableLayers = 1 << 6;
         [Tooltip("Çekiş hızı, u/s. C: Celeste 240 px/s ÷ 8.")]
         public float pullSpeed = 30f;
         [Tooltip("Normalize çekiş ilerlemesine göre hız. Ö: düz 1.")]
@@ -30,7 +35,7 @@ namespace Game.Hook
         public float postLaunchJumpWindow = 0.1f;
         [Tooltip("Yeni fırlatma için bekleme, s. C: Celeste.")]
         public float hookCooldown = 0.2f;
-        [Tooltip("Geri çağrılan kılıç hızı, u/s. Ö: oynayarak ayarlanacak.")]
+        [Tooltip("Geri çağrılan kanca hızı, u/s. Ö: oynayarak ayarlanacak.")]
         public float recallSpeed = 50f;
         [Tooltip("Saplanma anındaki yerel donma süresi, s. C: Celeste.")]
         public float impactFreeze = 0.05f;
@@ -44,10 +49,6 @@ namespace Game.Hook
         public float shakeExponent = 2f;
         [Tooltip("Travma azalma hızı, /s. Ö: oynayarak ayarlanacak.")]
         public float traumaDecay = 1f;
-        [Tooltip("Nişan yakalama yarıçapı, ekran px. Ö: 1080p referans.")]
-        public float snapRadiusPx = 64f;
-        [Tooltip("Hedef değiştirme skor farkı. Ö: oynayarak ayarlanacak.")]
-        public float switchMargin = 0.15f;
         [Tooltip("Fırlatma başlangıcının oyuncu merkezine göre ofseti. Ö: oynayarak ayarlanacak.")]
         public Vector2 throwOriginOffset = new Vector2(0.5f, 0f);
         [Tooltip("Fırlatma girdisi tamponu, s. Ö: oynayarak ayarlanacak.")]

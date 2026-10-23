@@ -2,6 +2,7 @@ using Game.Core;
 using Game.Hook;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Game.Dialogue
 {
@@ -9,8 +10,8 @@ namespace Game.Dialogue
     public class SwordVoice : MonoBehaviour
     {
         [SerializeField] SwordLineSet lines;
-        [SerializeField] SwordHook hook;
-        [SerializeField] Transform sword;
+        [SerializeField] GrappleHook hook;
+        [SerializeField, FormerlySerializedAs("sword")] Transform hookVisual;
         [SerializeField] GameEvent deathEvent;
         [SerializeField] GameEvent respawnEvent;
         [Tooltip("Hareketsizlik ve balon takibi için oyuncu. Boşsa bileşenin sahibi kullanılır.")]
@@ -120,7 +121,7 @@ namespace Game.Dialogue
             if (CurrentLine == null) return;
             if (bubble != null && bubble.activeSelf)
             {
-                var follow = sword != null ? sword : transform;
+                var follow = hookVisual != null ? hookVisual : transform;
                 bubble.transform.position = follow.position + bubbleOffset;
                 bubble.transform.rotation = Quaternion.identity;
                 if (label != null)

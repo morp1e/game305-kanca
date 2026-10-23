@@ -23,11 +23,11 @@ namespace Game.Editor.Sandbox
         public static void BuildMenu()
         {
             var movement = AssetDatabase.LoadAssetAtPath<PlayerMovementTuning>(DataDir + "/Tuning/PlayerMovementTuning.asset");
-            var hook = AssetDatabase.LoadAssetAtPath<SwordHookTuning>(DataDir + "/Tuning/SwordHookTuning.asset");
+            var hook = AssetDatabase.LoadAssetAtPath<GrappleHookTuning>(DataDir + "/Tuning/GrappleHookTuning.asset");
             Build(movement, hook);
         }
 
-        public static void Build(PlayerMovementTuning movement, SwordHookTuning tuning)
+        public static void Build(PlayerMovementTuning movement, GrappleHookTuning tuning)
         {
             EnsureFolder(PrefabDir); EnsureFolder(DataDir + "/Events"); EnsureFolder(DataDir + "/Dialogue");
             EnsureFolder(DataDir + "/Tuning");
@@ -42,61 +42,52 @@ namespace Game.Editor.Sandbox
             var player = CreatePlayer(square, movement, tuning, trauma);
             player.transform.SetParent(rig.transform, false);
             player.transform.localPosition = Vector3.zero;
-            var sword = CreateSword(square); sword.transform.SetParent(rig.transform, false);
+            var hookVisual = CreateHookVisual(square); hookVisual.transform.SetParent(rig.transform, false);
             var reticle = CreateReticle(circle); reticle.transform.SetParent(rig.transform, false);
-            var hook = player.GetComponent<SwordHook>();
-            Set(hook, ("sword", sword.transform), ("reticle", reticle.transform));
+            var hook = player.GetComponent<GrappleHook>();
+            Set(hook, ("hookVisual", hookVisual.transform), ("reticle", reticle.transform));
             Set(hook, ("aimCamera", null));
             var respawnController = player.AddComponent<RespawnController>();
             Set(respawnController, ("motor", player.GetComponent<PlayerMotor>()), ("deathEvent", death), ("respawnEvent", respawn));
             SetOptional(respawnController, "visual", player.transform.Find("Visual").gameObject);
             var feedback = player.AddComponent<HookFeedback>();
-            Set(feedback, ("hook", hook), ("sword", sword.transform), ("kickEvent", kick));
+            Set(feedback, ("hook", hook), ("hookVisual", hookVisual.transform), ("kickEvent", kick));
             var voice = player.AddComponent<SwordVoice>();
-            Set(voice, ("lines", lines), ("hook", hook), ("sword", sword.transform), ("deathEvent", death), ("respawnEvent", respawn));
+            Set(voice, ("lines", lines), ("hook", hook), ("hookVisual", hookVisual.transform), ("deathEvent", death), ("respawnEvent", respawn));
             SavePrefab(player, PrefabDir + "/Player.prefab");
             SavePrefab(rig, PrefabDir + "/PlayerRig.prefab");
             UnityEngine.Object.DestroyImmediate(rig);
 
-            CreateAnchorPrefab(circle);
             CreateHazardPrefab(square);
             CreateCheckpointPrefab(square);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
 
-        static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, SwordHookTuning tuning, FloatEvent trauma)
+        static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, GrappleHookTuning tuning, FloatEvent trauma)
         {
             var player = new GameObject("Player"); player.layer = LayerMask.NameToLayer("Player");
             var rb = player.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Dynamic; rb.gravityScale = 0f; rb.interpolation = RigidbodyInterpolation2D.Interpolate;
             var capsule = player.AddComponent<CapsuleCollider2D>(); capsule.direction = CapsuleDirection2D.Vertical; capsule.size = new Vector2(.8f, 1.8f);
-            var input = player.AddComponent<PlayerInputReader>(); var motor = player.AddComponent<PlayerMotor>(); var hook = player.AddComponent<SwordHook>();
+            var input = player.AddComponent<PlayerInputReader>(); var motor = player.AddComponent<PlayerMotor>(); var hook = player.AddComponent<GrappleHook>();
             var visual = new GameObject("Visual"); visual.transform.SetParent(player.transform, false); visual.transform.localScale = new Vector3(1, 2, 1);
             visual.AddComponent<SpriteRenderer>().sprite = sprite;
             Set(motor, ("tuning", movement), ("input", input)); Set(hook, ("tuning", tuning), ("input", input), ("body", motor), ("traumaEvent", trauma));
             return player;
         }
 
-        static GameObject CreateSword(Sprite sprite)
+        static GameObject CreateHookVisual(Sprite sprite)
         {
-            var sword = new GameObject("Sword"); sword.layer = LayerMask.NameToLayer("Sword");
-            var visual = new GameObject("Visual"); visual.transform.SetParent(sword.transform, false); visual.transform.localScale = new Vector3(1.2f, .25f, 1);
+            var hook = new GameObject("GrappleHook");
+            var visual = new GameObject("Visual"); visual.transform.SetParent(hook.transform, false); visual.transform.localScale = new Vector3(1.2f, .25f, 1);
             visual.AddComponent<SpriteRenderer>().sprite = sprite;
-            return sword;
+            return hook;
         }
 
         static GameObject CreateReticle(Sprite sprite)
         {
             var reticle = new GameObject("Reticle"); var renderer = reticle.AddComponent<SpriteRenderer>(); renderer.sprite = sprite;
             renderer.sortingLayerName = "UI_World"; reticle.transform.localScale = Vector3.one * .5f; return reticle;
-        }
-
-        static void CreateAnchorPrefab(Sprite sprite)
-        {
-            var go = new GameObject("Anchor"); go.layer = LayerMask.NameToLayer("Anchor");
-            go.AddComponent<SpriteRenderer>().sprite = sprite;
-            var collider = go.AddComponent<CircleCollider2D>(); collider.isTrigger = true; collider.radius = .5f; go.AddComponent<HookAnchor>();
-            SavePrefab(go, PrefabDir + "/Anchor.prefab"); UnityEngine.Object.DestroyImmediate(go);
         }
 
         static void CreateHazardPrefab(Sprite sprite)

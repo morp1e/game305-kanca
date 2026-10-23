@@ -10,11 +10,11 @@ namespace Game.Input
     [DefaultExecutionOrder(-100)]
     public sealed class PlayerInputReader : MonoBehaviour
     {
-        InputAction move, jump, throwSword, recall, point;
+        InputAction move, jump, throwHook, attack, point;
 
         double jumpPressedAt = double.NegativeInfinity;
         double throwPressedAt = double.NegativeInfinity;
-        double recallPressedAt = double.NegativeInfinity;
+        double attackPressedAt = double.NegativeInfinity;
 
         /// <summary>-1..1 yatay girdi.</summary>
         public float MoveX { get; private set; }
@@ -35,24 +35,24 @@ namespace Game.Input
             jump.AddBinding("<Keyboard>/space");
             jump.AddBinding("<Keyboard>/w");
 
-            throwSword = new InputAction("Throw", InputActionType.Button, "<Mouse>/leftButton");
-            recall = new InputAction("Recall", InputActionType.Button, "<Mouse>/rightButton");
+            throwHook = new InputAction("ThrowHook", InputActionType.Button, "<Mouse>/rightButton");
+            attack = new InputAction("Attack", InputActionType.Button, "<Mouse>/leftButton");
             point = new InputAction("Point", InputActionType.Value, "<Pointer>/position");
         }
 
         void OnEnable()
         {
-            move.Enable(); jump.Enable(); throwSword.Enable(); recall.Enable(); point.Enable();
+            move.Enable(); jump.Enable(); throwHook.Enable(); attack.Enable(); point.Enable();
         }
 
         void OnDisable()
         {
-            move.Disable(); jump.Disable(); throwSword.Disable(); recall.Disable(); point.Disable();
+            move.Disable(); jump.Disable(); throwHook.Disable(); attack.Disable(); point.Disable();
         }
 
         void OnDestroy()
         {
-            move.Dispose(); jump.Dispose(); throwSword.Dispose(); recall.Dispose(); point.Dispose();
+            move.Dispose(); jump.Dispose(); throwHook.Dispose(); attack.Dispose(); point.Dispose();
         }
 
         void Update()
@@ -62,14 +62,14 @@ namespace Game.Input
             PointerScreen = point.ReadValue<Vector2>();
 
             if (jump.WasPressedThisFrame()) jumpPressedAt = Now;
-            if (throwSword.WasPressedThisFrame()) throwPressedAt = Now;
-            if (recall.WasPressedThisFrame()) recallPressedAt = Now;
+            if (throwHook.WasPressedThisFrame()) throwPressedAt = Now;
+            if (attack.WasPressedThisFrame()) attackPressedAt = Now;
         }
 
         /// <summary>Son bufferSeconds içinde zıplamaya basıldıysa true döner ve basışı harcar.</summary>
         public bool ConsumeJump(float bufferSeconds) => Consume(ref jumpPressedAt, bufferSeconds);
         public bool ConsumeThrow(float bufferSeconds) => Consume(ref throwPressedAt, bufferSeconds);
-        public bool ConsumeRecall(float bufferSeconds) => Consume(ref recallPressedAt, bufferSeconds);
+        public bool ConsumeAttack(float bufferSeconds) => Consume(ref attackPressedAt, bufferSeconds);
 
         /// <summary>Harcamadan bakar.</summary>
         public bool HasBufferedJump(float bufferSeconds) => Now - jumpPressedAt <= bufferSeconds;

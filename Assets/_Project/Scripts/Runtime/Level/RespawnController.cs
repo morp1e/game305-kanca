@@ -25,13 +25,13 @@ namespace Game.Level
         public Vector2 CurrentCheckpoint { get; private set; }
         public bool IsDead { get; private set; }
         Checkpoint activeCheckpoint;
-        SwordHook hook;
+        GrappleHook hook;
         float respawnAt;
 
         void Awake()
         {
             if (motor == null) motor = GetComponent<PlayerMotor>();
-            hook = GetComponent<SwordHook>();
+            hook = GetComponent<GrappleHook>();
             CurrentCheckpoint = motor != null ? motor.Position : transform.position;
         }
 
@@ -58,7 +58,7 @@ namespace Game.Level
             IsDead = true;
             respawnAt = Time.time + Mathf.Max(0f, respawnDelay);
             if (deathEvent != null) deathEvent.Raise();
-            // Çekiş sürerken ölünürse kanca her adım kontrolü geri alır; önce kılıcı ele al.
+            // Çekiş sürerken ölünürse önce kancayı ele al.
             if (hook != null) hook.ResetToHand();
             if (motor != null)
             {

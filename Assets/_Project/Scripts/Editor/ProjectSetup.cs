@@ -99,7 +99,7 @@ namespace Game.Editor
         // Fizik katmanları (indeks sabit, kod LayerMask'larını isimle alır) ve çizim sırası.
         static readonly (int index, string name)[] Layers =
         {
-            (6, "Ground"), (7, "Player"), (8, "Anchor"), (9, "Hazard"), (10, "Enemy"), (11, "Sword"),
+            (6, "Ground"), (7, "Player"), (9, "Hazard"), (10, "Enemy"), (11, "Sword"),
         };
 
         // Default oynanış katmanıdır; arka plan katmanları önüne, ön plan ve UI arkasına girer.

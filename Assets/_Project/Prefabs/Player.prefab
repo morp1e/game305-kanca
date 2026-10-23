@@ -141,11 +141,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e4db76de3d304b61a770fbd3848ec5a7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Game.Runtime::Game.Hook.SwordHook
+  m_EditorClassIdentifier: Game.Runtime::Game.Hook.GrappleHook
   tuning: {fileID: 11400000, guid: 158db5c47eef6a4439f6e38ae070b522, type: 2}
   input: {fileID: 2938551226492974067}
   body: {fileID: 2607107479700947688}
-  sword: {fileID: 0}
+  hookVisual: {fileID: 0}
   aimCamera: {fileID: 0}
   traumaEvent: {fileID: 11400000, guid: b283f24b739cd2b42906d550998eb5d8, type: 2}
   reticle: {fileID: 0}
@@ -180,7 +180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::Game.Feedback.HookFeedback
   hook: {fileID: 297604311030357911}
-  sword: {fileID: 0}
+  hookVisual: {fileID: 0}
   aimLine: {fileID: 0}
   trail: {fileID: 0}
   kickEvent: {fileID: 11400000, guid: b8a70f867dd7ce44ca1b514720de631f, type: 2}
@@ -188,8 +188,6 @@ MonoBehaviour:
   trailColor: {r: 0.35, g: 0.85, b: 1, a: 1}
   trailTime: 0.12
   aimWidth: 0.0625
-  pulseScale: 1.15
-  pulseFrequency: 6
   dashTextureWidth: 8
   dashLength: 4
 --- !u!114 &4354386653561828621
@@ -206,7 +204,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Runtime::Game.Dialogue.SwordVoice
   lines: {fileID: 11400000, guid: bade659f4ccb41747b619b4f0dbd133a, type: 2}
   hook: {fileID: 297604311030357911}
-  sword: {fileID: 0}
+  hookVisual: {fileID: 0}
   deathEvent: {fileID: 11400000, guid: 5de12161f9b8bb743bc2252408d06b33, type: 2}
   respawnEvent: {fileID: 11400000, guid: 6c55fccb035be334e818c3ea0267d3d0, type: 2}
   player: {fileID: 0}
