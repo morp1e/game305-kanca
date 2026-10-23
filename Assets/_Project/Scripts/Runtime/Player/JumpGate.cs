@@ -1,5 +1,6 @@
 namespace Game.Player
 {
+    // Celeste Player.cs (MIT, (c) 2018 Noel Berry) uyarlaması; bkz. tools/reference/celeste/LICENSE
     /// <summary>Coyote, input buffer ve tek kullanımlık fırlatma zıplaması zamanlaması.</summary>
     public sealed class JumpGate
     {
@@ -41,6 +42,15 @@ namespace Game.Player
             if (coyoteRemaining <= 0f) return false;
             bufferRemaining = 0f;
             coyoteRemaining = 0f;
+            return true;
+        }
+
+        public bool TryConsumeWallJump()
+        {
+            if (bufferRemaining <= 0f) return false;
+            bufferRemaining = 0f;
+            coyoteRemaining = 0f;
+            launchRemaining = 0f;
             return true;
         }
 

@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Game.Player
 {
+    // Celeste Player.cs (MIT, (c) 2018 Noel Berry) uyarlaması; bkz. tools/reference/celeste/LICENSE
     /// <summary>
     /// Oyuncu hareketi. Gövde Dynamic: çarpışmayı ve zeminden ayırmayı Unity'nin fizik motoru çözer,
     /// biz yalnız hızı belirleriz (yerçekimi dahil, gravityScale 0). Kendi Kinematic çarpışma kodumuz
@@ -26,6 +27,14 @@ namespace Game.Player
         ContactFilter2D groundFilter;
         readonly JumpGate jumpGate = new JumpGate();
         float variableJumpRemaining;
+        float variableJumpSpeed;
+        float fastFallCap;
+        float wallSlideRemaining;
+        float forcedMoveRemaining;
+        float retainedWallSpeed;
+        float wallSpeedRemaining;
+        float launchMomentumRemaining;
+        float lastWrittenHorizontalSpeed;
 
         public Vector2 Position => body != null ? body.position : (Vector2)transform.position;
 
@@ -73,6 +82,10 @@ namespace Game.Player
             if (body == null || tuning == null || bodyCollider == null) return;
             float dt = Time.fixedDeltaTime;
             IsGrounded = CheckGrounded();
+            if (IsGrounded) wallSlideRemaining = tuning.WallSlideTime;
+            wallSpeedRemaining = Mathf.Max(0f, wallSpeedRemaining - dt);
+            launchMomentumRemaining = Mathf.Max(0f, launchMomentumRemaining - dt);
+            forcedMoveRemaining = Mathf.Max(0f, forcedMoveRemaining - dt);
 
             if (ExternalControl)
             {
@@ -82,13 +95,21 @@ namespace Game.Player
             }
 
             float moveX = input != null ? input.MoveX : 0f;
+            if (forcedMoveRemaining > 0f) moveX = forcedMoveRemaining > 0f ? forcedMoveDirection : moveX;
             if (moveX != 0f) movementFacing = moveX < 0f ? -1 : 1;
             bool jumpPressed = input != null && input.ConsumeJump(tuning.JumpBufferTime);
             jumpGate.Tick(dt, IsGrounded, jumpPressed, tuning.CoyoteTime, tuning.JumpBufferTime);
 
             Vector2 velocity = Velocity;
+            if (wallSpeedRemaining > 0f && retainedWallSpeed != 0f &&
+                Mathf.Sign(velocity.x) == Mathf.Sign(retainedWallSpeed) && !IsWallInDirection(Mathf.Sign(retainedWallSpeed)))
+            {
+                velocity.x = retainedWallSpeed;
+                wallSpeedRemaining = 0f;
+            }
             velocity.x = MovementMath.StepHorizontal(velocity.x, moveX, IsGrounded, dt,
-                tuning.MaxRunSpeed, tuning.RunAccel, tuning.RunReduce, tuning.AirMult, tuning.OverSpeedDecel);
+                tuning.MaxRunSpeed, tuning.RunAccel, tuning.RunReduce, tuning.AirMult, tuning.OverSpeedDecel,
+                launchMomentumRemaining > 0f);
 
             if (IsGrounded && velocity.y < 0f) velocity.y = 0f;
             if (jumpGate.TryConsumeJump(out bool fromLaunchWindow))
@@ -96,28 +117,98 @@ namespace Game.Player
                 velocity = MovementMath.ApplyJump(velocity, fromLaunchWindow, tuning.JumpSpeed,
                     tuning.LaunchJumpBonus, tuning.JumpHBoost, moveX);
                 variableJumpRemaining = tuning.VarJumpTime;
+                variableJumpSpeed = velocity.y;
                 IsGrounded = false;
+            }
+
+            if (!jumpGate.LaunchWindowActive && tuning.WallJumpEnabled && !IsGrounded && velocity.y <= 0f &&
+                moveX != 0f && IsWallInDirection(moveX))
+            {
+                velocity.y = Mathf.Max(velocity.y, -MovementMath.WallSlideCap(tuning.MaxFallSpeed,
+                    tuning.WallSlideStartMax, wallSlideRemaining, tuning.WallSlideTime));
+                wallSlideRemaining = Mathf.Max(0f, wallSlideRemaining - dt);
+            }
+
+            if (jumpGate.LaunchWindowActive == false && tuning.WallJumpEnabled &&
+                !IsGrounded && TryGetWallDirection(moveX, out int wallDirection))
+            {
+                if (jumpGate.TryConsumeWallJump())
+                {
+                    int away = -wallDirection;
+                    velocity.x = tuning.WallJumpHSpeed * away;
+                    velocity.y = tuning.JumpSpeed;
+                    variableJumpRemaining = tuning.VarJumpTime;
+                    variableJumpSpeed = velocity.y;
+                    forcedMoveDirection = away;
+                    forcedMoveRemaining = tuning.WallJumpForceTime;
+                    wallSlideRemaining = tuning.WallSlideTime;
+                    IsGrounded = false;
+                }
             }
 
             bool jumpHeld = input != null && input.JumpHeld;
             // Yerdeyken yerçekimi uygulanmaz; uygulansa her adım zemine bastırıp temas titretir.
             if (!IsGrounded)
+            {
+                bool fastFall = input != null && input.DownHeld && velocity.y <= -tuning.MaxFallSpeed;
+                fastFallCap = MovementMath.Approach(fastFallCap <= 0f ? tuning.MaxFallSpeed : fastFallCap,
+                    fastFall ? tuning.FastMaxFallSpeed : tuning.MaxFallSpeed,
+                    tuning.FastMaxAccel * dt);
+                bool sliding = moveX != 0f && IsWallInDirection(moveX) && velocity.y <= 0f && !(input != null && input.DownHeld);
+                float cap = sliding ? MovementMath.WallSlideCap(tuning.MaxFallSpeed, tuning.WallSlideStartMax,
+                    wallSlideRemaining, tuning.WallSlideTime) : fastFallCap;
                 velocity.y = MovementMath.StepGravity(velocity.y, dt, jumpHeld,
-                    tuning.Gravity, tuning.HalfGravThreshold, tuning.MaxFallSpeed);
+                    tuning.Gravity, tuning.HalfGravThreshold, cap);
+            }
             if (variableJumpRemaining > 0f)
             {
-                velocity.y = MovementMath.CutVariableJump(velocity.y, jumpHeld, variableJumpRemaining);
-                if (jumpHeld && velocity.y > 0f) velocity.y = Mathf.Max(velocity.y, tuning.JumpSpeed);
-                variableJumpRemaining = Mathf.Max(0f, variableJumpRemaining - dt);
+                if (jumpHeld)
+                {
+                    velocity.y = MovementMath.ApplyVariableJump(velocity.y, true, variableJumpSpeed, variableJumpRemaining);
+                    variableJumpRemaining = Mathf.Max(0f, variableJumpRemaining - dt);
+                }
+                else variableJumpRemaining = 0f;
             }
 
             if (velocity.y > 0f) TryCornerCorrection(velocity.y * dt);
             Velocity = velocity;
+            lastWrittenHorizontalSpeed = velocity.x;
+        }
+
+        int forcedMoveDirection;
+
+        bool IsWallInDirection(float direction)
+        {
+            if (direction == 0f) return false;
+            return body.Cast(Vector2.right * Mathf.Sign(direction), solidFilter, castHits, tuning.WallJumpCheckDist) > 0;
+        }
+
+        bool TryGetWallDirection(float moveX, out int direction)
+        {
+            int preferred = moveX == 0f ? movementFacing : (moveX > 0f ? 1 : -1);
+            if (IsWallInDirection(preferred)) { direction = preferred; return true; }
+            if (IsWallInDirection(-preferred)) { direction = -preferred; return true; }
+            direction = preferred;
+            return false;
+        }
+
+        void OnCollisionEnter2D(Collision2D collision)
+        {
+            if (collision.contactCount == 0) return;
+            ContactPoint2D contact = collision.GetContact(0);
+            if (Mathf.Abs(contact.normal.x) > 0.5f && wallSpeedRemaining <= 0f)
+            {
+                retainedWallSpeed = lastWrittenHorizontalSpeed;
+                wallSpeedRemaining = tuning != null ? tuning.WallSpeedRetentionTime : 0f;
+            }
+            if (contact.normal.y < -0.5f && variableJumpRemaining < tuning.VarJumpTime - tuning.CeilingVarJumpGrace)
+                variableJumpRemaining = 0f;
         }
 
         public void OpenLaunchJumpWindow(float seconds)
         {
             jumpGate.OpenLaunchWindow(seconds);
+            launchMomentumRemaining = Mathf.Max(launchMomentumRemaining, seconds);
         }
 
         bool CheckGrounded()
@@ -133,7 +224,8 @@ namespace Game.Player
         void TryCornerCorrection(float upwardDistance)
         {
             if (body.Cast(Vector2.up, solidFilter, castHits, upwardDistance) == 0) return;
-            float step = 1f / Mathf.Max(tuning.PixelsPerUnit, 1f);
+            const float celesteUnitsPerTile = 8f;
+            float step = 1f / celesteUnitsPerTile;
             int steps = Mathf.CeilToInt(tuning.CornerCorrectionPx);
             for (int i = 1; i <= steps; i++)
             {

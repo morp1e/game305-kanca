@@ -21,11 +21,21 @@ MonoBehaviour:
   gravity: 112.5
   maxFallSpeed: 20
   halfGravThreshold: 5
-  jumpSpeed: 13.1
+  jumpSpeed: 13.125
   varJumpTime: 0.2
   coyoteTime: 0.1
-  jumpBufferTime: 0.1
+  jumpBufferTime: 0.08
   launchJumpBonus: 2
+  wallJumpEnabled: 1
+  fastMaxFallSpeed: 30
+  fastMaxAccel: 37.5
+  wallSlideStartMax: 2.5
+  wallSlideTime: 1.2
+  wallJumpHSpeed: 16.25
+  wallJumpForceTime: 0.16
+  wallJumpCheckDist: 0.375
+  ceilingVarJumpGrace: 0.05
+  wallSpeedRetentionTime: 0.06
   groundCheckDistance: 0.08
   cornerCorrectionPx: 4
   pixelsPerUnit: 16

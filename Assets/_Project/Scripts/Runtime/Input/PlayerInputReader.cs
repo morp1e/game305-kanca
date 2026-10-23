@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 namespace Game.Input
 {
+    // Celeste Player.cs (MIT, (c) 2018 Noel Berry) uyarlaması; bkz. tools/reference/celeste/LICENSE
     /// <summary>
     /// Klavye + fare girdisi. Update'te okur, basışları zaman damgasıyla tamponlar;
     /// FixedUpdate'teki sistemler Consume* ile tüketir. Tuş atamaları bu dosyadadır.
@@ -10,7 +11,7 @@ namespace Game.Input
     [DefaultExecutionOrder(-100)]
     public sealed class PlayerInputReader : MonoBehaviour
     {
-        InputAction move, jump, throwHook, attack, point;
+        InputAction move, jump, down, throwHook, attack, point;
 
         double jumpPressedAt = double.NegativeInfinity;
         double throwPressedAt = double.NegativeInfinity;
@@ -19,15 +20,21 @@ namespace Game.Input
         /// <summary>-1..1 yatay girdi.</summary>
         public float MoveX { get; private set; }
         public bool JumpHeld { get; private set; }
+        public bool DownHeld { get; private set; }
         /// <summary>İmlecin ekran konumu (piksel).</summary>
         public Vector2 PointerScreen { get; private set; }
         Vector2? pointerWorldOverride;
         float? moveXOverride;
+        bool? jumpHeldOverride;
+        bool? downHeldOverride;
 
         /// <summary>Testlerde fare konumunu kamera girdisinden bağımsız belirler.</summary>
         public void SetPointerWorldOverride(Vector2? worldPoint) => pointerWorldOverride = worldPoint;
         /// <summary>Testlerde yatay hareket girdisini belirler.</summary>
         public void SetMoveXOverride(float? value) => moveXOverride = value;
+        public void SetJumpHeldOverride(bool? value) => jumpHeldOverride = value;
+        public void SetDownHeldOverride(bool? value) => downHeldOverride = value;
+        public void TriggerJumpForTest() => jumpPressedAt = Now;
         /// <summary>PlayMode testlerinde saldırı basışını tamponlar.</summary>
         public void TriggerAttackForTest() => attackPressedAt = Now;
 
@@ -44,6 +51,10 @@ namespace Game.Input
             jump.AddBinding("<Keyboard>/space");
             jump.AddBinding("<Keyboard>/w");
 
+            down = new InputAction("Down", InputActionType.Button);
+            down.AddBinding("<Keyboard>/s");
+            down.AddBinding("<Keyboard>/downArrow");
+
             throwHook = new InputAction("ThrowHook", InputActionType.Button, "<Mouse>/rightButton");
             attack = new InputAction("Attack", InputActionType.Button, "<Mouse>/leftButton");
             point = new InputAction("Point", InputActionType.Value, "<Pointer>/position");
@@ -51,23 +62,24 @@ namespace Game.Input
 
         void OnEnable()
         {
-            move.Enable(); jump.Enable(); throwHook.Enable(); attack.Enable(); point.Enable();
+            move.Enable(); jump.Enable(); down.Enable(); throwHook.Enable(); attack.Enable(); point.Enable();
         }
 
         void OnDisable()
         {
-            move.Disable(); jump.Disable(); throwHook.Disable(); attack.Disable(); point.Disable();
+            move.Disable(); jump.Disable(); down.Disable(); throwHook.Disable(); attack.Disable(); point.Disable();
         }
 
         void OnDestroy()
         {
-            move.Dispose(); jump.Dispose(); throwHook.Dispose(); attack.Dispose(); point.Dispose();
+            move.Dispose(); jump.Dispose(); down.Dispose(); throwHook.Dispose(); attack.Dispose(); point.Dispose();
         }
 
         void Update()
         {
             MoveX = Mathf.Clamp(moveXOverride ?? move.ReadValue<float>(), -1f, 1f);
-            JumpHeld = jump.IsPressed();
+            JumpHeld = jumpHeldOverride ?? jump.IsPressed();
+            DownHeld = downHeldOverride ?? down.IsPressed();
             PointerScreen = point.ReadValue<Vector2>();
 
             if (jump.WasPressedThisFrame()) jumpPressedAt = Now;

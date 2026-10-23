@@ -58,3 +58,4 @@ MonoBehaviour:
   switchMargin: 0.15
   throwOriginOffset: {x: 0.5, y: 0}
   inputBufferTime: 0.1
+  lightPullSpeed: 30

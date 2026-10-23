@@ -67,7 +67,8 @@ Preset Manager'da klasöre göre iki varsayılan preset:
 ## 4. Oyuncu kontrolcüsü
 
 - **Dynamic Rigidbody2D, hızı biz yazarız** (gravityScale 0, yerçekimi ve tüm ivme kodda). Çarpışma ve zeminden ayırma fizik motorunda kalır. Gerekçe: kontrol hissi yine tamamen bizim kodumuzda, kanca çekişi hızı doğrudan devralır, ama temas payı ve tünelleme gibi hatalara açık kendi çarpışma kodumuzu taşımayız. 2026-10-18: ilk sürüm Kinematic + kendi Cast döngüsüyle yazılmıştı; gerçek fizik testlerinde kırılgan bulunup değiştirildi.
-- Yerçekimi, zemin teması, coyote time, jump buffer ve köşe düzeltme kodda yazılır, değerleri `PlayerMovementTuning` SO'sundadır.
+- Yerçekimi, zemin teması, coyote time, 0,08 sn jump buffer, değişken zıplama, hızlı düşüş, duvar kayması ve duvar zıplaması ile köşe düzeltme Celeste `Player.cs` mantığına göre uyarlanmıştır. Değerler `PlayerMovementTuning` SO'sundadır; duvar zıplaması tasarımcı tarafından kapatılabilir.
+- Yatay hız Celeste kuralıyla yönetilir: aynı yönde maksimum koşu hızını aşınca `runReduce`, diğer durumlarda `runAccel` kullanılır. Bilinçli sapma: kanca fırlatma penceresindeki aşırı yatay momentum girdisizken aniden kesilmez, `runReduce` ile yavaşça azalır; kanca fırlamasının mevcut akış hissi korunur.
 - **Girdi `Update`'te okunur, tampona yazılır, `FixedUpdate`'te tüketilir.** Input System, `FixedUpdate` içinde sorgulanınca editörde hata basıyor.
 - Kontrolcünün bir "hız devralma" modu olur: kanca çekişi sırasında yerçekimi ve oyuncu girdisi devre dışı kalır, hızı kanca sistemi belirler.
 
@@ -140,7 +141,7 @@ Birim: 1 unit = 1 kare. Kaynak: C = Celeste kodu (piksel/sn, 8 px = 1 kare olara
 | shakeExponent | 2 | | E |
 | traumaDecay | 1,0 | /s | Ö |
 | pullableLayers | Enemy + Default | katman maskesi | Ö |
-| lightPullSpeed | 8 | u/s | Ö |
+| lightPullSpeed | 30 | u/s | Ö, oyuncu çekişiyle aynı |
 | pullableArriveDistance | 0,5 | u | Ö |
 | pullableMaxTime | 2 | s | Ö |
 | pullableReleaseSpeed | 1 | u/s | Ö |

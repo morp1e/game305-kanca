@@ -56,7 +56,7 @@ namespace Game.Hook
         public Vector2 throwOriginOffset = new Vector2(0.5f, 0f);
         [Tooltip("Fırlatma girdisi tamponu, s. Ö: oynayarak ayarlanacak.")]
         public float inputBufferTime = 0.1f;
-        [Tooltip("Hafif hedefe çekiş hızı, u/s. Ö: oynayarak ayarlanacak.")] public float lightPullSpeed = 8f;
+        [Tooltip("Hafif hedefe çekiş hızı, u/s. Ö: oyuncu çekişiyle aynı, oynayarak ayarlanacak.")] public float lightPullSpeed = 30f;
         [Tooltip("Hafif hedef varış mesafesi, u. Ö: oynayarak ayarlanacak.")] public float pullableArriveDistance = 0.5f;
         [Tooltip("Hafif hedefe çekiş azami süresi, s. Ö: oynayarak ayarlanacak.")] public float pullableMaxTime = 2f;
         [Tooltip("Hafif hedef varışındaki bırakma hızı, u/s. Ö: oynayarak ayarlanacak.")] public float pullableReleaseSpeed = 1f;
