@@ -212,9 +212,9 @@ namespace Game.Editor.Sandbox
             renderer.sortingOrder = name == "Decor" ? -2 : name == "Ground" ? -1 : 0;
             if (collider)
             {
-                var body = go.AddComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Static;
-                var tileCollider = go.AddComponent<TilemapCollider2D>(); tileCollider.compositeOperation = Collider2D.CompositeOperation.Merge;
-                var composite = go.AddComponent<CompositeCollider2D>(); composite.geometryType = CompositeCollider2D.GeometryType.Outlines;
+                // Karo başına kutu, SandboxBuilder ile aynı. CompositeCollider2D (Merge) Unity 6.3'te burada da
+                // sıfır şekil üretti (Sandbox_Ozenc, 2026-10-23); oyuncu zeminden düşüyordu.
+                go.AddComponent<TilemapCollider2D>();
             }
             if (noHook) go.AddComponent<NonHookable>();
             return map;
