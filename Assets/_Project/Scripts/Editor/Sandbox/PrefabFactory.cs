@@ -37,15 +37,18 @@ namespace Game.Editor.Sandbox
             var circle = AssetDatabase.LoadAssetAtPath<Sprite>(PixelDir + "/greybox_circle.png");
             var death = Event<GameEvent>(DataDir + "/Events/Event_PlayerDeath.asset");
             var respawn = Event<GameEvent>(DataDir + "/Events/Event_PlayerRespawn.asset");
+            var healthEvent = Event<HealthEvent>(DataDir + "/Events/Event_PlayerHealth.asset");
+            var damagedEvent = Event<GameEvent>(DataDir + "/Events/Event_PlayerDamaged.asset");
             var kick = Event<Vector2Event>(DataDir + "/Events/Event_CameraKick.asset");
             var lines = Event<SwordLineSet>(DataDir + "/Dialogue/SwordLines.asset");
             var trauma = AssetDatabase.LoadAssetAtPath<FloatEvent>(DataDir + "/Events/Event_CameraTrauma.asset");
             var swordTuning = Event<SwordTuning>(DataDir + "/Tuning/SwordTuning.asset");
             var dummyTuning = Event<TrainingDummyTuning>(DataDir + "/Tuning/TrainingDummyTuning.asset");
+            var healthTuning = Event<PlayerHealthTuning>(DataDir + "/Tuning/PlayerHealthTuning.asset");
             lines.EnsureCombatCues(); EditorUtility.SetDirty(lines);
             var rig = new GameObject("PlayerRig");
             if (armTuning == null) armTuning = Tuning(DataDir + "/Tuning/PlayerRigTuning.asset");
-            var player = CreatePlayer(square, movement, tuning, armTuning, trauma);
+            var player = CreatePlayer(square, movement, tuning, armTuning, trauma, healthTuning, healthEvent, damagedEvent);
             player.transform.SetParent(rig.transform, false);
             player.transform.localPosition = Vector3.zero;
             var hookVisual = CreateHookVisual(square); hookVisual.transform.SetParent(rig.transform, false);
@@ -76,12 +79,13 @@ namespace Game.Editor.Sandbox
             AssetDatabase.Refresh();
         }
 
-        static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, GrappleHookTuning tuning, PlayerRigTuning armTuning, FloatEvent trauma)
+        static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, GrappleHookTuning tuning, PlayerRigTuning armTuning, FloatEvent trauma, PlayerHealthTuning healthTuning, HealthEvent healthEvent, GameEvent damagedEvent)
         {
             var player = new GameObject("Player"); player.layer = LayerMask.NameToLayer("Player");
             var rb = player.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Dynamic; rb.gravityScale = 0f; rb.interpolation = RigidbodyInterpolation2D.Interpolate;
             var capsule = player.AddComponent<CapsuleCollider2D>(); capsule.direction = CapsuleDirection2D.Vertical; capsule.size = new Vector2(.8f, 1.8f);
             var input = player.AddComponent<PlayerInputReader>(); var motor = player.AddComponent<PlayerMotor>(); var hook = player.AddComponent<GrappleHook>();
+            var health = player.AddComponent<PlayerHealth>();
             var visualRoot = new GameObject("Visual"); visualRoot.transform.SetParent(player.transform, false);
             var visual = new GameObject("Body"); visual.transform.SetParent(visualRoot.transform, false); visual.transform.localScale = new Vector3(1, 2, 1);
             visual.AddComponent<SpriteRenderer>().sprite = sprite;
@@ -93,6 +97,8 @@ namespace Game.Editor.Sandbox
             Set(armRig, ("tuning", armTuning), ("bodySprite", visual.transform), ("hookArmPivot", hookArm.transform), ("swordArmPivot", swordArm.transform), ("input", input));
             Set(motor, ("tuning", movement), ("input", input), ("armRig", armRig));
             Set(hook, ("tuning", tuning), ("input", input), ("body", motor), ("armRig", armRig), ("traumaEvent", trauma));
+            Set(health, ("tuning", healthTuning), ("healthEvent", healthEvent), ("damagedEvent", damagedEvent), ("traumaEvent", trauma));
+            SetOptional(health, "visual", visualRoot);
             return player;
         }
 

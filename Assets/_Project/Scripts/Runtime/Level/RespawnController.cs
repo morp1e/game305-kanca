@@ -24,14 +24,19 @@ namespace Game.Level
 
         public Vector2 CurrentCheckpoint { get; private set; }
         public bool IsDead { get; private set; }
+        public bool IsReturning => returning;
+        public event System.Action Respawned;
         Checkpoint activeCheckpoint;
         GrappleHook hook;
         float respawnAt;
+        bool returning;
+        bool bodyWasSimulated;
 
         void Awake()
         {
             if (motor == null) motor = GetComponent<PlayerMotor>();
             hook = GetComponent<GrappleHook>();
+            if (visual == null && transform.Find("Visual") != null) visual = transform.Find("Visual").gameObject;
             CurrentCheckpoint = motor != null ? motor.Position : transform.position;
         }
 
@@ -42,6 +47,12 @@ namespace Game.Level
 
         void FixedUpdate()
         {
+            if (returning)
+            {
+                if (Time.time < respawnAt) return;
+                CompleteReturn();
+                return;
+            }
             if (!IsDead)
             {
                 if (motor != null && motor.Position.y < killHeight) Kill();
@@ -54,7 +65,7 @@ namespace Game.Level
 
         public void Kill()
         {
-            if (IsDead) return;
+            if (IsDead || returning) return;
             IsDead = true;
             respawnAt = Time.time + Mathf.Max(0f, respawnDelay);
             if (deathEvent != null) deathEvent.Raise();
@@ -66,6 +77,39 @@ namespace Game.Level
                 motor.Velocity = Vector2.zero;
             }
             if (visual != null) visual.SetActive(false);
+        }
+
+        public void ReturnTo(Vector2 position, float delay)
+        {
+            if (IsDead || returning) return;
+            returning = true;
+            respawnAt = Time.time + Mathf.Max(0f, delay);
+            if (hook != null) hook.ResetToHand();
+            if (motor != null)
+            {
+                var body = motor.GetComponent<Rigidbody2D>();
+                if (body != null) { bodyWasSimulated = body.simulated; body.simulated = false; }
+                motor.ExternalControl = true;
+                motor.Velocity = Vector2.zero;
+            }
+            if (visual != null) visual.SetActive(false);
+            returnPosition = position;
+        }
+
+        Vector2 returnPosition;
+
+        void CompleteReturn()
+        {
+            if (motor != null)
+            {
+                var body = motor.GetComponent<Rigidbody2D>();
+                if (body != null) { body.position = returnPosition; body.simulated = bodyWasSimulated; }
+                motor.transform.position = returnPosition;
+                motor.Velocity = Vector2.zero;
+                motor.ExternalControl = false;
+            }
+            if (visual != null) visual.SetActive(true);
+            returning = false;
         }
 
         public void SetCheckpoint(Vector2 position)
@@ -98,6 +142,7 @@ namespace Game.Level
             if (visual != null) visual.SetActive(true);
             IsDead = false;
             if (respawnEvent != null) respawnEvent.Raise();
+            Respawned?.Invoke();
         }
     }
 }

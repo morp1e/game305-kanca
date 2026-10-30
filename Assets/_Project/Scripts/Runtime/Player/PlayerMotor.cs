@@ -35,6 +35,7 @@ namespace Game.Player
         float wallSpeedRemaining;
         float launchMomentumRemaining;
         float lastWrittenHorizontalSpeed;
+        float knockbackControlLockRemaining;
 
         public Vector2 Position => body != null ? body.position : (Vector2)transform.position;
 
@@ -86,6 +87,18 @@ namespace Game.Player
             wallSpeedRemaining = Mathf.Max(0f, wallSpeedRemaining - dt);
             launchMomentumRemaining = Mathf.Max(0f, launchMomentumRemaining - dt);
             forcedMoveRemaining = Mathf.Max(0f, forcedMoveRemaining - dt);
+
+            if (knockbackControlLockRemaining > 0f)
+            {
+                knockbackControlLockRemaining = Mathf.Max(0f, knockbackControlLockRemaining - dt);
+                Vector2 knockbackVelocity = Velocity;
+                if (!IsGrounded)
+                    knockbackVelocity.y = MovementMath.StepGravity(knockbackVelocity.y, dt, false,
+                        tuning.Gravity, tuning.HalfGravThreshold, tuning.MaxFallSpeed);
+                else if (knockbackVelocity.y < 0f) knockbackVelocity.y = 0f;
+                Velocity = knockbackVelocity;
+                return;
+            }
 
             if (ExternalControl)
             {
@@ -209,6 +222,15 @@ namespace Game.Player
         {
             jumpGate.OpenLaunchWindow(seconds);
             launchMomentumRemaining = Mathf.Max(launchMomentumRemaining, seconds);
+        }
+
+        public void ApplyKnockback(Vector2 velocity, float controlLockSeconds)
+        {
+            ExternalControl = false;
+            Velocity = velocity;
+            knockbackControlLockRemaining = Mathf.Max(knockbackControlLockRemaining, Mathf.Max(0f, controlLockSeconds));
+            variableJumpRemaining = 0f;
+            forcedMoveRemaining = 0f;
         }
 
         bool CheckGrounded()

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Game.Player;
 
 namespace Game.Level
 {
@@ -17,6 +18,8 @@ namespace Game.Level
         {
             var body = other.attachedRigidbody;
             if (body == null) return;
+            var health = body.GetComponentInParent<PlayerHealth>();
+            if (health != null) { health.TakeHazardHit(); return; }
             var respawn = body.GetComponentInParent<RespawnController>();
             if (respawn != null) respawn.Kill();
         }
