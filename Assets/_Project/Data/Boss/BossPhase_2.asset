@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a11277a5c5b64468b80f2fd34ad3e146, type: 3}
+  m_Name: BossPhase_2
+  m_EditorClassIdentifier: Game.Runtime::Game.Boss.BossPhase
+  enterAtHealth: 0
+  transitionDuration: 2
+  telegraphScale: 0.8
+  minTelegraph: 0.45
+  idleMin: 0.3
+  idleMax: 0.6
+  hasShield: 0
+  attacks:
+  - attack: {fileID: 11400000, guid: 654cba753f0d07543ad5875dcdc4c04b, type: 2}
+    weight: 3
+    minRange: 0
+    maxRange: 40
+  - attack: {fileID: 11400000, guid: 23ab784a15b880a4fbf5f85a3041be59, type: 2}
+    weight: 2
+    minRange: 0
+    maxRange: 40
+  - attack: {fileID: 11400000, guid: 602967e9137d1984daa496946c73192c, type: 2}
+    weight: 2
+    minRange: 0
+    maxRange: 2.5
+  - attack: {fileID: 11400000, guid: 2fe0793497fdabf46ae3f52de81c11af, type: 2}
+    weight: 2
+    minRange: 0
+    maxRange: 40
+  - attack: {fileID: 11400000, guid: 7876d4d0c80acfc4589aed99d70790c7, type: 2}
+    weight: 1
+    minRange: 0
+    maxRange: 40

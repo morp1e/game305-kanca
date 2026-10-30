@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4318e172b1d042358597bae397c54a5d, type: 3}
+  m_Name: ProjectileDef_Spit
+  m_EditorClassIdentifier: Game.Runtime::Game.Enemies.ProjectileDefinition
+  speed: 6
+  lifetime: 4
+  damage: 1
+  deflectable: 1
+  reflectSpeedMult: 1.5
+  radius: 0.25

@@ -6,7 +6,7 @@
 ; Bolge 3 (x 76-110): yuruyen dusmanlar ve kasa; kanca hafif hedefi ceker, sersemlemisken kilic
 ; Bolge 4 (x 111-147): diken koridoru; tavandan tavana kanca, X parcalari kanca tutmaz, ortada ada
 ; Bolge 5 (x 148-171): dikey tirmanis; cikintilar, duvar ziplamasi, ucan ve tukurgen
-; Bolge 6 (x 172-237): ust zemin, kalkanli agir dusman, Zincirli Bekci arenasi (ic alan 28x12)
+; Bolge 6 (x 172-237): ust zemin, kalkanli agir dusman, Zincirli Bekci arenasi (ic alan 28x12, kirisler arena prefabinda)
 ##                                                                                                                                                                                                                                          ##
 ##                                                                                                                                                                                                  ################################        ##
 ##                                                                                                                                                                                                  ################################        ##
@@ -14,7 +14,7 @@
 ##                                                                                                                                                                                                  ##                            ##        ##
 ##                                                                                                                                                                                                  ##                            ##        ##
 ##                                                                                                                                                    ######################                        ##                            ##        ##
-##                                                                                                                                                    ##                                            ##     ####          ####     ##        ##
+##                                                                                                                                                    ##                                            ##                            ##        ##
 ##                                                                                                                                                    ##                                            ##                            ##        ##
 ##                                                                                                                                                    ##                                            ##                            ##        ##
 ##                                                                                                                                                    ##                                            ##                            ##        ##

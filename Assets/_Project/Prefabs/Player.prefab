@@ -111,6 +111,7 @@ GameObject:
   - component: {fileID: 4354386653561828621}
   - component: {fileID: 1371889653538187707}
   - component: {fileID: 2718266259714412711}
+  - component: {fileID: 5410640957027659126}
   m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
@@ -355,6 +356,23 @@ MonoBehaviour:
   aimCamera: {fileID: 0}
   traumaEvent: {fileID: 11400000, guid: b283f24b739cd2b42906d550998eb5d8, type: 2}
   voiceEvents: {fileID: 1371889653538187707}
+--- !u!114 &5410640957027659126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 723754467338534049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2164b80b7c414d8f878ad3601f16c405, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Player.PlayerHealth
+  tuning: {fileID: 11400000, guid: e4dbc3936e4844b4dbf3b7424c1d25a0, type: 2}
+  healthEvent: {fileID: 11400000, guid: b59907502b8d8424bb96f509b3712436, type: 2}
+  damagedEvent: {fileID: 11400000, guid: 6ae624cc3840035488cfef8036066976, type: 2}
+  traumaEvent: {fileID: 11400000, guid: b283f24b739cd2b42906d550998eb5d8, type: 2}
+  visual: {fileID: 2902170098523591817}
 --- !u!1 &1967427402607138303
 GameObject:
   m_ObjectHideFlags: 0

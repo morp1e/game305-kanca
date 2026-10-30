@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f319497ac754d10b75cabc57dd5d3a3, type: 3}
+  m_Name: BossAttack_GroundSlam
+  m_EditorClassIdentifier: Game.Runtime::Game.Boss.BossAttack
+  id: ground_slam
+  telegraph: 0.7
+  active: 0.15
+  recovery: 0.6
+  loosensShield: 1
+  movement: 2
+  moveSpeed: 0
+  hitboxes:
+  - offset: {x: 2, y: 0}
+    size: {x: 2, y: 2}
+    activeFrom: 0
+    activeTo: 0.15
+    damage: 1
+  spawnPrefab: {fileID: 3429005062987296480, guid: 95ae722a295fb0d4982a7d773f6d71ce, type: 3}
+  spawnSpeed: 10
+  spawnDamage: 1
+  spawnLifetime: 4
+  arenaEffect: 

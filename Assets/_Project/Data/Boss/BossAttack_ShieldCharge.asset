@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f319497ac754d10b75cabc57dd5d3a3, type: 3}
+  m_Name: BossAttack_ShieldCharge
+  m_EditorClassIdentifier: Game.Runtime::Game.Boss.BossAttack
+  id: shield_charge
+  telegraph: 0.8
+  active: 1
+  recovery: 1
+  loosensShield: 1
+  movement: 1
+  moveSpeed: 16
+  hitboxes:
+  - offset: {x: 2, y: 0}
+    size: {x: 2, y: 2}
+    activeFrom: 0
+    activeTo: 1
+    damage: 1
+  spawnPrefab: {fileID: 0}
+  spawnSpeed: 10
+  spawnDamage: 1
+  spawnLifetime: 4
+  arenaEffect: 

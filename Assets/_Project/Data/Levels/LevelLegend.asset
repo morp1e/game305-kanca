@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffd565d74fe94c6ab6afce4a030d40bd, type: 3}
+  m_Name: LevelLegend
+  m_EditorClassIdentifier: Game.Editor::Game.Editor.Level.LevelLegend
+  entries:
+  - character: '#'
+    kind: 0
+    prefabPath: 
+    offset: {x: 0, y: 0}
+  - character: X
+    kind: 1
+    prefabPath: 
+    offset: {x: 0, y: 0}
+  - character: ~
+    kind: 2
+    prefabPath: 
+    offset: {x: 0, y: 0}
+  - character: ^
+    kind: 3
+    prefabPath: Hazard_Spikes
+    offset: {x: 0, y: 0.25}
+  - character: S
+    kind: 3
+    prefabPath: PlayerRig
+    offset: {x: 0, y: 0.92}
+  - character: C
+    kind: 3
+    prefabPath: Checkpoint
+    offset: {x: 0, y: 1.5}
+  - character: z
+    kind: 4
+    prefabPath: 
+    offset: {x: 0, y: 0}
+  - character: w
+    kind: 3
+    prefabPath: Enemies/Walker
+    offset: {x: 0, y: 0.42}
+  - character: f
+    kind: 3
+    prefabPath: Enemies/Flyer
+    offset: {x: 0, y: 0.5}
+  - character: t
+    kind: 3
+    prefabPath: Enemies/Spitter
+    offset: {x: 0, y: 0.62}
+  - character: b
+    kind: 3
+    prefabPath: Enemies/Brute
+    offset: {x: 0, y: 1.12}
+  - character: k
+    kind: 3
+    prefabPath: Crate
+    offset: {x: 0, y: 0.57}
+  - character: d
+    kind: 3
+    prefabPath: TrainingDummy
+    offset: {x: 0, y: 0.82}
+  - character: B
+    kind: 3
+    prefabPath: Boss/BossArena
+    offset: {x: -0.5, y: 0}
+  - character: E
+    kind: 5
+    prefabPath: Level/LevelExit
+    offset: {x: 0, y: 0}
