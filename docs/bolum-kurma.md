@@ -1,12 +1,40 @@
-# Bölüm kurma
+# Metin haritadan bölüm kurma
 
-1. Önce `Tools/Kanca/Gri Kutu Sahnesini Kur` menüsünü çalıştırın. Bu işlem prefab ve Tile asset’lerini üretir. Ardından yeni sahne açıp `Assets/_Project/Scenes/Levels/` altına kaydedin.
-2. `GameObject > 2D Object > Tilemap > Rectangular` ile `Ground` Tilemap oluşturun. Tile Palette penceresini açın, `Assets/_Project/Art/Pixel/_Greybox/Tiles/tile_ground.asset` dosyasını palette sürükleyin ve zemin hücrelerini boyayın. Tilemap GameObject katmanını `Ground` yapın; `TilemapCollider2D` ile `Rigidbody2D` Static kullanın.
-3. `Assets/_Project/Prefabs/` içinden `Anchor`, `Hazard_Spikes`, `Checkpoint` ve `PlayerRig` prefab’larını sahneye sürükleyin. Kanca noktalarını Anchor prefab’ıyla işaretleyin.
-4. Denemek için önce `Tools/Kanca/Gri Kutu Sahnesini Kur` ile Sandbox sahnesini üretin ve Play’e basın. Yeni bölümünüzü denemek için sahneyi Build Settings’e ekleyin.
+Bölüm düzeni `Assets/_Project/Data/Levels/*.txt` dosyasındadır. Bir karakter bir karo hücresidir. İlk sütun x=0, en alttaki harita satırı y=0'dır. Satırları yukarıdan aşağı yazın; satır uzunlukları farklı olabilir, kısa satırların sağı boş kabul edilir. Boşluk ve `.` boş hücredir. `;` ile başlayan satırlar açıklamadır. Haritanın başındaki `@anahtar değer` satırları bölüm ayarıdır.
 
-`TrainingDummy` kılıç ve hafif kanca denemeleri için Enemy katmanına, `HeavyDummy` oyuncuyu çeken ağır hedef olarak Enemy katmanına, `Crate` hafif ve hasar almayan kanca hedefi olarak Default katmanına yerleştirilir.
+## Lejant
 
-## Elle test bölümü
+Lejant `Assets/_Project/Data/Levels/LevelLegend.asset` içinde tutulur. Asset yoksa kurucu varsayılan girdilerle oluşturur; mevcut lejantı değiştirmez.
 
-`Tools/Kanca/Ozenc Sandbox Kur` menüsü `Sandbox_Ozenc` kişisel sahnesini ve Kenney Tile Palette'ini kurar. Sahneyi açın, ardından **Window > 2D > Tile Palette** penceresini açın ve `Palette_Kenney` paletini seçin. Palette'te `Ground`, `NonHookable` veya `Decor` Tilemap'i aktif hedef olarak seçip boyayın. `NonHookable` katmanına boyanan karolar kancayı geri döndürür. Kenney karoları geçici CC0 yer tutuculardır: 18 px hücrelidir, son oyunda kendi 16 px çizimlerimizle değiştirilecektir.
+| Karakter | Üretilen |
+|---|---|
+| `#` | Kancalanabilir Ground karosu. Üst yüzeyde 0/1/2, altında 20 numaralı karo kullanılır. |
+| `X` | `NonHookable` işaretli Tilemap karosu. |
+| `~` | Çarpışmasız dekor karosu. |
+| `^` | `Hazard_Spikes` prefabı. |
+| `S` | Oyuncu başlangıcı. Haritada tam bir tane olmalıdır. |
+| `C` | Checkpoint prefabı. |
+| `z` | HazardRespawnZone varsa trigger alanı, yoksa yer tutucu ve uyarı. |
+| `w`, `f`, `t`, `b` | Sırasıyla Walker, Flyer, Turret ve Brute düşman prefablari. Eksik prefab uyarı ve yer tutucu üretir. |
+| `k`, `d`, `B` | Kasa, TrainingDummy ve boss arena prefablari. |
+| `E` | LevelExit prefabı varsa bölüm sonu. |
+
+Bilinmeyen karakterler hata oluşturmaz; satır ve sütun numarasıyla uyarı verir. `@killHeight` oyuncunun düşme ölüm sınırını, `@cameraPadding` kamera çokgeni çevresindeki payı belirler.
+
+## Örnek
+
+```text
+@name Level_01
+@killHeight -12
+@cameraPadding 2
+; Basit başlangıç ve zemin
+  C
+S###
+####
+```
+
+## Yeniden üretme
+
+Unity'de `Level_01.txt` seçiliyken **Tools > Kanca > Bolumu Haritadan Kur** menüsünü çalıştırın. Seçili TextAsset yoksa `Level_01.txt` kullanılır. Batchmode girişi `Game.Editor.Level.LevelBuilder.BuildLevel01` metodudur. Sahne `Assets/_Project/Scenes/Levels/Level_01.unity` yoluna yazılır. Aynı harita tekrar kurulduğunda aynı Tilemap ve nesne dizilimi oluşur.
+
+`Level_01.txt` altı gri kutu öğretim bölgesi içerir: hareket ve kılıç, kanca boşluğu, ilk düşmanlar, diken geçidi, dikey tırmanış ve boss öncesi arena. Harita değeridir; tasarım değişikliği için kod düzenlemek gerekmez.

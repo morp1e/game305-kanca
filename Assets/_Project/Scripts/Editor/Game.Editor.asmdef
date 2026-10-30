@@ -10,7 +10,8 @@
         "Unity.TextMeshPro",
         "Unity.2D.Tilemap.Extras",
         "Unity.2D.Sprite.Editor",
-        "Unity.2D.Tilemap.Editor"
+        "Unity.2D.Tilemap.Editor",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
         "Editor"

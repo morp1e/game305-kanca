@@ -39,6 +39,15 @@ namespace Game.Input
         /// <summary>PlayMode testlerinde saldırı basışını tamponlar.</summary>
         public void TriggerAttackForTest() => attackPressedAt = Now;
 
+        /// <summary>Menü kapanırken çağrılır: menüdeki tıklama ve tuşlar saldırı, kanca veya zıplama olarak kalmasın.</summary>
+        public void ClearBuffers()
+        {
+            jumpPressedAt = double.NegativeInfinity;
+            jumpActionPressedAt = double.NegativeInfinity;
+            throwPressedAt = double.NegativeInfinity;
+            attackPressedAt = double.NegativeInfinity;
+        }
+
         /// <summary>Basışlar ve tüketim aynı saatle ölçülür; Update ile FixedUpdate arasında kayma olmaz.</summary>
         static double Now => Time.realtimeSinceStartupAsDouble;
 

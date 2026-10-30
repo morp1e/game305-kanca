@@ -34,8 +34,9 @@ Assets/
     Audio/
     Data/           (SO asset'leri: ayarlar, boss desenleri, olay kanalları)
     Prefabs/
+    Resources/Flow/ (SceneFlow.prefab: sahne akışı, karartma, süre/ölüm sayacı)
     Scenes/
-      Bootstrap.unity
+      Title.unity, End.unity  (UiFactory üretir)
       Levels/
       Sandbox/      (kişisel deneme sahneleri: Sandbox_Ozenc, Sandbox_Efe)
     Scripts/
@@ -59,7 +60,7 @@ Preset Manager'da klasöre göre iki varsayılan preset:
 
 ## 3. Sahne düzeni ve çakışma önleme
 
-- `Bootstrap` sahnesi kalıcı sistemleri taşır (oyun durumu, ses, kamera kökü) ve bölüm sahnelerini **additive** yükler.
+- **Her sahne tek başına Play'e basılabilir.** Bootstrap sahnesi ve additive yükleme yok (Gizmo, 2026-10-30; önceki plan buydu). Kalıcı sistemler (`SceneFlow`, `ScreenFader`, `RunStats`) `Resources/Flow/SceneFlow.prefab`'dan ilk ihtiyaçta kurulur ve `DontDestroyOnLoad` olur. Bölümler tek modda (`LoadSceneMode.Single`, async) yüklenir, geçişte ekran kararır. Gerekçe: Sandbox ve bölüm sahneleri doğrudan denenebilir; iki kişilik ekipte additive sahne yönetiminin hata yüzeyi gereksiz.
 - **Her sahnenin tek sahibi vardır.** Sahibi olmadığın sahneyi değiştireceksen önce haber ver. Sahiplik `docs/ekip-rehberi.md` içindeki tabloda.
 - Deneme yapmak için kişisel `Sandbox_<ad>` sahnesi kullanılır.
 - Sahne yalnız yerleşimi taşır. Davranış prefab'ta, ayar SO'da durur. Böylece aynı anda iki kişinin aynı dosyayı değiştirmesi seyrekleşir.
@@ -204,3 +205,16 @@ Ekran çözünürlüğü politikası: 1080p ve 4K tam sayı ölçekte çalışı
 - Unity'nin varsayılanları doğru: Asset Serialization = Force Text, Version Control = Visible Meta Files.
 - **Git LFS kotası:** GitHub ücretsiz hesapta 10 GiB depolama ve ayda 10 GiB indirme. Her yeni klon (laboratuvar bilgisayarı dahil) indirme kotasından düşer. Ses ogg olarak eklenir, aynı dosyanın gereksiz sürümleri commit'lenmez.
 - **Sahne ve prefab çakışması için Unity Smart Merge** (UnityYAMLMerge). Kurulum `docs/ekip-rehberi.md` içinde.
+
+## 9. Arayüz ve sahne akışı
+
+- Arayüz oyun koduna bağlanmaz, olay kanallarını dinler: `HealthHud` → `Event_PlayerHealth`; `BossHealthBar` → `Event_BossFightStarted` (adı yazar, görünür), `Event_BossHealth`, `Event_BossDefeated` (bir süre sonra gizlenir), `Event_PlayerRespawn` (dövüş sıfırlandığı için gizlenir).
+- `GameHud.prefab` (sol üstte can maskeleri, alt ortada boss çubuğu, Esc ile duraklatma menüsü) her bölüm sahnesine konur. İçindeki `FlowBootstrap`, bölüm doğrudan açılsa da `SceneFlow`'u kurar: "oyun bitti" kanalı dinlenir, süre ve ölüm sayılır.
+- Akış: `Title` → `SceneCatalog.levels` sırası → `End`. `Event_GameWon` (boss yenilince) bitiş sahnesini açar; `LevelExit` tetikleyicisi sıradaki sahneye geçer. Duraklatma `Time.timeScale = 0` kullanır; menü kapanırken `PlayerInputReader.ClearBuffers()` menü tıklamalarının saldırı/kanca olarak kalmasını önler.
+- Görsel: 1920×1080 referanslı `CanvasScaler` (eşleme 0,5), TextMeshPro, renkler `UiPalette`'te (koyu lacivert zemin, kırık beyaz metin, tek vurgu rengi amber). Prefab'lar ve Title/End sahneleri `Tools/Kanca/Arayuzu Kur` (`Game.Editor.UI.UiFactory.BuildAll`) ile koddan üretilir; elle düzenlenmez, değişiklik fabrikada yapılır. Metinler bileşen alanıdır, kod açmadan değişir.
+
+## 10. Bölüm verisi ve build
+
+Bölüm yerleşimi `Assets/_Project/Data/Levels/*.txt` metin haritasında tutulur. `LevelLegend.asset` karakterleri Tilemap türü veya prefab yoluyla eşler. Harita değiştikten sonra Tools > Kanca > Bolumu Haritadan Kur ile sahne yeniden üretilir. Kurucu deterministiktir ve aynı harita aynı sahneyi üretir. `Level_01` için batchmode girişi `Game.Editor.Level.LevelBuilder.BuildLevel01` metodudur.
+
+Build menüleri etkin Build Settings sahnelerini kullanır. `Game.Editor.Build.BuildScript.BuildWindows` Windows çıktısını `Builds/Windows/Kanca.exe`, `BuildWebGL` WebGL çıktısını `Builds/WebGL/` altına üretir. Build sırasında Development seçeneği etkinleştirilmez ve PlayerSettings değiştirilmez.
