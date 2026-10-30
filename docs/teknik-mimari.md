@@ -193,7 +193,7 @@ Ekran çözünürlüğü politikası: 1080p ve 4K tam sayı ölçekte çalışı
 
 ## 7. Veri ve olaylar
 
-- Ayarlar SO'da: `PlayerMovementTuning`, `PlayerRigTuning`, `PlayerHealthTuning`, `GrappleHookTuning`, `SwordTuning`, `TrainingDummyTuning`, `CameraTuning`, `BossPattern`.
+- Ayarlar SO'da: `PlayerMovementTuning`, `PlayerRigTuning`, `PlayerHealthTuning`, `GrappleHookTuning`, `SwordTuning`, `TrainingDummyTuning`, `CameraTuning`, `BossDefinition`, `BossPhase`, `BossAttack`.
 - Sistemler arası haberleşme SO olay kanallarıyla: `OnPlayerDamaged`, `OnHookStuck` vb. Böylece UI ve ses, oyuncu koduna doğrudan bağlanmaz.
 - SO'lar build'de **salt okunurdur**. Oyuncu ilerlemesi ayrı bir kayıt dosyasında tutulur.
 - Play modunda SO'da yapılan değişiklik kalıcıdır. Ayar yaparken işe yarar, ama yanlışlıkla değiştirilen değer commit'e girer. Commit'ten önce diff'e bakın.
@@ -218,3 +218,38 @@ Ekran çözünürlüğü politikası: 1080p ve 4K tam sayı ölçekte çalışı
 Bölüm yerleşimi `Assets/_Project/Data/Levels/*.txt` metin haritasında tutulur. `LevelLegend.asset` karakterleri Tilemap türü veya prefab yoluyla eşler. Harita değiştikten sonra Tools > Kanca > Bolumu Haritadan Kur ile sahne yeniden üretilir. Kurucu deterministiktir ve aynı harita aynı sahneyi üretir. `Level_01` için batchmode girişi `Game.Editor.Level.LevelBuilder.BuildLevel01` metodudur.
 
 Build menüleri etkin Build Settings sahnelerini kullanır. `Game.Editor.Build.BuildScript.BuildWindows` Windows çıktısını `Builds/Windows/Kanca.exe`, `BuildWebGL` WebGL çıktısını `Builds/WebGL/` altına üretir. Build sırasında Development seçeneği etkinleştirilmez ve PlayerSettings değiştirilmez.
+
+## 11. Düşmanlar
+
+Düşman ayarları `EnemyDefinition` ScriptableObject'lerinde, mermi ayarları `ProjectileDefinition` içinde tutulur. Prefab ve içerik `Assets/_Project/Prefabs/Enemies/` altındadır. Ortak `EnemyBrain`, `EnemyHealth`, `ContactDamage` ve `HookPullable` bileşenleri kullanılır. Katman `Enemy` olur, gövde Dynamic Rigidbody2D ve FreezeRotation kullanır. Algılama için trigger kullanılmaz; mesafe ve Ground katmanına görüş ışını kullanılır.
+
+| Prefab | Öğrettiği kanca/kılıç kararı | Can | Kanca | Başlangıç ayarları |
+|---|---|---:|---|---|
+| Walker | Kenardan dönen devriyeyi kancayla kes, ardından kılıçla yen | 2 | Light | 2 u/s devriye, 5 u/s hücum, 6 u algı, 0,4 s telegraph, 0,8 s hücum, 1 s toparlanma, yerçekimi 3 |
+| Flyer | Havadaki telegraph'ı kancayla iptal et, dalıştan kaçın | 2 | Light | 3 u/s süzülme, 7 u algı, 0,35 s telegraph, 6 u/s dalış, 0,7 s dalış, yerçekimi 0 |
+| Spitter | Görüş hattını kes veya kancayla telegraph sırasında yaklaş; mermiyi kılıçla sektir | 3 | Light | 9 u algı, 0,5 s telegraph, 6 u/s mermi, 1,8 s bekleme, yerçekimi 3 |
+| Brute | Ağır hedefe kancayla çekil; kalkanı arkadan dolaş ve toparlanmada vur | 5 | Heavy | 1,5 u/s devriye, 120 derece ön kalkan, 0,6 s telegraph, 2×1,5 u saldırı kutusu, 0,2 s aktif, 1,5 s toparlanma, yerçekimi 3, geri itme direnci 1 |
+
+`EnemyDefinition` alanları: `maxHealth`, `moveSpeed`, `chaseSpeed`, `patrolRange`, `detectionRadius`, `loseTargetRadius`, `telegraphDuration`, `attackDuration`, `recoverDuration`, `attackCooldown`, `contactDamage`, `attackDamage`, `hurtStunDuration`, `knockbackResistance`, `gravityScale`, `shieldArcDegrees`, `projectile`, `hitFlashColor`, `hitFlashDuration`, `telegraphColor`, `resetOnPlayerRespawn`; uçan düşman için `hoverAmplitude` ve `hoverFrequency`; ağır saldırı için `attackBoxSize` ve `attackBoxForward`. `ProjectileDefinition` alanları `speed`, `lifetime`, `damage`, `deflectable`, `reflectSpeedMult` ve `radius` olur. Her ayar tooltip ile Ö: oynayarak ayarlanacak olarak işaretlidir.
+
+Tüm oynanış sayıları düşman tanımı SO'sunda düzenlenir. Başlangıç değerleri Ö: oynayarak ayarlanacak. Düşman ölünce kök nesne etkin kalır; beyin, renderer'lar, collider'lar ve fizik kapatılır. `resetOnPlayerRespawn` açıksa `Event_PlayerRespawn` ile konum, can ve durum başlangıca döner. Kancaya bağlı hafif düşman hız yazmaz ve temas hasarı vermez. Kanca sersemletmesi sıfır hasarlı `HitInfo` ile durum makinesine ulaşır. Telegraph hasar alır ama sırf kılıç isabetiyle iptal olmaz; kanca Pulled durumuna alarak iptal eder.
+
+```text
+Patrol -> Notice -> Telegraph -> Attack -> Recover -> Patrol
+Patrol <-> Chase
+Her etkin durum -> Hurt (hasarlı sersemletme) / Stunned (sıfır hasarlı sersemletme)
+Hafif HookPullable.IsHooked -> Pulled -> Released sonrası Stunned
+Her durum -> Dead
+```
+
+Brute kalkanı `ShieldMath` hesabıyla yalnız ön yaydaki saldırıyı engeller; Recover sırasında kalkan kapalıdır. Sektirilebilir mermi kılıç yönünde hızını çarpar ve düşman katmanındaki `IDamageable` nesnesine çarpar. Merminin sahibi oyuncu olduğunda oyuncuya isabet etmez. `Tools/Kanca/Dusmanlari Kur` menüsü `Game.Editor.Enemies.EnemyFactory.BuildAll` giriş noktasıyla tanımları ve prefabları üretir.
+
+## 12. Test yazarken
+
+Bu tuzakların her biri 2026-10-30'da gerçek bir testi yanlış kırmızıya ya da yanlış yeşile çevirdi:
+
+- **Yerçekimi yüksek.** Oyuncu Celeste değerleriyle düşer (112,5 u/s²): zeminsiz test sahnesinde 0,2 s'de 2 karodan fazla. Oyuncu hedef olarak duracaksa altına zemin koyun ya da `PlayerMotor.ExternalControl = true` ile sabitleyin.
+- **Kare saymayın.** Batchmode'da kare süresi milisaniyenin altına inebilir; "100 kare bekle" 0,01 s bile etmez. Süreyle bekleyin (`Time.time` son tarihi) ya da `WaitForFixedUpdate` sayın.
+- **Nesneleri üst üste doğurmayın.** Aynı konumda doğan düşman ve oyuncu, test daha başlamadan temas hasarı üretir.
+- **Reflection ile private alan atarken temel sınıfı da gezin.** `GetType().GetField` türetilmiş türde temel sınıfın private alanını bulmaz (ör. `WalkerBrain` → `EnemyBrain.definition`).
+- **Geri itme ve hitstop birden fazla yerde uygulanmasın.** Kılıç, dürtüyü hitstop bittikten sonra kendisi verir; hedefin `TakeHit`'i ikinci kez itmez.

@@ -58,9 +58,8 @@ Unity'de en çok iş, iki kişinin aynı sahneyi aynı anda değiştirmesiyle ka
 
 | Sahne | Sahibi |
 |---|---|
-| `Bootstrap` | Özenç |
-| `Levels/Level_01` | Özenç |
-| `Levels/Boss` | *(belirlenecek)* |
+| `Title`, `End` | Özenç (koddan üretilir: `UiFactory`) |
+| `Levels/Level_01` | Özenç (koddan üretilir: `Level_01.txt` haritası; elle düzenleme yeniden kurulumda kaybolur) |
 | `Sandbox/Sandbox_Ozenc` | Özenç |
 | `Sandbox/Sandbox_Efe` | Efe |
 

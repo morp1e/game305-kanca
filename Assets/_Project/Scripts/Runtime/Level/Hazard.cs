@@ -1,5 +1,6 @@
 using UnityEngine;
 using Game.Player;
+using Game.Combat;
 
 namespace Game.Level
 {
@@ -21,7 +22,17 @@ namespace Game.Level
             var health = body.GetComponentInParent<PlayerHealth>();
             if (health != null) { health.TakeHazardHit(); return; }
             var respawn = body.GetComponentInParent<RespawnController>();
-            if (respawn != null) respawn.Kill();
+            if (respawn != null) { respawn.Kill(); return; }
+            if (body.gameObject.layer != LayerMask.NameToLayer("Enemy")) return;
+            var damageables = body.GetComponentsInParent<MonoBehaviour>();
+            foreach (var component in damageables)
+            {
+                if (component is IDamageable damageable)
+                {
+                    damageable.TakeHit(new HitInfo(999f, Vector2.zero, 0f, other));
+                    return;
+                }
+            }
         }
     }
 }
