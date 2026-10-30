@@ -14,6 +14,7 @@ namespace Game.Input
         InputAction move, jump, down, throwHook, attack, point;
 
         double jumpPressedAt = double.NegativeInfinity;
+        double jumpActionPressedAt = double.NegativeInfinity;
         double throwPressedAt = double.NegativeInfinity;
         double attackPressedAt = double.NegativeInfinity;
 
@@ -34,7 +35,7 @@ namespace Game.Input
         public void SetMoveXOverride(float? value) => moveXOverride = value;
         public void SetJumpHeldOverride(bool? value) => jumpHeldOverride = value;
         public void SetDownHeldOverride(bool? value) => downHeldOverride = value;
-        public void TriggerJumpForTest() => jumpPressedAt = Now;
+        public void TriggerJumpForTest() { jumpPressedAt = Now; jumpActionPressedAt = Now; }
         /// <summary>PlayMode testlerinde saldırı basışını tamponlar.</summary>
         public void TriggerAttackForTest() => attackPressedAt = Now;
 
@@ -82,13 +83,19 @@ namespace Game.Input
             DownHeld = downHeldOverride ?? down.IsPressed();
             PointerScreen = point.ReadValue<Vector2>();
 
-            if (jump.WasPressedThisFrame()) jumpPressedAt = Now;
+            if (jump.WasPressedThisFrame()) { jumpPressedAt = Now; jumpActionPressedAt = Now; }
             if (throwHook.WasPressedThisFrame()) throwPressedAt = Now;
             if (attack.WasPressedThisFrame()) attackPressedAt = Now;
         }
 
         /// <summary>Son bufferSeconds içinde zıplamaya basıldıysa true döner ve basışı harcar.</summary>
         public bool ConsumeJump(float bufferSeconds) => Consume(ref jumpPressedAt, bufferSeconds);
+        public bool ConsumeJumpForAction(float bufferSeconds, double pressedAfter)
+        {
+            if (jumpActionPressedAt < pressedAfter || Now - jumpActionPressedAt > bufferSeconds) return false;
+            jumpActionPressedAt = double.NegativeInfinity;
+            return true;
+        }
         public bool ConsumeThrow(float bufferSeconds) => Consume(ref throwPressedAt, bufferSeconds);
         public bool ConsumeAttack(float bufferSeconds) => Consume(ref attackPressedAt, bufferSeconds);
 

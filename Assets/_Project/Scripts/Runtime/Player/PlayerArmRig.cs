@@ -19,6 +19,7 @@ namespace Game.Player
         bool initialized;
 
         public int Facing { get; private set; } = 1;
+        public Transform SwordArmPivot => swordArmPivot;
         public Transform HookHandTip => hookArmPivot != null ? hookArmPivot.Find("HandTip") : null;
         public Transform SwordHandTip => swordArmPivot != null ? swordArmPivot.Find("HandTip") : null;
 
@@ -45,7 +46,7 @@ namespace Game.Player
             {
                 float alpha = tuning.armRotationSmoothing <= 0f ? 1f : 1f - Mathf.Exp(-tuning.armRotationSmoothing * Time.deltaTime);
                 hookAngle = Mathf.LerpAngle(hookArmPivot.eulerAngles.z, hookAngle, alpha);
-                swordAngle = Mathf.LerpAngle(swordArmPivot.eulerAngles.z, swordAngle, alpha);
+                if (!swordOverride.HasValue) swordAngle = Mathf.LerpAngle(swordArmPivot.eulerAngles.z, swordAngle, alpha);
             }
             hookArmPivot.rotation = Quaternion.Euler(0f, 0f, hookAngle);
             swordArmPivot.rotation = Quaternion.Euler(0f, 0f, swordAngle);

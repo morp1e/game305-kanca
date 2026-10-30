@@ -12,15 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9cf66549b9245b18e855f526792bfb7, type: 3}
   m_Name: SwordTuning
   m_EditorClassIdentifier: Game.Runtime::Game.Combat.SwordTuning
-  attackDuration: 0.25
-  activeStart: 0.25
-  activeEnd: 0.7
-  cooldown: 0.4
+  windupSeconds: 0.05
+  activeSeconds: 0.14
+  recoverySeconds: 0.06
+  swingInterval: 0.4
+  comboWindow: 0.35
   swingArcDegrees: 100
-  hitOffset: {x: 1, y: 0}
-  hitSize: {x: 1.4, y: 0.8}
+  windupPullbackDegrees: 8
+  bladeLength: 1.4
+  bladeRadius: 0.12
+  maxSweepStepDegrees: 4
   damage: 1
   knockback: 8
-  hitstop: 0.05
+  knockbackUpBias: 0.15
+  hitstop: 0.07
   traumaOnHit: 0.2
-  inputBuffer: 0.12
+  inputBuffer: 0.3

@@ -149,19 +149,28 @@ Birim: 1 unit = 1 kare. Kaynak: C = Celeste kodu (piksel/sn, 8 px = 1 kare olara
 
 Celeste karakteri 8 px'lik karelerde koşuyor, bizim karelerimiz 16 px. Bu yüzden çevrilmiş değerler başlangıç noktasıdır, doğru değer değildir.
 
+### Kılıç savuruşu
+Savuruş üç fazdır: hazırlık (`windupSeconds`), hasar veren vuruş (`activeSeconds`), toparlanma (`recoverySeconds`). Vuruş sırasında bıçak, omuz pivotundan uzanan bir kapsüldür (`bladeLength`, `bladeRadius`); iki fizik adımı arasındaki açı farkı `maxSweepStepDegrees` adımlarla taranır, böylece hızlı savuruş ince hedefin içinden geçmez. Aynı savuruş bir hedefe bir kez vurur.
+
+- İsabette oyuncu ve hedef birlikte `hitstop` kadar donar; geri itme donma bittikten sonra nişan yönünde (`knockbackUpBias` kadar yukarı eğik) uygulanır.
+- Savuruş başlangıçları arasında en az `swingInterval` geçer. Önceki savuruş bittikten sonra `comboWindow` içinde gelen saldırı ters yönde savrulur.
+- Toparlanma fazını zıplama keser; kanca kesmez (kanca girdiyi kılıçtan önce tüketir).
+- Kılıç hareket taşımaz: pogo ve oyuncuyu ileri taşıyan vuruş yoktur (Özenç, 2026-10-26).
+
 ### `SwordTuning` başlangıç değerleri
-Saldırı süresi 0,25 s ve saldırılar arası süre 0,4 s için Hollow Knight nail referans alındı (Ö). Diğer değerler oynayarak ayarlanacak.
+Saldırılar arası süre 0,4 s için Hollow Knight nail referans alındı (Ö). Diğer değerler oynayarak ayarlanacak.
 
 | Parametre | Başlangıç | Birim | Kaynak |
 |---|---:|---|---|
-| attackDuration | 0,25 | s | Ö, Hollow Knight referansı |
-| activeStart / activeEnd | 0,25 / 0,70 | normalize | Ö |
-| cooldown | 0,4 | s | Ö, Hollow Knight referansı |
-| swingArcDegrees | 100 | derece | Ö |
-| hitOffset / hitSize | (1, 0) / (1,4, 0,8) | u | Ö |
-| damage / knockback | 1 / 8 | can / dürtü | Ö |
-| hitstop / traumaOnHit | 0,05 / 0,2 | s / 0-1 | Ö |
-| inputBuffer | 0,12 | s | Ö |
+| windupSeconds / activeSeconds / recoverySeconds | 0,05 / 0,14 / 0,06 | s | Ö |
+| swingInterval | 0,4 | s | Ö, Hollow Knight referansı |
+| comboWindow | 0,35 | s | Ö |
+| swingArcDegrees / windupPullbackDegrees | 100 / 8 | derece | Ö |
+| bladeLength / bladeRadius | 1,4 / 0,12 | u | Ö |
+| maxSweepStepDegrees | 4 | derece | Ö |
+| damage / knockback / knockbackUpBias | 1 / 8 / 0,15 | can / dürtü / × | Ö |
+| hitstop / traumaOnHit | 0,07 / 0,2 | s / 0-1 | Ö |
+| inputBuffer | 0,3 | s | Ö |
 
 ## 6. Kamera ve karışık çözünürlük
 

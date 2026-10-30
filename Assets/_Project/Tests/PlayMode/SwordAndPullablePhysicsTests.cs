@@ -81,6 +81,19 @@ namespace Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator SwordHitsTargetNearEndOfVisibleSweep()
+        {
+            float angle = -46f * Mathf.Deg2Rad;
+            target = MakeDummy(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 1.05f);
+            input.SetPointerWorldOverride(new Vector2(5f, 0f));
+            yield return new WaitForFixedUpdate();
+            var dummy = target.GetComponent<TrainingDummy>();
+            input.TriggerAttackForTest();
+            for (int i = 0; i < 40; i++) yield return new WaitForFixedUpdate();
+            Assert.That(dummy.Health, Is.EqualTo(2f).Within(.01f), "görünen yay sonundaki hedef vurulmadı");
+        }
+
+        [UnityTest]
         public IEnumerator LightCrateIsReeledTowardPlayer()
         {
             target = MakePullable("Crate", new Vector2(3f, 0f), HookWeightClass.Light, false);
