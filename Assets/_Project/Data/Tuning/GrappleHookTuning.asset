@@ -12,9 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da29589553094f91a38766a242599c9c, type: 3}
   m_Name: SwordHookTuning
   m_EditorClassIdentifier: Game.Runtime::Game.Hook.SwordHookTuning
-  throwSpeed: 40
-  maxRange: 10
-  swordRadius: 0.15
+  throwSpeed: 80
+  maxRange: 8
+  hookRadius: 0.15
+  throwOriginOffset: {x: 0.5, y: 0}
+  inputBufferTime: 0.1
+  hookableLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  pullableLayers:
+    serializedVersion: 2
+    m_Bits: 1025
   pullSpeed: 30
   pullSpeedCurve:
     serializedVersion: 2
@@ -48,14 +56,14 @@ MonoBehaviour:
   postLaunchJumpWindow: 0.1
   hookCooldown: 0.2
   recallSpeed: 50
+  lightPullSpeed: 30
+  pullableArriveDistance: 0.5
+  pullableMaxTime: 2
+  pullableReleaseSpeed: 1
+  pullableStunDuration: 0.2
   impactFreeze: 0.05
   pullShakeDuration: 0.2
   traumaOnStick: 0.2
   traumaOnBigImpact: 0.5
   shakeExponent: 2
   traumaDecay: 1
-  snapRadiusPx: 64
-  switchMargin: 0.15
-  throwOriginOffset: {x: 0.5, y: 0}
-  inputBufferTime: 0.1
-  lightPullSpeed: 30

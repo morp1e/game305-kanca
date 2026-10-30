@@ -39,8 +39,4 @@ MonoBehaviour:
   groundCheckDistance: 0.08
   cornerCorrectionPx: 4
   pixelsPerUnit: 16
-  collisionSkin: 0.01
-  ceilingNormalThreshold: 0.5
-  minimumMoveDistance: 0.001
   velocityGizmoSeconds: 0.1
-  slideIterations: 4

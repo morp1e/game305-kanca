@@ -2343,6 +2343,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2640753431960186926, guid: c8d5285c51abc8e4382278e2e9e1338e, type: 3}
+      propertyPath: aimColor.b
+      value: 0.7106918
+      objectReference: {fileID: 0}
+    - target: {fileID: 2640753431960186926, guid: c8d5285c51abc8e4382278e2e9e1338e, type: 3}
+      propertyPath: aimColor.g
+      value: 0.44474104
+      objectReference: {fileID: 0}
+    - target: {fileID: 2640753431960186926, guid: c8d5285c51abc8e4382278e2e9e1338e, type: 3}
+      propertyPath: aimColor.r
+      value: 0.6214467
+      objectReference: {fileID: 0}
     - target: {fileID: 3799438002601099363, guid: c8d5285c51abc8e4382278e2e9e1338e, type: 3}
       propertyPath: aimCamera
       value: 
@@ -2524,7 +2536,7 @@ Camera:
   far clip plane: 5000
   field of view: 40
   orthographic: 1
-  orthographic size: 7.15625
+  orthographic size: 7.375
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
