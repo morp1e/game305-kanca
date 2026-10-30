@@ -99,6 +99,9 @@ namespace Game.Tests
             if (projectileDefinition != null) Object.Destroy(projectileDefinition);
             // Hedefini ıskalayan mermi 4 s yaşar; sonraki test sınıflarının oyuncusuna çarpmasın.
             foreach (var projectile in Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None)) Object.DestroyImmediate(projectile.gameObject);
+            // Assertion düşünce testin sonundaki Destroy satırları çalışmaz; sahnede kalan düşman sonraki testin oyuncusuna temas hasarı verir.
+            foreach (var brain in Object.FindObjectsByType<EnemyBrain>(FindObjectsSortMode.None)) Object.DestroyImmediate(brain.gameObject);
+            foreach (var leftover in Object.FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None)) Object.DestroyImmediate(leftover.gameObject);
         }
         [UnityTest] public IEnumerator HookedWalkerPreservesExternalVelocityAndSuppressesContact()
         {
@@ -271,6 +274,7 @@ namespace Game.Tests
             projectileDefinition = ScriptableObject.CreateInstance<ProjectileDefinition>();
             projectileDefinition.speed = 6f;
             projectileDefinition.lifetime = 4f;
+            definition.projectile = projectileDefinition;
             GameObject projectileObject = new GameObject("ProjectilePrefab") { layer = LayerMask.NameToLayer("Enemy") };
             projectileObject.SetActive(false);
             projectileObject.AddComponent<Rigidbody2D>();
