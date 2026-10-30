@@ -106,11 +106,24 @@ namespace Game.Editor.Level
             if (asset != null) return asset;
             EnsureFolder("Assets/_Project/Data/Levels");
             asset = ScriptableObject.CreateInstance<LevelLegend>();
-            void Add(char c, LevelLegendKind kind, string path = null) => asset.entries.Add(new LevelLegendEntry { character = c.ToString(), kind = kind, prefabPath = path });
+            // Ofset: prefab'ın merkezi hücrenin alt ortasından ne kadar yukarıda. Collider yarı yüksekliği + 0,02 pay;
+            // aksi halde nesne zeminin içinde doğar ve fizik onu fırlatır.
+            void Add(char c, LevelLegendKind kind, string path = null, float up = 0f, float right = 0f) =>
+                asset.entries.Add(new LevelLegendEntry { character = c.ToString(), kind = kind, prefabPath = path, offset = new Vector2(right, up) });
             Add('#', LevelLegendKind.TileGround); Add('X', LevelLegendKind.TileNonHookable); Add('~', LevelLegendKind.TileDecor);
-            Add('^', LevelLegendKind.Prefab, "Hazard_Spikes"); Add('S', LevelLegendKind.Prefab, "PlayerRig"); Add('C', LevelLegendKind.Prefab, "Checkpoint");
-            Add('z', LevelLegendKind.HazardZone); Add('w', LevelLegendKind.Prefab, "Enemies/Walker"); Add('f', LevelLegendKind.Prefab, "Enemies/Flyer"); Add('t', LevelLegendKind.Prefab, "Enemies/Turret"); Add('b', LevelLegendKind.Prefab, "Enemies/Brute");
-            Add('k', LevelLegendKind.Prefab, "Crate"); Add('d', LevelLegendKind.Prefab, "TrainingDummy"); Add('B', LevelLegendKind.Prefab, "Boss/BossArena"); Add('E', LevelLegendKind.Exit, "Level/LevelExit");
+            Add('^', LevelLegendKind.Prefab, "Hazard_Spikes", .25f);
+            Add('S', LevelLegendKind.Prefab, "PlayerRig", .92f);
+            Add('C', LevelLegendKind.Prefab, "Checkpoint", 1.5f);
+            Add('z', LevelLegendKind.HazardZone);
+            Add('w', LevelLegendKind.Prefab, "Enemies/Walker", .42f);
+            Add('f', LevelLegendKind.Prefab, "Enemies/Flyer", .5f);
+            Add('t', LevelLegendKind.Prefab, "Enemies/Spitter", .62f);
+            Add('b', LevelLegendKind.Prefab, "Enemies/Brute", 1.12f);
+            Add('k', LevelLegendKind.Prefab, "Crate", .57f);
+            Add('d', LevelLegendKind.Prefab, "TrainingDummy", .82f);
+            // Arena kökü zemin üst yüzünün ortasındadır; B iç alanın 15. sütununa (indeks 14) konur, hücre kenarına hizalanır.
+            Add('B', LevelLegendKind.Prefab, "Boss/BossArena", 0f, -.5f);
+            Add('E', LevelLegendKind.Exit, "Level/LevelExit");
             AssetDatabase.CreateAsset(asset, LegendPath); return asset;
         }
         static Tilemap CreateTilemap(Transform parent, string name, bool collider, bool nonHookable)
@@ -130,14 +143,39 @@ namespace Game.Editor.Level
         static void SpawnOptional(string path, Transform root, Vector3 pos) { var e = new LevelLegendEntry { prefabPath = path }; SpawnPrefab(root, '?', e, pos); }
         static void BuildHazardZone(Transform root, Vector3 pos)
         {
-            var go = new GameObject("HazardRespawnZone"); go.transform.SetParent(root); go.transform.position = pos;
-            var box = go.AddComponent<BoxCollider2D>(); box.isTrigger = true; box.size = new Vector2(3, 4);
-            var type = Type.GetType("Game.Level.HazardRespawnZone, Game.Runtime");
-            if (type == null) { Debug.LogWarning("HazardRespawnZone henüz bulunamadı; yer tutucu oluşturuldu."); return; }
-            var zone = go.AddComponent(type); var child = new GameObject("RespawnPoint"); child.transform.SetParent(go.transform); child.transform.localPosition = Vector3.zero;
-            var so = new SerializedObject(zone); var p = so.FindProperty("respawnPoint"); if (p != null) p.objectReferenceValue = child.transform; else { p = so.FindProperty("spawnOffset"); if (p != null) p.vector2Value = Vector2.zero; } so.ApplyModifiedPropertiesWithoutUndo();
+            // Bölge hücrenin üstünde 3x4 karo; dönüş noktası hücrenin 1 karo üstünde (oyuncu kapsülünün yarı boyu 0,9).
+            var go = new GameObject("HazardRespawnZone");
+            go.transform.SetParent(root);
+            go.transform.position = pos;
+            go.layer = LayerMask.NameToLayer("Ignore Raycast");
+            var box = go.AddComponent<BoxCollider2D>();
+            box.isTrigger = true;
+            box.size = new Vector2(3f, 4f);
+            box.offset = new Vector2(0f, 2f);
+            var zone = go.AddComponent<HazardRespawnZone>();
+            var point = new GameObject("RespawnPoint");
+            point.transform.SetParent(go.transform);
+            point.transform.localPosition = new Vector3(0f, 1f, 0f);
+            SharedSandboxSetup.Set(zone, ("respawnPoint", point.transform));
         }
-        static void BuildExit(Transform root, Vector3 pos, LevelLegendEntry entry) { SpawnPrefab(root, 'E', entry, pos); }
+
+        static void BuildExit(Transform root, Vector3 pos, LevelLegendEntry entry)
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(Prefabs + entry.prefabPath + ".prefab") != null)
+            {
+                SpawnPrefab(root, 'E', entry, pos);
+                return;
+            }
+            // Prefab yoksa çıkış tetikleyicisi doğrudan kurulur: 1 karo genişlik, 4 karo yükseklik.
+            var exit = new GameObject("LevelExit");
+            exit.transform.SetParent(root);
+            exit.transform.position = pos + new Vector3(0f, 2f, 0f);
+            exit.layer = LayerMask.NameToLayer("Ignore Raycast");
+            var box = exit.AddComponent<BoxCollider2D>();
+            box.isTrigger = true;
+            box.size = new Vector2(1f, 4f);
+            exit.AddComponent<LevelExit>();
+        }
         static void CreateBounds(LevelMapData map, Camera camera, float padding)
         {
             var go = new GameObject("LevelBounds", typeof(LevelBounds)); go.layer = LayerMask.NameToLayer("Ignore Raycast"); var polygon = go.GetComponent<PolygonCollider2D>(); polygon.isTrigger = true;
