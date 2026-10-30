@@ -12,16 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7dbcb578d6f24fcca1998cbd5a45b4bb, type: 3}
   m_Name: EnemyDef_Spitter
   m_EditorClassIdentifier: Game.Runtime::Game.Enemies.EnemyDefinition
-  maxHealth: 2
-  moveSpeed: 2
-  chaseSpeed: 5
+  maxHealth: 3
+  moveSpeed: 0
+  chaseSpeed: 0
   patrolRange: 2
-  detectionRadius: 6
-  loseTargetRadius: 9
-  telegraphDuration: 0.4
-  attackDuration: 0.8
-  recoverDuration: 1
-  attackCooldown: 1
+  detectionRadius: 9
+  loseTargetRadius: 11
+  telegraphDuration: 0.5
+  attackDuration: 0.2
+  recoverDuration: 1.8
+  attackCooldown: 1.8
   contactDamage: 1
   attackDamage: 1
   hurtStunDuration: 0.5

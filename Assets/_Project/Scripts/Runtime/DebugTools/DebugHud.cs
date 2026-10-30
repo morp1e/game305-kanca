@@ -44,7 +44,8 @@ namespace Game.DebugTools
             string line = swordVoice != null ? swordVoice.CurrentLine ?? "yok" : "yok";
             string content = $"FPS {fps:0}\nHız X {velocity.x:0.00}  Y {velocity.y:0.00}  |v| {velocity.magnitude:0.00}\n" +
                 $"IsGrounded {motor.IsGrounded}  ExternalControl {motor.ExternalControl}\nGrappleHook {state}\nIsDead {dead}  SwordVoice {line}";
-            GUI.Box(new Rect(12, 12, 420, 112), content);
+            // Sağ üstte: sol üst oyuncunun can maskelerine ayrıldı (GameHud).
+            GUI.Box(new Rect(Screen.width - 432, 12, 420, 112), content);
         }
     }
 }

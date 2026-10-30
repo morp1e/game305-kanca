@@ -55,6 +55,9 @@ namespace Game.Editor.Enemies
                 if (name == "Brute") definition.attackDamage = 2f;
             }
             if (definition.projectile == null) definition.projectile = projectile;
+            // Alanlar CreateAsset'ten sonra C# ile yazıldı; işaretlenmezse Unity diske varsayılanları kaydeder
+            // (2026-10-30: dört tanımın hepsi Walker değerleriyle kalmıştı).
+            EditorUtility.SetDirty(definition);
             string prefab = PrefabPath + "/" + name + ".prefab";
             bool newPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefab) == null;
             GameObject root = LoadOrCreateRoot(name, prefab, out bool loadedContents);

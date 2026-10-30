@@ -10,6 +10,7 @@ namespace Game.Editor.Sandbox
     {
         const string Root = "Assets/_Project";
         const string PrefabPath = Root + "/Prefabs/Player.prefab";
+        const string RigPrefabPath = Root + "/Prefabs/PlayerRig.prefab";
         const string TuningPath = Root + "/Data/Tuning/PlayerHealthTuning.asset";
         const string HealthEventPath = Root + "/Data/Events/Event_PlayerHealth.asset";
         const string DamagedEventPath = Root + "/Data/Events/Event_PlayerDamaged.asset";
@@ -23,25 +24,41 @@ namespace Game.Editor.Sandbox
             var healthEvent = GetOrCreate<HealthEvent>(HealthEventPath);
             var damagedEvent = GetOrCreate<GameEvent>(DamagedEventPath);
             var traumaEvent = AssetDatabase.LoadAssetAtPath<FloatEvent>(Root + "/Data/Events/Event_CameraTrauma.asset");
-            var prefab = PrefabUtility.LoadPrefabContents(PrefabPath);
+            // PlayerRig içindeki oyuncu Player.prefab'ın bağlı örneği değil, ayrı bir kopya (PrefabFactory iki prefab'ı da
+            // SaveAsPrefabAsset ile kaydediyor). Sahneler PlayerRig'i kullandığı için ikisine de ayrı ayrı eklenir.
+            ApplyTo(PrefabPath, root => root, tuning, healthEvent, damagedEvent, traumaEvent);
+            ApplyTo(RigPrefabPath, root => root.transform.Find("Player")?.gameObject, tuning, healthEvent, damagedEvent, traumaEvent);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Oyuncu can bileşeni ve olay bağlantıları kuruldu (Player ve PlayerRig).");
+        }
+
+        static void ApplyTo(string path, System.Func<GameObject, GameObject> findPlayer, PlayerHealthTuning tuning,
+            HealthEvent healthEvent, GameEvent damagedEvent, FloatEvent traumaEvent)
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null) return;
+            var prefab = PrefabUtility.LoadPrefabContents(path);
             try
             {
-                var health = prefab.GetComponent<PlayerHealth>();
-                if (health == null) health = prefab.AddComponent<PlayerHealth>();
+                var player = findPlayer(prefab);
+                if (player == null)
+                {
+                    Debug.LogWarning("[PlayerHealthSetup] Oyuncu bulunamadı: " + path);
+                    return;
+                }
+                var health = player.GetComponent<PlayerHealth>();
+                if (health == null) health = player.AddComponent<PlayerHealth>();
                 var serialized = new SerializedObject(health);
                 AssignIfEmpty(serialized, "tuning", tuning);
                 AssignIfEmpty(serialized, "healthEvent", healthEvent);
                 AssignIfEmpty(serialized, "damagedEvent", damagedEvent);
                 AssignIfEmpty(serialized, "traumaEvent", traumaEvent);
-                var visual = prefab.transform.Find("Visual");
+                var visual = player.transform.Find("Visual");
                 AssignIfEmpty(serialized, "visual", visual != null ? visual.gameObject : null);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
-                PrefabUtility.SaveAsPrefabAsset(prefab, PrefabPath);
+                PrefabUtility.SaveAsPrefabAsset(prefab, path);
             }
             finally { PrefabUtility.UnloadPrefabContents(prefab); }
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            Debug.Log("Oyuncu can bileşeni ve olay bağlantıları kuruldu.");
         }
 
         static void AssignIfEmpty(SerializedObject serialized, string name, Object value)

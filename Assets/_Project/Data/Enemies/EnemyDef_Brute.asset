@@ -12,23 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7dbcb578d6f24fcca1998cbd5a45b4bb, type: 3}
   m_Name: EnemyDef_Brute
   m_EditorClassIdentifier: Game.Runtime::Game.Enemies.EnemyDefinition
-  maxHealth: 2
-  moveSpeed: 2
-  chaseSpeed: 5
+  maxHealth: 5
+  moveSpeed: 1.5
+  chaseSpeed: 1.5
   patrolRange: 2
   detectionRadius: 6
-  loseTargetRadius: 9
-  telegraphDuration: 0.4
-  attackDuration: 0.8
-  recoverDuration: 1
-  attackCooldown: 1
+  loseTargetRadius: 8
+  telegraphDuration: 0.6
+  attackDuration: 0.2
+  recoverDuration: 1.5
+  attackCooldown: 1.5
   contactDamage: 1
-  attackDamage: 1
+  attackDamage: 2
   hurtStunDuration: 0.5
   hurtDeceleration: 40
-  knockbackResistance: 0
+  knockbackResistance: 1
   gravityScale: 3
-  shieldArcDegrees: 0
+  shieldArcDegrees: 120
   projectile: {fileID: 0}
   hitFlashColor: {r: 1, g: 1, b: 1, a: 1}
   hitFlashDuration: 0.12

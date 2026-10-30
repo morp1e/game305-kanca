@@ -17,7 +17,7 @@ MonoBehaviour:
   chaseSpeed: 5
   patrolRange: 2
   detectionRadius: 6
-  loseTargetRadius: 9
+  loseTargetRadius: 8
   telegraphDuration: 0.4
   attackDuration: 0.8
   recoverDuration: 1

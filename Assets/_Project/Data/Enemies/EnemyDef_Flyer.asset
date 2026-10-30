@@ -13,21 +13,21 @@ MonoBehaviour:
   m_Name: EnemyDef_Flyer
   m_EditorClassIdentifier: Game.Runtime::Game.Enemies.EnemyDefinition
   maxHealth: 2
-  moveSpeed: 2
-  chaseSpeed: 5
+  moveSpeed: 3
+  chaseSpeed: 6
   patrolRange: 2
-  detectionRadius: 6
+  detectionRadius: 7
   loseTargetRadius: 9
-  telegraphDuration: 0.4
-  attackDuration: 0.8
-  recoverDuration: 1
-  attackCooldown: 1
+  telegraphDuration: 0.35
+  attackDuration: 0.7
+  recoverDuration: 0.8
+  attackCooldown: 0.8
   contactDamage: 1
   attackDamage: 1
   hurtStunDuration: 0.5
   hurtDeceleration: 40
   knockbackResistance: 0
-  gravityScale: 3
+  gravityScale: 0
   shieldArcDegrees: 0
   projectile: {fileID: 0}
   hitFlashColor: {r: 1, g: 1, b: 1, a: 1}
