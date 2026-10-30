@@ -209,7 +209,7 @@ Ekran çözünürlüğü politikası: 1080p ve 4K tam sayı ölçekte çalışı
 ## 9. Arayüz ve sahne akışı
 
 - Arayüz oyun koduna bağlanmaz, olay kanallarını dinler: `HealthHud` → `Event_PlayerHealth`; `BossHealthBar` → `Event_BossFightStarted` (adı yazar, görünür), `Event_BossHealth`, `Event_BossDefeated` (bir süre sonra gizlenir), `Event_PlayerRespawn` (dövüş sıfırlandığı için gizlenir).
-- `GameHud.prefab` (sol üstte can maskeleri, alt ortada boss çubuğu, Esc ile duraklatma menüsü) her bölüm sahnesine konur. İçindeki `FlowBootstrap`, bölüm doğrudan açılsa da `SceneFlow`'u kurar: "oyun bitti" kanalı dinlenir, süre ve ölüm sayılır.
+- `GameHud.prefab` (sol üstte can maskeleri, üst ortada boss çubuğu, Esc ile duraklatma menüsü) her bölüm sahnesine konur. İçindeki `FlowBootstrap`, bölüm doğrudan açılsa da `SceneFlow`'u kurar: "oyun bitti" kanalı dinlenir, süre ve ölüm sayılır.
 - Akış: `Title` → `SceneCatalog.levels` sırası → `End`. `Event_GameWon` (boss yenilince) bitiş sahnesini açar; `LevelExit` tetikleyicisi sıradaki sahneye geçer. Duraklatma `Time.timeScale = 0` kullanır; menü kapanırken `PlayerInputReader.ClearBuffers()` menü tıklamalarının saldırı/kanca olarak kalmasını önler.
 - Görsel: 1920×1080 referanslı `CanvasScaler` (eşleme 0,5), TextMeshPro, renkler `UiPalette`'te (koyu lacivert zemin, kırık beyaz metin, tek vurgu rengi amber). Prefab'lar ve Title/End sahneleri `Tools/Kanca/Arayuzu Kur` (`Game.Editor.UI.UiFactory.BuildAll`) ile koddan üretilir; elle düzenlenmez, değişiklik fabrikada yapılır. Metinler bileşen alanıdır, kod açmadan değişir.
 

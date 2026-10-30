@@ -98,9 +98,9 @@ namespace Game.Editor.UI
             var hud = healthRoot.gameObject.AddComponent<HealthHud>();
             Set(hud, ("health", playerHealth), ("container", healthRoot), ("iconTemplate", templateImage));
 
-            // Alt orta: boss çubuğu.
+            // Üst orta: boss çubuğu. Altta olunca arena kamerasında zemin şeridine ve zemin boyunca giden şok dalgasına biniyordu.
             var bossRoot = CreateRect("BossHealth", canvas.transform);
-            Anchor(bossRoot, new Vector2(0.5f, 0f), new Vector2(0f, 64f), new Vector2(960f, 64f));
+            Anchor(bossRoot, new Vector2(0.5f, 1f), new Vector2(0f, -28f), new Vector2(960f, 64f));
             var bossGroup = bossRoot.gameObject.AddComponent<CanvasGroup>();
             bossGroup.blocksRaycasts = false;
             var nameLabel = CreateText("BossName", bossRoot, "Boss", 30f, UiPalette.Text, TextAlignmentOptions.Left);

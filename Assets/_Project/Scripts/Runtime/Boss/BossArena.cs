@@ -19,6 +19,8 @@ namespace Game.Boss
         [SerializeField] GameEvent bossDefeated;
         [SerializeField] Vector2 arenaSize = new Vector2(28f, 12f);
         [SerializeField] Collider2D[] beamColliders;
+        [Tooltip("Dövüş boyunca arenayı bütün gösteren sabit kamera; oyuncuyu izleyen kameradan öncelikli. Boşsa kamera değişmez.")]
+        [SerializeField] Unity.Cinemachine.CinemachineCamera arenaCamera;
         bool started;
 
         void Awake()
@@ -53,6 +55,7 @@ namespace Game.Boss
             if (started) return;
             started = true;
             SetDoors(true);
+            SetArenaCamera(true);
             if (definition != null) fightStarted?.Raise(definition.displayName);
             if (boss != null) boss.BeginFight();
             if (boss != null) bossHealth?.Raise(boss.Health, definition != null ? definition.maxHealth : boss.Health);
@@ -62,6 +65,7 @@ namespace Game.Boss
         {
             started = false;
             SetDoors(false);
+            SetArenaCamera(false);
             StopAllCoroutines();
             if (beamColliders != null)
                 foreach (var beam in beamColliders)
@@ -74,7 +78,16 @@ namespace Game.Boss
             if (boss != null) boss.ResetFight();
         }
 
-        public void OpenDoors() => SetDoors(false);
+        public void OpenDoors()
+        {
+            SetDoors(false);
+            SetArenaCamera(false);
+        }
+
+        void SetArenaCamera(bool active)
+        {
+            if (arenaCamera != null) arenaCamera.gameObject.SetActive(active);
+        }
 
         void SetDoors(bool closed)
         {

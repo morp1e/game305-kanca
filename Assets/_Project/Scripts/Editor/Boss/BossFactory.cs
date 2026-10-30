@@ -58,7 +58,7 @@ namespace Game.Editor.Boss
             var definition = GetOrCreate<BossDefinition>(definitionPath);
             if (newDefinition) ConfigureDefinition(definition, phaseOne, phaseTwo);
 
-            GameObject shockwave = BuildProjectilePrefab("Shockwave", 0.8f, 0.9f, Color.white);
+            GameObject shockwave = BuildProjectilePrefab("Shockwave", 0.8f, 0.9f, new Color(1f, .45f, .25f));
             GameObject debris = BuildProjectilePrefab("Debris", 0.45f, 0.6f, new Color(.45f, .3f, .2f));
             if (slam.spawnPrefab == null)
             {
@@ -174,6 +174,9 @@ namespace Game.Editor.Boss
             var renderer = root.AddComponent<SpriteRenderer>();
             renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GreySpritePath);
             renderer.color = color;
+            // Sprite 1x1 birim; görsel collider boyutuna gerilir (Pixel preset'i Full Rect, Sliced çalışır).
+            renderer.drawMode = SpriteDrawMode.Sliced;
+            renderer.size = new Vector2(width, height);
             root.AddComponent<BossProjectile>();
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
@@ -195,6 +198,8 @@ namespace Game.Editor.Boss
             var renderer = root.AddComponent<SpriteRenderer>();
             renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GreySpritePath);
             renderer.color = new Color(.22f, .24f, .28f);
+            renderer.drawMode = SpriteDrawMode.Sliced;
+            renderer.size = new Vector2(3f, 3f);
             var contact = root.AddComponent<ContactDamage>();
             SetLayerMask(contact, "targetLayers", LayerMask.GetMask("Player"));
             var brain = root.AddComponent<BossBrain>();
@@ -219,6 +224,9 @@ namespace Game.Editor.Boss
             var shieldRenderer = shieldRoot.AddComponent<SpriteRenderer>();
             shieldRenderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GreySpritePath);
             shieldRenderer.color = new Color(.72f, .75f, .8f);
+            shieldRenderer.drawMode = SpriteDrawMode.Sliced;
+            shieldRenderer.size = new Vector2(1f, 2.5f);
+            shieldRenderer.sortingOrder = renderer.sortingOrder + 1;
             shieldRoot.AddComponent<NonHookable>();
             var pullable = shieldRoot.AddComponent<HookPullable>();
             SetInt(pullable, "weightClass", (int)HookWeightClass.Light);
@@ -272,8 +280,23 @@ namespace Game.Editor.Boss
             SetObject(arena, "bossDefeated", defeated);
             SetArrayObjects(arena, "doors", new Object[] { leftDoor, rightDoor });
             SetArrayObjects(arena, "beamColliders", new Object[] { leftBeam, rightBeam });
+            SetObject(arena, "arenaCamera", ArenaCamera(root.transform));
             PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
+        }
+
+        /// <summary>Arenanın ortasına bakan sabit kamera: iç alan 28x12, lens 30x17 karo gösterir; duvarlar ve tavan kadrajda.</summary>
+        static Unity.Cinemachine.CinemachineCamera ArenaCamera(Transform parent)
+        {
+            var cameraObject = new GameObject("ArenaCamera");
+            cameraObject.transform.SetParent(parent, false);
+            cameraObject.transform.localPosition = new Vector3(0f, 6.5f, -10f);
+            var arenaCamera = cameraObject.AddComponent<Unity.Cinemachine.CinemachineCamera>();
+            arenaCamera.Lens.OrthographicSize = 8.4375f;
+            arenaCamera.Priority = 10;
+            cameraObject.AddComponent<Unity.Cinemachine.CinemachinePixelPerfect>();
+            cameraObject.SetActive(false);
+            return arenaCamera;
         }
 
         static Collider2D Beam(Transform parent, string name, Vector3 position)
