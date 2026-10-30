@@ -55,7 +55,7 @@ namespace Game.Hook
         [Tooltip("Hafif hedef varış mesafesi, u. Ö: oynayarak ayarlanacak.")] [Min(0f)] public float pullableArriveDistance = 0.5f;
         [Tooltip("Hafif hedefe çekiş azami süresi, s. Ö: oynayarak ayarlanacak.")] [Min(0f)] public float pullableMaxTime = 2f;
         [Tooltip("Hafif hedef varışındaki bırakma hızı, u/s. Ö: oynayarak ayarlanacak.")] [Min(0f)] public float pullableReleaseSpeed = 1f;
-        [Tooltip("Hafif hedef varışındaki sıfır hasarlı sersemletme süresi, s. Ö: oynayarak ayarlanacak.")] [Min(0f)] public float pullableStunDuration = 0.2f;
+        [Tooltip("Hafif hedef varışındaki sıfır hasarlı sersemletme süresi, s. Kılıcın hazırlık + vuruşu 0,19 s; 0,5 s ile çek-ve-vur oturur. Ö: oynayarak ayarlanacak.")] [Min(0f)] public float pullableStunDuration = 0.5f;
 
         [Header("His/sarsıntı")]
         [Tooltip("Saplanma anındaki yerel donma süresi, s. C: Celeste.")]

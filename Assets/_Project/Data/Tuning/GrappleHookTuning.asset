@@ -60,7 +60,7 @@ MonoBehaviour:
   pullableArriveDistance: 0.5
   pullableMaxTime: 2
   pullableReleaseSpeed: 1
-  pullableStunDuration: 0.2
+  pullableStunDuration: 0.5
   impactFreeze: 0.05
   pullShakeDuration: 0.2
   traumaOnStick: 0.2

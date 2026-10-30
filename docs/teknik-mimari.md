@@ -78,6 +78,12 @@ Preset Manager'da klasöre göre iki varsayılan preset:
 - Sağa bakarken sol/kanca kolu gövdenin arkasında, sağ/kılıç kolu önündedir. Sola bakınca çizim sırası değişir. Sol yön aynalaması omuz X ofsetini ve kol açısını yansıtır; kol çizimi +X yönüne, pivot omuzda olacak şekilde yapılır.
 - `PlayerRigTuning.angleSnapDegrees` sıfır olduğunda serbest dönüş, 22,5 olduğunda 16 yön ve 45 olduğunda 8 yön verir. Piksel art sprite'larının serbest dönüşteki görünümü gözle değerlendirilecektir; karşılaştırma kamera probuyla birlikte §6'da yapılır.
 
+### Can ve hasar
+- `PlayerHealth`, oyuncu gövdesinde `IDamageable` uygular. Temas hasarı ve diğer saldırılar `HitInfo` ile vurur; can `HealthEvent` kanalına başlangıçta ve her değişimde yayınlanır.
+- Ölümcül olmayan isabet canı azaltır, `invulnerabilitySeconds` boyunca sonraki isabetleri yok sayar, kısa süreli yerel hitstop ve geri itme uygular. Geri itme kilidinde yatay girdi ve zıplama tüketilmez, yerçekimi sürer.
+- Diken davranışı `PlayerHealthTuning.hazardPolicy` ile seçilir. `InstantDeath` mevcut ölüm akışını kullanır. `DamageAndReturn` can düşürür ve oyuncuyu son girdiği `HazardRespawnZone` noktasına, bu yoksa checkpoint'e geri taşır. Dönüş sırasında diken tekrarlanmaz, can sıfırlanırsa ölüm akışı çalışır.
+- Gerçek ölüm sonrası `refillOnRespawn` canı doldurur. Diken dönüşü ölüm sayılmaz ve ölüm olayı yayınlamaz.
+
 ## 5. Kılıç ve kanca sistemi
 
 ### Davranış
@@ -121,8 +127,8 @@ Birim: 1 unit = 1 kare. Kaynak: C = Celeste kodu (piksel/sn, 8 px = 1 kare olara
 
 | Parametre | Başlangıç | Birim | Kaynak |
 |---|---|---|---|
-| throwSpeed | 40 | u/s | Ö |
-| maxRange | 10 | u | Ö |
+| throwSpeed | 80 | u/s | Ö; Özenç oynayarak 40'tan çekti |
+| maxRange | 8 | u | Ö; Özenç oynayarak 10'dan çekti |
 | hookRadius | 0,15 | u | Ö |
 | hookableLayers | Ground | katman maskesi | Ö |
 | pullSpeed | 30 | u/s | C (240 ÷ 8) |
@@ -145,7 +151,7 @@ Birim: 1 unit = 1 kare. Kaynak: C = Celeste kodu (piksel/sn, 8 px = 1 kare olara
 | pullableArriveDistance | 0,5 | u | Ö |
 | pullableMaxTime | 2 | s | Ö |
 | pullableReleaseSpeed | 1 | u/s | Ö |
-| pullableStunDuration | 0,2 | s | Ö |
+| pullableStunDuration | 0,5 | s | Ö; kılıcın hazırlık + vuruşu 0,19 s, 0,2 s ile çek-ve-vur oturmuyordu |
 
 Celeste karakteri 8 px'lik karelerde koşuyor, bizim karelerimiz 16 px. Bu yüzden çevrilmiş değerler başlangıç noktasıdır, doğru değer değildir.
 
@@ -186,7 +192,7 @@ Ekran çözünürlüğü politikası: 1080p ve 4K tam sayı ölçekte çalışı
 
 ## 7. Veri ve olaylar
 
-- Ayarlar SO'da: `PlayerMovementTuning`, `PlayerRigTuning`, `GrappleHookTuning`, `SwordTuning`, `TrainingDummyTuning`, `CameraTuning`, `BossPattern`.
+- Ayarlar SO'da: `PlayerMovementTuning`, `PlayerRigTuning`, `PlayerHealthTuning`, `GrappleHookTuning`, `SwordTuning`, `TrainingDummyTuning`, `CameraTuning`, `BossPattern`.
 - Sistemler arası haberleşme SO olay kanallarıyla: `OnPlayerDamaged`, `OnHookStuck` vb. Böylece UI ve ses, oyuncu koduna doğrudan bağlanmaz.
 - SO'lar build'de **salt okunurdur**. Oyuncu ilerlemesi ayrı bir kayıt dosyasında tutulur.
 - Play modunda SO'da yapılan değişiklik kalıcıdır. Ayar yaparken işe yarar, ama yanlışlıkla değiştirilen değer commit'e girer. Commit'ten önce diff'e bakın.

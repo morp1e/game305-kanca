@@ -22,14 +22,17 @@ namespace Game.Hook
         [SerializeField] Transform reticle;
 
         public HookState State { get; private set; } = HookState.InHand;
+        public HookPullable ActivePullable => activePullable;
         public Vector2 AimPoint => input != null && aimCamera != null ? input.PointerWorld(aimCamera) : (Vector2)transform.position;
         public Vector2 ActivePoint { get; private set; }
         public Vector2 ActiveNormal { get; private set; }
         public event Action<HookState> StateChanged;
 
         readonly RaycastHit2D[] pullHits = new RaycastHit2D[8];
+        readonly RaycastHit2D[] throwHits = new RaycastHit2D[8];
         Collider2D activeSurface;
         HookPullable activePullable;
+        Vector2 pullableLocalOffset;
         Vector2 throwDirection;
         Vector2 pullDirection;
         float flightDistance;
@@ -38,6 +41,7 @@ namespace Game.Hook
         float freezeRemaining;
         float cooldownRemaining;
         ContactFilter2D groundFilter;
+        ContactFilter2D throwFilter;
 
         void Awake()
         {
@@ -46,6 +50,10 @@ namespace Game.Hook
             groundFilter = new ContactFilter2D();
             groundFilter.SetLayerMask(LayerMask.GetMask("Ground"));
             groundFilter.useTriggers = false;
+            // Proje ayarında queriesHitTriggers açık; kanca checkpoint ve dönüş bölgesi gibi görünmez trigger'lara çarpmasın.
+            throwFilter = new ContactFilter2D();
+            throwFilter.useTriggers = false;
+            if (tuning != null) throwFilter.SetLayerMask(tuning.hookableLayers | tuning.pullableLayers);
             if (hookVisual != null) hookVisual.position = HandPosition();
         }
 
@@ -100,12 +108,13 @@ namespace Game.Hook
         void TickThrown(float dt)
         {
             var distance = Mathf.Min(tuning.throwSpeed * dt, Mathf.Max(0f, tuning.maxRange - flightDistance));
-            var hit = Physics2D.CircleCast(hookVisual.position, tuning.hookRadius, throwDirection, distance, tuning.hookableLayers | tuning.pullableLayers);
+            throwFilter.SetLayerMask(tuning.hookableLayers | tuning.pullableLayers);
+            var hit = FirstThrowHit(Physics2D.CircleCast(hookVisual.position, tuning.hookRadius, throwDirection, throwFilter, throwHits, distance));
             if (hit.collider != null)
             {
                 hookVisual.position = hit.point;
                 if (hit.collider.GetComponentInParent<NonHookable>() != null) EnterReturning();
-                else if ((tuning.pullableLayers.value & (1 << hit.collider.gameObject.layer)) != 0 && hit.collider.GetComponentInParent<HookPullable>() is HookPullable pullable) StickPullable(hit, pullable);
+                else if ((tuning.pullableLayers.value & (1 << hit.collider.gameObject.layer)) != 0 && hit.collider.GetComponentInParent<HookPullable>() is HookPullable pullable && pullable.isActiveAndEnabled) StickPullable(hit, pullable);
                 else if ((tuning.hookableLayers.value & (1 << hit.collider.gameObject.layer)) != 0) Stick(hit);
                 else EnterReturning();
                 return;
@@ -115,6 +124,19 @@ namespace Game.Hook
             hookVisual.right = throwDirection;
             flightDistance += distance;
             if (flightDistance >= tuning.maxRange) EnterReturning();
+        }
+
+        /// <summary>Cast sonuçları mesafeye göre sıralıdır; oyuncunun kendi collider'ı atlanır.</summary>
+        RaycastHit2D FirstThrowHit(int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                var candidate = throwHits[i];
+                if (candidate.collider == null) continue;
+                if (body != null && candidate.collider.attachedRigidbody != null && candidate.collider.attachedRigidbody.gameObject == body.gameObject) continue;
+                return candidate;
+            }
+            return default;
         }
 
         void Stick(RaycastHit2D hit)
@@ -134,6 +156,9 @@ namespace Game.Hook
         void StickPullable(RaycastHit2D hit, HookPullable pullable)
         {
             activePullable = pullable;
+            // Büyük ağır hedefte (boss, kalkanlı) çekiş gövde merkezine değil saplanılan noktaya gider.
+            pullableLocalOffset = pullable.Body != null ? hit.point - pullable.Body.position : Vector2.zero;
+            pullable.NotifyHooked();
             activeSurface = hit.collider;
             ActivePoint = hit.point;
             ActiveNormal = hit.normal;
@@ -168,7 +193,7 @@ namespace Game.Hook
                 var components = target.GetComponentsInParent<MonoBehaviour>();
                 for (int i = 0; i < components.Length; i++)
                     if (components[i] is IDamageable damageable) { damageable.TakeHit(new HitInfo(0f, Vector2.zero, 0f, this, tuning.pullableStunDuration)); break; }
-                activePullable = null; activeSurface = null;
+                ReleasePullable(); activeSurface = null;
                 cooldownRemaining = tuning.hookCooldown;
                 ChangeState(HookState.InHand);
                 return;
@@ -182,7 +207,7 @@ namespace Game.Hook
             if (activeSurface == null) { EnterReturning(); return; }
             if (activePullable != null && activePullable.Body != null)
             {
-                ActivePoint = activePullable.Body.position;
+                ActivePoint = activePullable.Body.position + pullableLocalOffset;
                 hookVisual.position = ActivePoint;
             }
             body.ExternalControl = true;
@@ -202,7 +227,7 @@ namespace Game.Hook
             if (activeSurface == null) { ChangeState(HookState.Launch); return; }
             if (activePullable != null && activePullable.Body != null)
             {
-                ActivePoint = activePullable.Body.position;
+                ActivePoint = activePullable.Body.position + pullableLocalOffset;
                 hookVisual.position = ActivePoint;
             }
             body.ExternalControl = true;
@@ -253,7 +278,7 @@ namespace Game.Hook
             body.ExternalControl = false;
             body.OpenLaunchJumpWindow(tuning.postLaunchJumpWindow);
             activeSurface = null;
-            activePullable = null;
+            ReleasePullable();
             cooldownRemaining = tuning.hookCooldown;
             ChangeState(HookState.InHand);
         }
@@ -282,7 +307,7 @@ namespace Game.Hook
         {
             if (body != null) body.ExternalControl = false;
             activeSurface = null;
-            activePullable = null;
+            ReleasePullable();
             cooldownRemaining = 0f;
             if (hookVisual != null) hookVisual.position = HandPosition();
             ChangeState(HookState.InHand);
@@ -292,9 +317,18 @@ namespace Game.Hook
         {
             body.ExternalControl = false;
             activeSurface = null;
-            activePullable = null;
+            ReleasePullable();
             ChangeState(HookState.Returning);
         }
+
+        void ReleasePullable()
+        {
+            if (activePullable != null) activePullable.NotifyReleased();
+            activePullable = null;
+            pullableLocalOffset = Vector2.zero;
+        }
+
+        void OnDisable() => ReleasePullable();
 
         void ChangeState(HookState next)
         {

@@ -105,6 +105,31 @@ namespace Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator TriggerInFlightPath_IsIgnoredAndHookSticksToWallBehind()
+        {
+            // Checkpoint ve diken-dönüş bölgesi Default katmanında trigger'dır; Default pullableLayers içinde.
+            // Proje ayarında queriesHitTriggers açık olduğu için kanca eskiden bu görünmez alana çarpıp geri dönüyordu.
+            var zone = new GameObject("InvisibleTrigger") { layer = LayerMask.NameToLayer("Default") };
+            zone.transform.position = new Vector3(3f, 1f, 0f);
+            var box = zone.AddComponent<BoxCollider2D>();
+            box.isTrigger = true;
+            box.size = new Vector2(1f, 4f);
+            for (int i = 0; i < 30; i++) yield return new WaitForFixedUpdate();
+            bool stuck = false, returned = false;
+            hook.StateChanged += state =>
+            {
+                if (state == HookState.Stuck) stuck = true;
+                if (state == HookState.Returning) returned = true;
+            };
+            FireAt(new Vector2(12f, 1f));
+            for (int i = 0; i < 30 && !stuck && !returned; i++) yield return new WaitForFixedUpdate();
+            Assert.That(returned, Is.False, "kanca trigger'a çarpıp geri döndü");
+            Assert.That(stuck, Is.True, "kanca trigger'ın arkasındaki duvara saplanmadı");
+            Assert.That(hook.ActivePoint.x, Is.GreaterThan(5f), "saplanma noktası duvarda değil");
+            Object.Destroy(zone);
+        }
+
+        [UnityTest]
         public IEnumerator NonHookableGroundCollider_ReturnsWithoutPulling()
         {
             wall.AddComponent<NonHookable>();
