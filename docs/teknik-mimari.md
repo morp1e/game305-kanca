@@ -79,6 +79,9 @@ Preset Manager'da klasöre göre iki varsayılan preset:
 - Sağa bakarken sol/kanca kolu gövdenin arkasında, sağ/kılıç kolu önündedir. Sola bakınca çizim sırası değişir. Sol yön aynalaması omuz X ofsetini ve kol açısını yansıtır; kol çizimi +X yönüne, pivot omuzda olacak şekilde yapılır.
 - `PlayerRigTuning.angleSnapDegrees` sıfır olduğunda serbest dönüş, 22,5 olduğunda 16 yön ve 45 olduğunda 8 yön verir. Piksel art sprite'larının serbest dönüşteki görünümü gözle değerlendirilecektir; karşılaştırma kamera probuyla birlikte §6'da yapılır.
 
+### Kanca zinciri görseli
+`GrappleChainVisual`, zinciri `PlayerArmRig.HookHandTip` ile kanca başı görseli arasında düz bir çizgi olarak döşer. Zincir Thrown, Stuck, Pulling, Reeling ve Returning durumlarında görünür; Launch ve InHand durumlarında gizlenir. Bu yalnızca görsel geri bildirimdir, ip fiziği eklemez.
+
 ### Can ve hasar
 - `PlayerHealth`, oyuncu gövdesinde `IDamageable` uygular. Temas hasarı ve diğer saldırılar `HitInfo` ile vurur; can `HealthEvent` kanalına başlangıçta ve her değişimde yayınlanır.
 - Ölümcül olmayan isabet canı azaltır, `invulnerabilitySeconds` boyunca sonraki isabetleri yok sayar, kısa süreli yerel hitstop ve geri itme uygular. Geri itme kilidinde yatay girdi ve zıplama tüketilmez, yerçekimi sürer.

@@ -92,7 +92,11 @@ Oyuncu gövdesi ve kollar ayrı teslim edilir: gövde animasyon sheet'i kolsuz �
 - Rengi yalnız ona ayrılmıştır (bkz. okunabilirlik kuralı).
 - Üç hal: boşta (`idle`), hedeflenmiş, yani imleç üstündeyken (`targeted`), kılıç saplıyken (`active`).
 
-### 3.6 Zemin ve platform (tileset)
+### 3.6 Kanca zinciri
+- Bir zincir bağlantısını veya yatay döşenebilen 2-3 bağlantılık kısa bir parçayı çizin.
+- Sprite PPU 16, Filter Point, Mesh Type Full Rect ve Wrap Mode Repeat olmalı. Unity sprite'ı uç noktalar arasındaki mesafe boyunca yatay döşer.
+
+### 3.7 Zemin ve platform (tileset)
 - 16×16 karelerden oluşan tileset.
 - Kenar, köşe, iç köşe ve dolgu kareleri ayrı ayrı çizilir ki zemin her şekilde döşenebilsin. Hangi parçaların gerektiğini ilk tileset'ten önce bir şablonla vereceğiz. *(geçici)*
 

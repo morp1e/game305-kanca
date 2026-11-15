@@ -20,6 +20,7 @@ namespace Game.Editor.Sandbox
         const string DataDir = Root + "/Data";
         const string PixelDir = Root + "/Art/Pixel/_Greybox";
         const string SparkMaterialPath = Root + "/Art/Materials/Mat_SwordSpark.mat";
+        const string ChainSpritePath = Root + "/Art/Pixel/prop_chain.aseprite";
 
         [MenuItem("Tools/Kanca/Prefabları Üret")]
         public static void BuildMenu()
@@ -74,6 +75,16 @@ namespace Game.Editor.Sandbox
             SetOptional(respawnController, "visual", player.transform.Find("Visual").gameObject);
             var feedback = player.AddComponent<HookFeedback>();
             Set(feedback, ("hook", hook), ("hookVisual", hookVisual.transform), ("kickEvent", kick));
+            var chain = player.GetComponent<GrappleChainVisual>();
+            if (chain == null) chain = player.AddComponent<GrappleChainVisual>();
+            var armRig = player.GetComponent<PlayerArmRig>();
+            var chainSerialized = new SerializedObject(chain);
+            chainSerialized.FindProperty("hook").objectReferenceValue = hook;
+            chainSerialized.FindProperty("startAnchor").objectReferenceValue = armRig.HookHandTip;
+            chainSerialized.FindProperty("endAnchor").objectReferenceValue = hookVisual.transform;
+            chainSerialized.FindProperty("linkSprite").objectReferenceValue = FirstSprite(ChainSpritePath);
+            chainSerialized.FindProperty("sortingOrderOffset").intValue = -1;
+            chainSerialized.ApplyModifiedPropertiesWithoutUndo();
             var voice = player.AddComponent<SwordVoice>();
             var voiceEvents = player.AddComponent<SwordVoiceEvents>();
             Set(voice, ("lines", lines), ("hook", hook), ("swordEvents", voiceEvents), ("hookVisual", hookVisual.transform), ("deathEvent", death), ("respawnEvent", respawn));
@@ -226,6 +237,13 @@ namespace Game.Editor.Sandbox
             var serialized = new SerializedObject(target);
             var property = serialized.FindProperty(name);
             if (property != null) { property.objectReferenceValue = value; serialized.ApplyModifiedPropertiesWithoutUndo(); }
+        }
+
+        static Sprite FirstSprite(string path)
+        {
+            foreach (var asset in AssetDatabase.LoadAllAssetsAtPath(path))
+                if (asset is Sprite sprite) return sprite;
+            return null;
         }
 
         static void SetIfEmpty(UnityEngine.Object target, params (string name, UnityEngine.Object value)[] values)
