@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 677b2a0352a5e40608bfd15b619f0adf, type: 3}
+  m_Name: Walker
+  m_EditorClassIdentifier: Game.Runtime::Game.Visual.SpriteAnimSet
+  clips:
+  - name: idle
+    frames:
+    - {fileID: 21300000, guid: fe831228021874a6d9f97cb2a89cc0a7, type: 3}
+    fps: 8
+    loop: 1
+    eventFrame: -1
+  - name: walk
+    frames:
+    - {fileID: 21300000, guid: fe831228021874a6d9f97cb2a89cc0a7, type: 3}
+    - {fileID: 21300000, guid: b634085c5171d43149f4e390875783ee, type: 3}
+    - {fileID: 21300000, guid: 88f1c31ed030b40b692a668495bff112, type: 3}
+    - {fileID: 21300000, guid: 2f0e18ae44a1b449c87cc1d4813f2bf7, type: 3}
+    - {fileID: 21300000, guid: 5ccfe3a9b93a04820b8c2a8eeac29c6e, type: 3}
+    - {fileID: 21300000, guid: 6036e3cf99313499c9c3c8e08a67c2e3, type: 3}
+    - {fileID: 21300000, guid: b8002b13e968748798cddecfb2e089b7, type: 3}
+    - {fileID: 21300000, guid: bd0da0d42235245e6a827f479d44629d, type: 3}
+    fps: 12
+    loop: 1
+    eventFrame: -1
+  - name: windup
+    frames:
+    - {fileID: 21300000, guid: fe831228021874a6d9f97cb2a89cc0a7, type: 3}
+    - {fileID: 21300000, guid: b634085c5171d43149f4e390875783ee, type: 3}
+    - {fileID: 21300000, guid: 88f1c31ed030b40b692a668495bff112, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: attack
+    frames:
+    - {fileID: 21300000, guid: 2f0e18ae44a1b449c87cc1d4813f2bf7, type: 3}
+    - {fileID: 21300000, guid: 5ccfe3a9b93a04820b8c2a8eeac29c6e, type: 3}
+    - {fileID: 21300000, guid: 6036e3cf99313499c9c3c8e08a67c2e3, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: 1
+  - name: recover
+    frames:
+    - {fileID: 21300000, guid: b8002b13e968748798cddecfb2e089b7, type: 3}
+    - {fileID: 21300000, guid: bd0da0d42235245e6a827f479d44629d, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: hurt
+    frames:
+    - {fileID: 21300000, guid: b634085c5171d43149f4e390875783ee, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: death
+    frames:
+    - {fileID: 21300000, guid: fcdc9fb5656b14af4856e2e70f05a26b, type: 3}
+    - {fileID: 21300000, guid: d1629f395bc42407091a3cb37c9d8c2f, type: 3}
+    - {fileID: 21300000, guid: 875072b3e4d9746b6a564b22baef8ab2, type: 3}
+    - {fileID: 21300000, guid: 075076ff5482a4fd589ea8d617bb500a, type: 3}
+    - {fileID: 21300000, guid: 1e02ce390f0564a5396a1dd4cf6feb34, type: 3}
+    - {fileID: 21300000, guid: 7e514c9e89d194dff8c614b4431adf8f, type: 3}
+    - {fileID: 21300000, guid: 9e95b189cbed540988618989c5914027, type: 3}
+    - {fileID: 21300000, guid: ef50d4246afeb4056a7c1e0c2cc06d3c, type: 3}
+    - {fileID: 21300000, guid: 424606c0af0f84476b1b695290452daf, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  visualOffset: {x: 0, y: 0}
+  visualScale: 1
+  spritesFaceLeft: 1

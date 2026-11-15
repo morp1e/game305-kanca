@@ -51,10 +51,13 @@ namespace Game.Tests
                 for (int i = 0; i < tuning.comboSteps.Length; i++)
                 {
                     var step = tuning.comboSteps[i];
-                    Assert.AreEqual(0, ComboSequence.Phase(step.windup - 0.001f, step), $"adım {i + 1} hazırlık sınırı");
-                    Assert.AreEqual(1, ComboSequence.Phase(step.windup, step), $"adım {i + 1} aktif başlangıcı");
-                    Assert.AreEqual(2, ComboSequence.Phase(step.windup + step.active, step), $"adım {i + 1} toparlanma başlangıcı");
-                    Assert.AreEqual(3, ComboSequence.Phase(step.windup + step.active + step.recovery, step), $"adım {i + 1} bitişi");
+                    float windup = Mathf.Max(0f, step.windup);
+                    float active = Mathf.Max(0.001f, step.active);
+                    float recovery = Mathf.Max(0f, step.recovery);
+                    Assert.AreEqual(0, ComboSequence.Phase(windup - 0.001f, step), $"adım {i + 1} hazırlık sınırı");
+                    Assert.AreEqual(1, ComboSequence.Phase(windup, step), $"adım {i + 1} aktif başlangıcı");
+                    Assert.AreEqual(2, ComboSequence.Phase(windup + active, step), $"adım {i + 1} toparlanma başlangıcı");
+                    Assert.AreEqual(3, ComboSequence.Phase(windup + active + recovery, step), $"adım {i + 1} bitişi");
                 }
                 var finisher = tuning.comboSteps[2];
                 Assert.That(finisher.windup, Is.LessThanOrEqualTo(0.05f));

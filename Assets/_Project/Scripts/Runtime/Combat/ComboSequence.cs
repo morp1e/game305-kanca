@@ -5,6 +5,7 @@ namespace Game.Combat
     /// <summary>Unity objesinden bağımsız kombo adımı ve pencere hesabı.</summary>
     public sealed class ComboSequence
     {
+        const float PhaseBoundaryTolerance = 0.000001f;
         int nextStep;
         float lastStart = float.NegativeInfinity;
         bool lastStartWasFinisher;
@@ -34,9 +35,13 @@ namespace Game.Combat
 
         public static int Phase(float time, ComboStep step)
         {
-            if (time < Mathf.Max(0f, step.windup)) return 0;
-            if (time < Mathf.Max(0f, step.windup) + Mathf.Max(0.001f, step.active)) return 1;
-            if (time < Mathf.Max(0f, step.windup) + Mathf.Max(0.001f, step.active) + Mathf.Max(0f, step.recovery)) return 2;
+            float elapsed = time + PhaseBoundaryTolerance;
+            float windup = Mathf.Max(0f, step.windup);
+            float activeEnd = windup + Mathf.Max(0.001f, step.active);
+            float recoveryEnd = activeEnd + Mathf.Max(0f, step.recovery);
+            if (elapsed < windup) return 0;
+            if (elapsed < activeEnd) return 1;
+            if (elapsed < recoveryEnd) return 2;
             return 3;
         }
     }

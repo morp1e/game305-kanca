@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7dbcb578d6f24fcca1998cbd5a45b4bb, type: 3}
   m_Name: EnemyDef_Walker
   m_EditorClassIdentifier: Game.Runtime::Game.Enemies.EnemyDefinition
+  visualSet: {fileID: 11400000, guid: a0a6a5ea939894a23ba24543035072ff, type: 2}
+  telegraphTintStrength: 0
+  deathHoldSeconds: 0.6
   maxHealth: 2
   moveSpeed: 2
   chaseSpeed: 5

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using Game.Combat;
 using Game.Input;
 using Game.Player;
 using NUnit.Framework;
@@ -12,7 +13,7 @@ namespace Game.Tests
     // "zemine basıyor mu, içinden geçiyor mu" sorularını cevaplar.
     public class PlayerPhysicsTests
     {
-        GameObject floor, player;
+        GameObject floor, player, wall;
         PlayerMotor motor;
 
         static void SetField(object target, string name, object value) =>
@@ -21,6 +22,7 @@ namespace Game.Tests
         [SetUp]
         public void Build()
         {
+            ResetGlobalPhysicsState();
             floor = new GameObject("Floor") { layer = LayerMask.NameToLayer("Ground") };
             floor.transform.position = new Vector3(0f, -0.5f, 0f);
             floor.AddComponent<BoxCollider2D>().size = new Vector2(40f, 1f);
@@ -41,13 +43,26 @@ namespace Game.Tests
         [TearDown]
         public void Clean()
         {
-            Object.Destroy(player);
-            Object.Destroy(floor);
+            if (wall != null) Object.DestroyImmediate(wall);
+            if (player != null) Object.DestroyImmediate(player);
+            if (floor != null) Object.DestroyImmediate(floor);
+            foreach (GameObject leftoverWall in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+                if (leftoverWall.name == "Wall") Object.DestroyImmediate(leftoverWall);
+            ResetGlobalPhysicsState();
+        }
+
+        static void ResetGlobalPhysicsState()
+        {
+            foreach (HitstopService service in Object.FindObjectsByType<HitstopService>(FindObjectsSortMode.None))
+                Object.DestroyImmediate(service);
+            Time.timeScale = 1f;
         }
 
         [UnityTest]
         public IEnumerator FallsAndRestsOnFloor()
         {
+            int landings = 0;
+            motor.Landed += () => landings++;
             for (int i = 0; i < 300; i++)
             {
                 yield return new WaitForFixedUpdate();
@@ -58,6 +73,7 @@ namespace Game.Tests
             // Zeminin üstü y=0, kapsülün yarı boyu 0.9.
             Assert.That(player.transform.position.y, Is.EqualTo(0.9f).Within(0.05f), "oyuncu zemine oturmadı");
             Assert.That(motor.IsGrounded, Is.True, "zemindeyken IsGrounded false");
+            Assert.That(landings, Is.EqualTo(1), "zemine ilk inişte Landed bir kez yayınlanmalı");
         }
 
         [UnityTest]
@@ -85,6 +101,8 @@ namespace Game.Tests
             for (int i = 0; i < 100; i++) yield return new WaitForFixedUpdate();
             float start = player.transform.position.y;
             var input = player.GetComponent<PlayerInputReader>();
+            int jumps = 0;
+            motor.Jumped += () => jumps++;
             input.SetJumpHeldOverride(true);
             input.TriggerJumpForTest();
             float peak = start;
@@ -99,6 +117,7 @@ namespace Game.Tests
                 (5f * 5f) / 112.5f;
             Debug.Log($"[CelesteJump] observed={height:F3} tiles; held-var-jump reference={heldVarJumpReference:F3} tiles");
             Assert.That(height, Is.InRange(3.2f, 3.9f));
+            Assert.That(jumps, Is.EqualTo(1));
         }
 
         [UnityTest]
@@ -133,8 +152,8 @@ namespace Game.Tests
         [UnityTest]
         public IEnumerator WallJumpPushesAwayAndUp()
         {
-            var wall = new GameObject("Wall") { layer = LayerMask.NameToLayer("Ground") };
-            wall.transform.position = new Vector3(1.1f, 2f, 0f);
+            wall = new GameObject("Wall") { layer = LayerMask.NameToLayer("Ground") };
+            wall.transform.position = new Vector3(1f, 2f, 0f);
             wall.AddComponent<BoxCollider2D>().size = new Vector2(0.5f, 5f);
             player.transform.position = new Vector3(0f, 2f, 0f);
             motor.Velocity = new Vector2(0f, -1f);
@@ -149,7 +168,27 @@ namespace Game.Tests
             Debug.Log($"[WallJump] after press position={player.transform.position} velocity={motor.Velocity} grounded={motor.IsGrounded}");
             Assert.That(motor.Velocity.x, Is.LessThan(0f));
             Assert.That(motor.Velocity.y, Is.GreaterThan(0f));
-            Object.Destroy(wall);
+            Object.DestroyImmediate(wall);
+            wall = null;
+        }
+
+        [UnityTest]
+        public IEnumerator WallSlideStateTracksTheExistingSlideCondition()
+        {
+            wall = new GameObject("Wall") { layer = LayerMask.NameToLayer("Ground") };
+            wall.transform.position = new Vector3(0.65f, 2f, 0f);
+            wall.AddComponent<BoxCollider2D>().size = new Vector2(0.5f, 5f);
+            player.transform.position = new Vector3(0f, 2f, 0f);
+            motor.Velocity = new Vector2(0f, -1f);
+            player.GetComponent<PlayerInputReader>().SetMoveXOverride(1f);
+            yield return new WaitForFixedUpdate();
+            Assert.IsTrue(motor.IsWallSliding);
+
+            player.GetComponent<PlayerInputReader>().SetMoveXOverride(0f);
+            yield return new WaitForFixedUpdate();
+            Assert.IsFalse(motor.IsWallSliding);
+            Object.DestroyImmediate(wall);
+            wall = null;
         }
 
         [UnityTest]

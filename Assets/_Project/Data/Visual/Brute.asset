@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 677b2a0352a5e40608bfd15b619f0adf, type: 3}
+  m_Name: Brute
+  m_EditorClassIdentifier: Game.Runtime::Game.Visual.SpriteAnimSet
+  clips:
+  - name: idle
+    frames:
+    - {fileID: -446198063759132195, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 1235243342741060904, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 6008631576532437361, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 5792058939128127358, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 4185659681491201354, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: -3981304751274544797, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    fps: 8
+    loop: 1
+    eventFrame: -1
+  - name: walk
+    frames:
+    - {fileID: -446198063759132195, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 1235243342741060904, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 6008631576532437361, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 5792058939128127358, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 4185659681491201354, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: -3981304751274544797, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    fps: 12
+    loop: 1
+    eventFrame: -1
+  - name: windup
+    frames:
+    - {fileID: -8473535881398634344, guid: de8dcc1ce0e4644568510462bb263175, type: 3}
+    - {fileID: 3700778223479553246, guid: de8dcc1ce0e4644568510462bb263175, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: attack
+    frames:
+    - {fileID: -728343487374458041, guid: de8dcc1ce0e4644568510462bb263175, type: 3}
+    - {fileID: 1487279022005020668, guid: de8dcc1ce0e4644568510462bb263175, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: 0
+  - name: recover
+    frames:
+    - {fileID: -446198063759132195, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 1235243342741060904, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 6008631576532437361, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 5792058939128127358, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 4185659681491201354, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: -3981304751274544797, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: hurt
+    frames:
+    - {fileID: -446198063759132195, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 1235243342741060904, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 6008631576532437361, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 5792058939128127358, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: 4185659681491201354, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    - {fileID: -3981304751274544797, guid: 2c8f822dfdd2a47a59b88d73a8ccf44f, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: death
+    frames:
+    - {fileID: 21300000, guid: fcdc9fb5656b14af4856e2e70f05a26b, type: 3}
+    - {fileID: 21300000, guid: d1629f395bc42407091a3cb37c9d8c2f, type: 3}
+    - {fileID: 21300000, guid: 875072b3e4d9746b6a564b22baef8ab2, type: 3}
+    - {fileID: 21300000, guid: 075076ff5482a4fd589ea8d617bb500a, type: 3}
+    - {fileID: 21300000, guid: 1e02ce390f0564a5396a1dd4cf6feb34, type: 3}
+    - {fileID: 21300000, guid: 7e514c9e89d194dff8c614b4431adf8f, type: 3}
+    - {fileID: 21300000, guid: 9e95b189cbed540988618989c5914027, type: 3}
+    - {fileID: 21300000, guid: ef50d4246afeb4056a7c1e0c2cc06d3c, type: 3}
+    - {fileID: 21300000, guid: 424606c0af0f84476b1b695290452daf, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  visualOffset: {x: 0, y: 0}
+  visualScale: 1
+  spritesFaceLeft: 1

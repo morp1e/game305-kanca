@@ -1,10 +1,14 @@
 using UnityEngine;
+using Game.Visual;
 namespace Game.Enemies
 {
     /// <summary>Düşman davranışı ve başlangıç ayarları.</summary>
     [CreateAssetMenu(menuName = "Kanca/Dusman/Enemy Definition", fileName = "EnemyDef_")]
     public class EnemyDefinition : ScriptableObject
     {
+        [Tooltip("Bu düşmanın animasyon seti. Boşsa gri kutu görünümü kullanılır.")] public SpriteAnimSet visualSet;
+        [Tooltip("Set varken Telegraph sırasında uygulanacak renk etkisi. Sıfır kapatır.")] [Range(0f, 1f)] public float telegraphTintStrength;
+        [Tooltip("Ölüm klibi yoksa veya bitmezse görselin açık kalacağı süre, s.")] [Min(0f)] public float deathHoldSeconds = .6f;
         [Tooltip("Maksimum can. Ö: oynayarak ayarlanacak.")] public float maxHealth = 2f;
         [Tooltip("Devriye hızı, u/s. Ö: oynayarak ayarlanacak.")] public float moveSpeed = 2f;
         [Tooltip("Takip veya saldırı hızı, u/s. Ö: oynayarak ayarlanacak.")] public float chaseSpeed = 5f;

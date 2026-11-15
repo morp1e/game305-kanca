@@ -7,6 +7,7 @@ using Game.Hook;
 using Game.Input;
 using Game.Level;
 using Game.Player;
+using Game.Visual;
 using UnityEditor;
 using UnityEngine;
 
@@ -123,14 +124,35 @@ namespace Game.Editor.Sandbox
             var input = player.AddComponent<PlayerInputReader>(); var motor = player.AddComponent<PlayerMotor>(); var hook = player.AddComponent<GrappleHook>();
             var health = player.AddComponent<PlayerHealth>();
             var visualRoot = new GameObject("Visual"); visualRoot.transform.SetParent(player.transform, false);
-            var visual = new GameObject("Body"); visual.transform.SetParent(visualRoot.transform, false); visual.transform.localScale = new Vector3(1, 2, 1);
-            visual.AddComponent<SpriteRenderer>().sprite = sprite;
+            var playerVisualSet = AssetDatabase.LoadAssetAtPath<SpriteAnimSet>(DataDir + "/Visual/Player.asset");
+            visualRoot.transform.localPosition = playerVisualSet != null ? new Vector3(0f, -0.9f, 0f) : Vector3.zero;
+            var bodyRenderer = visualRoot.AddComponent<SpriteRenderer>();
+            bodyRenderer.sprite = sprite;
+            if (playerVisualSet == null)
+            {
+                bodyRenderer.drawMode = SpriteDrawMode.Sliced;
+                bodyRenderer.size = new Vector2(1f, 2f);
+            }
+            else
+            {
+                bodyRenderer.drawMode = SpriteDrawMode.Simple;
+                bodyRenderer.size = Vector2.zero;
+            }
+            Transform bodyTransform = visualRoot.transform;
+            var animPlayer = visualRoot.AddComponent<SpriteAnimPlayer>();
+            Set(animPlayer, ("spriteRenderer", bodyRenderer));
+            if (playerVisualSet != null) Set(animPlayer, ("set", playerVisualSet));
+            visualRoot.AddComponent<PlayerAnimDriver>();
+            var animDriver = visualRoot.GetComponent<PlayerAnimDriver>();
+            var aimCenter = new GameObject("AimCenter").transform; aimCenter.SetParent(player.transform, false);
             var hookArm = CreateArm("HookArm", sprite, new Color(.25f, .85f, .95f), armTuning.armLength);
             hookArm.transform.SetParent(visualRoot.transform, false);
             var swordArm = CreateArm("SwordArm", sprite, new Color(1f, .72f, .22f), armTuning.armLength);
             swordArm.transform.SetParent(visualRoot.transform, false);
+            ConfigureArmSpriteVisibility(hookArm, swordArm, playerVisualSet != null);
             var armRig = player.AddComponent<PlayerArmRig>();
-            Set(armRig, ("tuning", armTuning), ("bodySprite", visual.transform), ("hookArmPivot", hookArm.transform), ("swordArmPivot", swordArm.transform), ("input", input));
+            Set(armRig, ("tuning", armTuning), ("bodySprite", bodyTransform), ("aimCenter", aimCenter), ("hookArmPivot", hookArm.transform), ("swordArmPivot", swordArm.transform), ("input", input));
+            Set(animDriver, ("motor", motor), ("health", health), ("armRig", armRig), ("animPlayer", animPlayer));
             Set(motor, ("tuning", movement), ("input", input), ("armRig", armRig));
             Set(hook, ("tuning", tuning), ("input", input), ("body", motor), ("armRig", armRig), ("traumaEvent", trauma));
             Set(health, ("tuning", healthTuning), ("healthEvent", healthEvent), ("damagedEvent", damagedEvent), ("traumaEvent", trauma));
@@ -145,6 +167,15 @@ namespace Game.Editor.Sandbox
             var renderer = arm.AddComponent<SpriteRenderer>(); renderer.sprite = sprite; renderer.color = color;
             var hand = new GameObject("HandTip"); hand.transform.SetParent(pivot.transform, false); hand.transform.localPosition = new Vector3(length, 0f, 0f);
             return pivot;
+        }
+
+        internal static void ConfigureArmSpriteVisibility(GameObject hookArm, GameObject swordArm, bool hasBodySet)
+        {
+            bool visible = !hasBodySet;
+            SpriteRenderer hookRenderer = hookArm != null ? hookArm.GetComponentInChildren<SpriteRenderer>() : null;
+            SpriteRenderer swordRenderer = swordArm != null ? swordArm.GetComponentInChildren<SpriteRenderer>() : null;
+            if (hookRenderer != null) hookRenderer.enabled = visible;
+            if (swordRenderer != null) swordRenderer.enabled = visible;
         }
 
         static GameObject CreateHookVisual(Sprite sprite)

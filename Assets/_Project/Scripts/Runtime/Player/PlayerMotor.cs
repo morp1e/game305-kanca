@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using Game.Core;
 using Game.Input;
 using UnityEngine;
@@ -47,6 +48,9 @@ namespace Game.Player
         }
 
         public bool IsGrounded { get; private set; }
+        public bool IsWallSliding { get; private set; }
+        public event Action Jumped;
+        public event Action Landed;
         public Collider2D BodyCollider => bodyCollider != null ? bodyCollider : GetComponent<Collider2D>();
         public bool ExternalControl { get; set; }
 
@@ -57,7 +61,6 @@ namespace Game.Player
         void Awake()
         {
             if (tuning == null) Debug.LogError("[PlayerMotor] tuning atanmamış, oyuncu hareket etmeyecek.", this);
-            if (input == null) Debug.LogError("[PlayerMotor] input atanmamış.", this);
 
             body = GetComponent<Rigidbody2D>();
             bodyCollider = GetComponent<Collider2D>();
@@ -82,7 +85,10 @@ namespace Game.Player
         {
             if (body == null || tuning == null || bodyCollider == null) return;
             float dt = Time.fixedDeltaTime;
+            bool wasGrounded = IsGrounded;
             IsGrounded = CheckGrounded();
+            if (!wasGrounded && IsGrounded) Landed?.Invoke();
+            IsWallSliding = false;
             if (IsGrounded) wallSlideRemaining = tuning.WallSlideTime;
             wallSpeedRemaining = Mathf.Max(0f, wallSpeedRemaining - dt);
             launchMomentumRemaining = Mathf.Max(0f, launchMomentumRemaining - dt);
@@ -129,6 +135,7 @@ namespace Game.Player
             {
                 velocity = MovementMath.ApplyJump(velocity, fromLaunchWindow, tuning.JumpSpeed,
                     tuning.LaunchJumpBonus, tuning.JumpHBoost, moveX);
+                Jumped?.Invoke();
                 variableJumpRemaining = tuning.VarJumpTime;
                 variableJumpSpeed = velocity.y;
                 IsGrounded = false;
@@ -156,6 +163,7 @@ namespace Game.Player
                     forcedMoveRemaining = tuning.WallJumpForceTime;
                     wallSlideRemaining = tuning.WallSlideTime;
                     IsGrounded = false;
+                    Jumped?.Invoke();
                 }
             }
 
@@ -168,6 +176,7 @@ namespace Game.Player
                     fastFall ? tuning.FastMaxFallSpeed : tuning.MaxFallSpeed,
                     tuning.FastMaxAccel * dt);
                 bool sliding = moveX != 0f && IsWallInDirection(moveX) && velocity.y <= 0f && !(input != null && input.DownHeld);
+                IsWallSliding = sliding;
                 float cap = sliding ? MovementMath.WallSlideCap(tuning.MaxFallSpeed, tuning.WallSlideStartMax,
                     wallSlideRemaining, tuning.WallSlideTime) : fastFallCap;
                 velocity.y = MovementMath.StepGravity(velocity.y, dt, jumpHeld,

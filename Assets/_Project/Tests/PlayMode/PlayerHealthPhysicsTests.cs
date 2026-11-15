@@ -5,6 +5,7 @@ using Game.Core;
 using Game.Input;
 using Game.Level;
 using Game.Player;
+using Game.Visual;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -21,6 +22,12 @@ namespace Game.Tests
         PlayerHealthTuning tuning;
         HealthEvent healthEvent;
         GameEvent deathEvent;
+        GameObject visual;
+        GameObject floor;
+        SpriteAnimSet animationSet;
+        Sprite deathSprite;
+        Sprite idleSprite;
+        PlayerAnimDriver animDriver;
 
         static void SetField(object target, string name, object value) => target.GetType().GetField(name, Private).SetValue(target, value);
 
@@ -35,6 +42,24 @@ namespace Game.Tests
             motor = player.AddComponent<PlayerMotor>();
             respawn = player.AddComponent<RespawnController>();
             health = player.AddComponent<PlayerHealth>();
+            visual = new GameObject("Visual");
+            visual.transform.SetParent(player.transform, false);
+            var spriteRenderer = visual.AddComponent<SpriteRenderer>();
+            var animPlayer = visual.AddComponent<SpriteAnimPlayer>();
+            animDriver = visual.AddComponent<PlayerAnimDriver>();
+            SetField(animDriver, "animPlayer", animPlayer);
+            var deathTexture = new Texture2D(1, 1);
+            var idleTexture = new Texture2D(1, 1);
+            deathSprite = Sprite.Create(deathTexture, new Rect(0, 0, 1, 1), Vector2.zero);
+            idleSprite = Sprite.Create(idleTexture, new Rect(0, 0, 1, 1), Vector2.zero);
+            animationSet = ScriptableObject.CreateInstance<SpriteAnimSet>();
+            animationSet.clips = new[]
+            {
+                new SpriteAnimClip { name = "death", frames = new[] { deathSprite, deathSprite }, fps = 4f, loop = false },
+                new SpriteAnimClip { name = "idle", frames = new[] { idleSprite }, fps = 8f, loop = true }
+            };
+            SetField(animPlayer, "spriteRenderer", spriteRenderer);
+            SetField(animPlayer, "set", animationSet);
             tuning = ScriptableObject.CreateInstance<PlayerHealthTuning>();
             tuning.damageHitstop = 0f;
             tuning.invulnerabilitySeconds = .16f;
@@ -48,6 +73,7 @@ namespace Game.Tests
             SetField(respawn, "respawnDelay", .06f);
             SetField(health, "tuning", tuning);
             SetField(health, "healthEvent", healthEvent);
+            SetField(health, "visual", visual);
             player.SetActive(true);
         }
 
@@ -58,6 +84,10 @@ namespace Game.Tests
             if (tuning != null) Object.Destroy(tuning);
             if (healthEvent != null) Object.Destroy(healthEvent);
             if (deathEvent != null) Object.Destroy(deathEvent);
+            if (floor != null) Object.Destroy(floor);
+            if (animationSet != null) Object.Destroy(animationSet);
+            if (deathSprite != null) { Object.Destroy(deathSprite.texture); Object.Destroy(deathSprite); }
+            if (idleSprite != null) { Object.Destroy(idleSprite.texture); Object.Destroy(idleSprite); }
         }
 
         [UnityTest]
@@ -92,8 +122,11 @@ namespace Game.Tests
                 for (int step = 0; step < 10; step++) yield return new WaitForFixedUpdate();
             }
             Assert.That(health.CurrentHealth, Is.EqualTo(1f), "dokunulmazlık aralığından sonra gelen dört vuruş 4 can düşürmeli");
-            // Yeniden doğma 0,06 s sürer; ölüm, beklemeden aynı adımda okunur.
+            // Ölüm animasyonu bitmeden respawn gecikmesi başlamaz.
             health.TakeHit(new HitInfo(1f, Vector2.right, 0f, player));
+            Assert.That(respawn.IsDeathAnimationPending, Is.True);
+            Assert.That(respawn.IsDead, Is.False);
+            for (int step = 0; step < 40 && !respawn.IsDead; step++) yield return new WaitForFixedUpdate();
             Assert.That(respawn.IsDead, Is.True);
             Assert.That(deaths, Is.EqualTo(1));
             health.TakeHit(new HitInfo(1f, Vector2.right, 0f, player));
@@ -102,6 +135,38 @@ namespace Game.Tests
             Assert.That(health.CurrentHealth, Is.EqualTo(5f));
             Assert.That(healthEvent.Current, Is.EqualTo(5f));
             Assert.That(healthEvent.Max, Is.EqualTo(5f));
+        }
+
+        [UnityTest]
+        public IEnumerator LethalHitPlaysDeathBeforeRespawnAndReturnsToIdle()
+        {
+            BuildPlayer(Vector2.zero);
+            floor = new GameObject("Ground") { layer = LayerMask.NameToLayer("Ground") };
+            floor.transform.position = new Vector2(0f, -0.5f);
+            floor.AddComponent<BoxCollider2D>().size = new Vector2(8f, 1f);
+            SetField(respawn, "respawnDelay", 0.25f);
+            health.TakeHit(new HitInfo(5f, Vector2.right, 0f, player));
+
+            Assert.That(respawn.IsDeathAnimationPending, Is.True);
+            Assert.That(respawn.IsDead, Is.False);
+            Assert.That(visual.activeSelf, Is.True, "death klibi oynarken Visual açık kalmalı");
+            Assert.That(motor.ExternalControl, Is.True, "ölüm klibi boyunca oyuncu kontrolü kilitli olmalı");
+            Assert.That(animDriver.ActiveClipName, Is.EqualTo("death"));
+
+            yield return new WaitForSeconds(.15f);
+            Assert.That(respawn.IsDeathAnimationPending, Is.True);
+            Assert.That(visual.activeSelf, Is.True);
+            yield return new WaitForSeconds(.42f);
+            Assert.That(respawn.IsDead, Is.True, "respawn sayacı ölüm klibinden sonra başlamalı");
+            Assert.That(visual.activeSelf, Is.False);
+            for (int i = 0; i < 20 && respawn.IsDead; i++) yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(respawn.IsDead, Is.False);
+            Assert.That(visual.activeSelf, Is.True);
+            Assert.That(motor.ExternalControl, Is.False);
+            Assert.That(health.CurrentHealth, Is.EqualTo(5f));
+            Assert.That(animDriver.ActiveClipName, Is.EqualTo("idle"));
         }
 
         [UnityTest]
@@ -143,7 +208,7 @@ namespace Game.Tests
             var spikes = new GameObject("Spikes") { layer = LayerMask.NameToLayer("Hazard") };
             spikes.AddComponent<BoxCollider2D>().isTrigger = true;
             spikes.AddComponent<Hazard>();
-            yield return new WaitForFixedUpdate();
+            for (int i = 0; i < 40 && !respawn.IsDead; i++) yield return new WaitForFixedUpdate();
             Assert.That(respawn.IsDead, Is.True);
             Object.Destroy(spikes);
         }

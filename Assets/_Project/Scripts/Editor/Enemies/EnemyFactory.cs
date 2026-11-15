@@ -2,6 +2,7 @@ using Game.Combat;
 using Game.Core;
 using Game.Enemies;
 using Game.Hook;
+using Game.Visual;
 using UnityEditor;
 using UnityEngine;
 namespace Game.Editor.Enemies
@@ -14,6 +15,7 @@ namespace Game.Editor.Enemies
         const string SpritePath = "Assets/_Project/Art/Pixel/_Greybox/greybox_square.png";
         const string EventPath = "Assets/_Project/Data/Events/Event_PlayerRespawn.asset";
         const string SwordTuningPath = "Assets/_Project/Data/Tuning/SwordTuning.asset";
+        const string VisualDataPath = "Assets/_Project/Data/Visual";
         [MenuItem("Tools/Kanca/Dusmanlari Kur")]
         public static void BuildAll()
         {
@@ -25,10 +27,10 @@ namespace Game.Editor.Enemies
             Projectile projectilePrefab = BuildProjectile(projectileDefinition);
             GameEvent respawn = AssetDatabase.LoadAssetAtPath<GameEvent>(EventPath);
             SwordTuning swordTuning = AssetDatabase.LoadAssetAtPath<SwordTuning>(SwordTuningPath);
-            BuildEnemy("Walker", typeof(WalkerBrain), new Color(1f, .48f, .12f), new Vector2(1f, .8f), 2f, 2f, 5f, 6f, .4f, .8f, 1f, 3f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn, swordTuning);
-            BuildEnemy("Flyer", typeof(FlyerBrain), new Color(.65f, .32f, .9f), new Vector2(.8f, .8f), 2f, 3f, 6f, 7f, .35f, .7f, .8f, 0f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn, swordTuning);
-            BuildEnemy("Spitter", typeof(SpitterBrain), new Color(.24f, .8f, .28f), new Vector2(1f, 1.2f), 3f, 0f, 0f, 9f, .5f, .2f, 1.8f, 3f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn, swordTuning);
-            BuildEnemy("Brute", typeof(BruteBrain), new Color(.48f, .12f, .15f), new Vector2(1.6f, 2.2f), 5f, 1.5f, 1.5f, 6f, .6f, .2f, 1.5f, 3f, HookWeightClass.Heavy, projectileDefinition, projectilePrefab, respawn, swordTuning);
+            BuildEnemy("Walker", typeof(WalkerBrain), new Color(1f, .48f, .12f), new Vector2(1.1f, 1.8f), 2f, 2f, 5f, 6f, .4f, .8f, 1f, 3f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn, swordTuning);
+            BuildEnemy("Flyer", typeof(FlyerBrain), new Color(.65f, .32f, .9f), new Vector2(.7f, 1.5f), 2f, 3f, 6f, 7f, .35f, .7f, .8f, 0f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn, swordTuning);
+            BuildEnemy("Spitter", typeof(SpitterBrain), new Color(.24f, .8f, .28f), new Vector2(.9f, 1.6f), 3f, 0f, 0f, 9f, .5f, .2f, 1.8f, 3f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn, swordTuning);
+            BuildEnemy("Brute", typeof(BruteBrain), new Color(.48f, .12f, .15f), new Vector2(1.3f, 2.4f), 5f, 1.5f, 1.5f, 6f, .6f, .2f, 1.5f, 3f, HookWeightClass.Heavy, projectileDefinition, projectilePrefab, respawn, swordTuning);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Düşman tanımları ve prefabları kuruldu.");
@@ -38,6 +40,7 @@ namespace Game.Editor.Enemies
             string definitionPath = DataPath + "/EnemyDef_" + name + ".asset";
             bool newDefinition = AssetDatabase.LoadAssetAtPath<EnemyDefinition>(definitionPath) == null;
             EnemyDefinition definition = GetAsset<EnemyDefinition>(definitionPath);
+            definition.visualSet = AssetDatabase.LoadAssetAtPath<SpriteAnimSet>(VisualDataPath + "/" + name + ".asset");
             if (newDefinition)
             {
                 definition.maxHealth = health;
@@ -62,15 +65,9 @@ namespace Game.Editor.Enemies
             string prefab = PrefabPath + "/" + name + ".prefab";
             bool newPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefab) == null;
             GameObject root = LoadOrCreateRoot(name, prefab, out bool loadedContents);
-            if (newPrefab)  {
-                root.layer = LayerMask.NameToLayer("Enemy");
-                root.transform.localScale = new Vector3(size.x, size.y, 1f);
-            }
-            SpriteRenderer renderer = Ensure<SpriteRenderer>(root);
-            if (newPrefab)  {
-                renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
-                renderer.color = color;
-            }
+            if (newPrefab) root.layer = LayerMask.NameToLayer("Enemy");
+            SpriteRenderer renderer = EnsureVisual(root, size, color, definition.visualSet, newPrefab);
+            root.transform.localScale = Vector3.one;
             Rigidbody2D body = Ensure<Rigidbody2D>(root);
             body.bodyType = RigidbodyType2D.Dynamic;
             body.gravityScale = definition.gravityScale;
@@ -91,13 +88,51 @@ namespace Game.Editor.Enemies
             Set(enemyHealth, "playerRespawnEvent", respawn);
             CombatHitReaction reaction = Ensure<CombatHitReaction>(root);
             if (swordTuning != null) Set(reaction, "tuning", swordTuning);
-            if (newPrefab) collider.size = Vector2.one;
+            collider.size = size;
+            Transform visualTransform = root.transform.Find("Visual");
+            if (definition.visualSet != null)
+                visualTransform.localPosition = new Vector3(collider.offset.x, collider.offset.y - size.y * .5f, 0f);
+            else
+                visualTransform.localPosition = collider.offset;
             if (name == "Spitter")  {
                 var spitter = (SpitterBrain)brain;
                 Set(spitter, "projectilePrefab", projectilePrefab);
             }
-            if (name == "Brute" && root.transform.Find("Shield") == null) EnsureShield(root, renderer);
+            if (name == "Brute") EnsureShield(root, renderer, size);
             SaveRoot(root, prefab, loadedContents);
+        }
+        static SpriteRenderer EnsureVisual(GameObject root, Vector2 size, Color color, SpriteAnimSet set, bool newPrefab)
+        {
+            Transform visualTransform = root.transform.Find("Visual");
+            GameObject visual = visualTransform != null ? visualTransform.gameObject : new GameObject("Visual");
+            visual.transform.SetParent(root.transform, false);
+            visual.layer = root.layer;
+            visual.transform.localScale = set == null ? new Vector3(size.x, size.y, 1f) : Vector3.one;
+            SpriteRenderer renderer = Ensure<SpriteRenderer>(visual);
+            SpriteRenderer oldRenderer = root.GetComponent<SpriteRenderer>();
+            if (oldRenderer != null)
+            {
+                EditorUtility.CopySerialized(oldRenderer, renderer);
+                Object.DestroyImmediate(oldRenderer, true);
+            }
+            if (newPrefab || renderer.sprite == null) renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
+            if (newPrefab) renderer.color = color;
+            if (set != null)
+            {
+                renderer.color = Color.white;
+                renderer.drawMode = SpriteDrawMode.Simple;
+                renderer.size = Vector2.zero;
+            }
+            SpriteAnimPlayer player = Ensure<SpriteAnimPlayer>(visual);
+            SerializedObject serializedPlayer = new SerializedObject(player);
+            SerializedProperty setProperty = serializedPlayer.FindProperty("set");
+            if (setProperty != null)
+            {
+                setProperty.objectReferenceValue = set;
+                serializedPlayer.ApplyModifiedPropertiesWithoutUndo();
+            }
+            Ensure<EnemyAnimator>(root);
+            return renderer;
         }
         static Projectile BuildProjectile(ProjectileDefinition definition)
         {
@@ -123,14 +158,14 @@ namespace Game.Editor.Enemies
             Ensure<Projectile>(root);
             return SaveRoot(root, path, loadedContents).GetComponent<Projectile>();
         }
-        static void EnsureShield(GameObject root, SpriteRenderer parent)
+        static void EnsureShield(GameObject root, SpriteRenderer parent, Vector2 bodySize)
         {
             Transform child = root.transform.Find("Shield");
             GameObject shield = child != null ? child.gameObject : new GameObject("Shield");
             shield.transform.SetParent(root.transform, false);
             shield.layer = LayerMask.NameToLayer("Enemy");
-            shield.transform.localPosition = Vector3.right * .35f;
-            shield.transform.localScale = new Vector3(.18f, .7f, 1f);
+            shield.transform.localPosition = new Vector3(bodySize.x * .42f, bodySize.y * .1f, 0f);
+            shield.transform.localScale = new Vector3(bodySize.x * .2f, bodySize.y * .42f, 1f);
             SpriteRenderer renderer = Ensure<SpriteRenderer>(shield);
             renderer.sprite = parent.sprite;
             renderer.color = new Color(.8f, .8f, .78f);

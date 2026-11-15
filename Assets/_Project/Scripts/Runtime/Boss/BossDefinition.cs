@@ -17,5 +17,8 @@ namespace Game.Boss
         [Tooltip("Gövde temas hasarı.")] public float contactDamage = 1f;
         [Tooltip("Yenilgi olayından oyun sonuna kadar geçen süre, s.")] public float victoryDelay = 2.5f;
         [Tooltip("Kirişin kancalanamaz kaldığı süre, s. Ö: oynayarak ayarlanacak.")] public float beamNonHookableDuration = 3f;
+        [Tooltip("Boss gövdesi collider boyutu. Sprite boyutu fiziği değiştirmez.")] public Vector2 bodySize = new Vector2(3f, 3f);
+        [Tooltip("Görselde isteğe bağlı kullanılacak renk tonu.")] public Color bossTint = Color.white;
+        [Tooltip("Açıksa bossTint görsel rengini belirler. Varsayılan kapalıdır.")] public bool useBossTint;
     }
 }

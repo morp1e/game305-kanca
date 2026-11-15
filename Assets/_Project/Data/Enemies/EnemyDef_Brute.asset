@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7dbcb578d6f24fcca1998cbd5a45b4bb, type: 3}
   m_Name: EnemyDef_Brute
   m_EditorClassIdentifier: Game.Runtime::Game.Enemies.EnemyDefinition
+  visualSet: {fileID: 11400000, guid: 9cc5a3ef153ad449e856c84c1b75005d, type: 2}
+  telegraphTintStrength: 0
+  deathHoldSeconds: 0.6
   maxHealth: 5
   moveSpeed: 1.5
   chaseSpeed: 1.5

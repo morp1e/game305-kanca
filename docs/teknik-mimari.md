@@ -211,6 +211,14 @@ Birim: 1 unit = 1 kare. Tüm başlangıçlar Ö: oynayarak ayarlanacak. Kombo i�
 
 `smearColor`, `sparkLifetime` ve altı ses yuvası da tuning asset'indedir. Placeholder sesleri kısa whoosh, düşük frekanslı darbe, derin bitiriş ve öldürme kuyruğu içerir. Gerçek vuruş hissi, görsel yön ve animasyon eşzamanı Unity'de oynanarak doğrulanacaktır.
 
+### Görsel animasyon
+
+Karakter ve düşman kareleri `SpriteAnimSet` ScriptableObject içindeki `SpriteAnimClip` verisiyle tanımlanır. Klip adı, kare dizisi, FPS, döngü ve isteğe bağlı olay karesi veride tutulur. JSON klibindeki isteğe bağlı `frames: [ilk, son]` alanı sıfır tabanlı, iki ucu dahil kare aralığını seçer; alan verilmezse kaynak sprite'ların tamamı kullanılır. `SpriteAnimPlayer` klipleri koddan oynatır; Animator Controller kullanılmaz. Normal oynatma `Time.deltaTime` ile ilerler ve hitstop sırasında zaman ölçeğine uyar. Süre verilen oynatma kareleri Hurt veya Telegraph gibi mevcut mekanik süresine yayar. Döngüsüz klip bitince son kare görünür kalır ve `ClipFinished` olayı bir kez yayınlanır. İşaretli karede `FrameEvent` yayınlanır.
+
+Set veya klip bulunmazsa oynatıcı sessizce mevcut renderer içeriğini korur; gri kutu yer tutucular çalışmaya devam eder. `visualOffset` renderer konumuna, `visualScale` yalnız `Visual` transform'una uygulanır; fizik kökü ölçeklenmez. Kaynak sprite'lar PPU 24'tür. Player idle silueti yaklaşık 40 piksel / 1,67 birim yüksekliğinde ölçülmüştür; 1,8 birim collider'ın 1,15 katı görünür boy için ölçek 1,24'tür. Boss silueti 5,2 birim, collider 3 birim yüksekliğindedir; yaklaşık 1,2 collider oranı için boss ölçeği 0,69'dur. Düşman collider'ları görünür gövdenin yaklaşık yüzde 65 genişliği ve yüzde 90 yüksekliği alınarak 0,1 birime yuvarlanır: Walker 1,1×1,8, Flyer 0,7×1,5, Spitter 0,9×1,6, Brute 1,3×2,4. Kenar algılama ışınları collider sınırlarına göre başlatılır.
+
+PNG ve Aseprite piksel içerikleri `PixelSpriteImporter` ile Point filtre, sıkıştırmasız, mipmapsiz ve saydamlık etkin ayarla içe alınır. Yanındaki `.slice.json` dosyası varsa grid ölçüsü, kare sayısı, PPU, sütun sayısı ve normalize pivot okunur; yoksa tek sprite, PPU 16 ve alt-orta pivot kullanılır. `prop_*.png` ve `prop_*.aseprite` döşenebilir zincir görselleri Repeat ve Full Rect alır. `Assets/ThirdParty/GothicVania/anim-sets.json` içeriği `Tools/Kanca/Animasyon Setlerini Kur` menüsünden animasyon set asset'lerine dönüştürülür.
+
 ## 6. Kamera ve karışık çözünürlük
 
 Piksel katman (PPU 16) ile boyalı katman (PPU 64) aynı ekranda. Pixel Perfect Camera'nın `Upscale Render Texture` modu tüm sahneyi 480×270'e indirir ve boyalı arka planı bozar, bu yüzden kapalı kalır.

@@ -69,6 +69,10 @@ Kullanılan her hazır içerik (font, ses, müzik, doku, Asset Store paketi) iç
 
 | Asset | Tür | Üretici ve kaynak URL | Lisans ve sürüm | Edinme tarihi | İzin ve sınırlar | Atıf metni | Değişiklik | Projedeki yol | Kanıt | Kontrol eden |
 |---|---|---|---|---|---|---|---|---|---|---|
+| GothicVania Church | Piksel sprite ve efekt | ansimuz, https://opengameart.org/content/gothicvania-church-pack | CC0 1.0 Universal | 2026-11-15 | Kamu malı; sınırlama yok | Atıf zorunlu değil | Yer tutucu; değiştirilecek | `Assets/ThirdParty/GothicVania/church/` | Kaynak URL ve `README.md` | Ekip |
+| GothicVania Patreon Collection | Piksel sprite | ansimuz, https://opengameart.org/content/gothicvania-patreons-collection | CC0 1.0 Universal | 2026-11-15 | Kamu malı; sınırlama yok | Atıf zorunlu değil | Yer tutucu; değiştirilecek | `Assets/ThirdParty/GothicVania/patreon/` | Kaynak URL, `README.md`, `public-license.txt` | Ekip |
+| GothicVania Swamp | Piksel sprite | ansimuz, https://opengameart.org/content/gotthicvania-swamp | CC0 1.0 Universal | 2026-11-15 | Kamu malı; sınırlama yok | Atıf zorunlu değil | Yer tutucu; değiştirilecek | `Assets/ThirdParty/GothicVania/swamp/` | Kaynak URL ve `README.md` | Ekip |
+| GothicVania Cemetery | Piksel sprite | ansimuz, https://opengameart.org/content/gothicvania-cemetery-pack | CC0 1.0 Universal | 2026-11-15 | Kamu malı; sınırlama yok | Atıf zorunlu değil | Yer tutucu; değiştirilecek | `Assets/ThirdParty/GothicVania/cemetery/` | Kaynak URL ve `README.md` | Ekip |
 
 Unity Asset Store içeriği yalnız esaslı özgün içerikle birlikte, ürünün esaslı kısmını oluşturmayacak biçimde kullanılabilir. Tek başına dağıtılamaz.
 

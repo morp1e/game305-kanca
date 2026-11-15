@@ -57,7 +57,8 @@ namespace Game.Tests
         public IEnumerator RootSpriteHitReactionNeverWritesRigidbodyTransform()
         {
             reactionObject = new GameObject("RootSpriteReaction");
-            reactionObject.AddComponent<Rigidbody2D>();
+            var body = reactionObject.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
             reactionObject.AddComponent<SpriteRenderer>();
             var reaction = reactionObject.AddComponent<CombatHitReaction>();
             Assert.IsTrue(service.Request(0.12f, stopScale: 0.05f));

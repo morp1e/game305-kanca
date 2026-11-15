@@ -19,7 +19,7 @@ namespace Game.Boss
         [SerializeField] BossShield shield;
         [SerializeField] BossArena arena;
         [SerializeField] ContactDamage contactDamage;
-        [SerializeField] SpriteRenderer visual;
+        [SerializeField] BossAnimator bossAnimator;
         CombatHitReaction hitReaction;
         [SerializeField] Transform player;
         [SerializeField] HealthEvent healthEvent;
@@ -59,7 +59,7 @@ namespace Game.Boss
             if (bodyCollider == null) bodyCollider = GetComponent<Collider2D>();
             if (shield == null) shield = GetComponentInChildren<BossShield>();
             if (contactDamage == null) contactDamage = GetComponent<ContactDamage>();
-            if (visual == null) visual = GetComponentInChildren<SpriteRenderer>();
+            if (bossAnimator == null) bossAnimator = GetComponentInChildren<BossAnimator>();
             hitReaction = GetComponent<CombatHitReaction>();
             random = new System.Random(randomSeed);
             playerFilter = new ContactFilter2D();
@@ -143,6 +143,7 @@ namespace Game.Boss
             StopAllCoroutines();
             active = false;
             state = BossState.Dormant;
+            bossAnimator?.PlayState(BossState.Dormant);
             health = definition != null ? definition.maxHealth : 0f;
             phaseIndex = 0;
             transitionQueued = false;
@@ -166,7 +167,6 @@ namespace Game.Boss
             bool fromFront = HitFromFront(hit.Source);
             if (fromFront && phaseIndex == 0 && shield != null && shield.IsAttached)
             {
-                if (visual != null) visual.color = Color.white;
                 return;
             }
             // Kancanın varış vuruşu: kalkan kancalandığı an yuvasından ayrılmıştır (IsAttached false), gevşek olması yeter.
@@ -193,6 +193,9 @@ namespace Game.Boss
                 if (health <= 0f) Die();
             }
             hitReaction?.Play(hit.Hitstop);
+            if (hit.Damage > 0f && state != BossState.Telegraph && state != BossState.Active &&
+                state != BossState.Staggered && state != BossState.Dead)
+                bossAnimator?.PlayHurt();
         }
 
         bool HitFromFront(UnityEngine.Object source)
@@ -214,6 +217,7 @@ namespace Game.Boss
             if (player == null) { var found = FindFirstObjectByType<PlayerHealth>(); if (found != null) player = found.transform; }
             float range = player != null ? Vector2.Distance(player.position, transform.position) : 0f;
             if (player != null) facing = player.position.x >= transform.position.x ? 1 : -1;
+            bossAnimator?.SetFlip(facing < 0);
             chosen = BossAttackSelector.Select(phase.attacks, range, previousAttack, previousCount, random);
             if (chosen.attack == null) { SetIdle(); return; }
             if (chosen.attack.id == previousAttack) previousCount++; else { previousAttack = chosen.attack.id; previousCount = 1; }
@@ -270,7 +274,6 @@ namespace Game.Boss
         void FinishCharge()
         {
             if (contactDamage != null) contactDamage.Suppressed = true;
-            if (visual != null) visual.color = Color.white;
             traumaEvent?.Raise(0.3f);
             stateElapsed = 0f;
             SetState(BossState.Recover);
@@ -357,6 +360,7 @@ namespace Game.Boss
         void Die()
         {
             active = false;
+            if (bodyCollider != null) bodyCollider.enabled = false;
             if (contactDamage != null) contactDamage.Suppressed = true;
             SetState(BossState.Dead);
             defeatedEvent?.Raise();
@@ -376,7 +380,17 @@ namespace Game.Boss
             state = next;
             timer = 0f;
             stateElapsed = 0f;
-            if (visual != null) visual.color = next == BossState.Telegraph ? Color.red : Color.gray;
+            float animationDuration = next switch
+            {
+                BossState.Intro => definition != null ? definition.introDuration : 0f,
+                BossState.Telegraph => chosen.attack != null ? TelegraphDuration() : 0f,
+                BossState.Active => chosen.attack != null ? chosen.attack.active : 0f,
+                BossState.Recover => chosen.attack != null ? chosen.attack.recovery : 0f,
+                BossState.Staggered => idleDuration,
+                _ => 0f
+            };
+            bossAnimator?.PlayState(next, animationDuration,
+                next == BossState.Active && chosen.attack != null && chosen.attack.movement == BossMoveType.Charge);
             if (contactDamage != null)
                 contactDamage.Suppressed = next == BossState.Recover || next == BossState.Staggered ||
                     next == BossState.ShieldRewind || next == BossState.PhaseTransition || next == BossState.Dead ||

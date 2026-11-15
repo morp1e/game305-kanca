@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using Game.Combat;
 using Game.Core;
 using Game.Hook;
@@ -18,6 +19,7 @@ namespace Game.Player
 
         PlayerMotor motor;
         RespawnController respawn;
+        PlayerAnimDriver deathAnimDriver;
         GrappleHook hook;
         Rigidbody2D body;
         float currentHealth;
@@ -30,15 +32,20 @@ namespace Game.Player
         bool externalBeforeHitstop;
         bool hasHazardPoint;
         bool initialized;
+        bool deathNotified;
         Vector2 hazardPoint;
         Vector2 pendingKnockback;
         Coroutine blinkRoutine;
+        Coroutine deathRoutine;
         Transform heavyPullTarget;
         float heavyPullGraceUntil;
 
         public float CurrentHealth => currentHealth;
         public float MaxHealth => tuning != null ? tuning.maxHealth : currentHealth;
         public bool IsInvulnerable => PlayerHealthMath.IsInvulnerable(Time.time, invulnerableUntil);
+        public float HurtControlLockSeconds => Mathf.Max(0f, tuning != null ? tuning.knockbackControlLockSeconds : 0f);
+        public event Action Damaged;
+        public event Action Died;
 
         void Awake()
         {
@@ -49,6 +56,7 @@ namespace Game.Player
         {
             motor = GetComponent<PlayerMotor>();
             respawn = GetComponent<RespawnController>();
+            deathAnimDriver = GetComponentInChildren<PlayerAnimDriver>(true);
             hook = GetComponent<GrappleHook>();
             body = GetComponent<Rigidbody2D>();
             if (visual == null) visual = transform.Find("Visual") != null ? transform.Find("Visual").gameObject : null;
@@ -68,11 +76,18 @@ namespace Game.Player
             PublishHealth();
         }
 
+        void Update()
+        {
+            if (respawn != null && respawn.IsDead) NotifyDied();
+            else if (respawn != null && !respawn.IsDead && currentHealth > 0f) deathNotified = false;
+        }
+
         void OnDisable()
         {
             if (respawn != null) respawn.Respawned -= HandleRespawn;
             if (hook != null) hook.StateChanged -= HandleHookState;
             if (blinkRoutine != null) StopCoroutine(blinkRoutine);
+            if (deathRoutine != null) StopCoroutine(deathRoutine);
             SetVisualVisible(true);
             RestoreHitstop(false);
         }
@@ -107,11 +122,12 @@ namespace Game.Player
 
             currentHealth = PlayerHealthMath.ClampHealth(PlayerHealthMath.ApplyDamage(currentHealth, hit.Damage), MaxHealth);
             PublishHealth();
+            Damaged?.Invoke();
             damagedEvent?.Raise();
             traumaEvent?.Raise(tuning != null ? tuning.traumaOnDamage : 0f);
             if (currentHealth <= 0f)
             {
-                respawn?.Kill();
+                BeginLethalDeath();
                 return;
             }
 
@@ -125,14 +141,15 @@ namespace Game.Player
 
         public void TakeHazardHit()
         {
-            if (hazardReturnActive || (respawn != null && (respawn.IsDead || respawn.IsReturning))) return;
+            if (hazardReturnActive || (respawn != null && (respawn.IsDead || respawn.IsReturning || respawn.IsDeathAnimationPending))) return;
             HazardPolicy policy = tuning != null ? tuning.hazardPolicy : HazardPolicy.InstantDeath;
-            if (policy == HazardPolicy.InstantDeath) { respawn?.Kill(); return; }
+            if (policy == HazardPolicy.InstantDeath) { BeginLethalDeath(); return; }
 
             currentHealth = PlayerHealthMath.ClampHealth(PlayerHealthMath.ApplyDamage(currentHealth, tuning != null ? tuning.hazardDamage : 1f), MaxHealth);
             PublishHealth();
+            Damaged?.Invoke();
             damagedEvent?.Raise();
-            if (currentHealth <= 0f) { respawn?.Kill(); return; }
+            if (currentHealth <= 0f) { BeginLethalDeath(); return; }
 
             if (hook != null && hook.State != HookState.InHand) hook.ResetToHand();
             Vector2 destination = hasHazardPoint ? hazardPoint : respawn != null ? respawn.CurrentCheckpoint : transform.position;
@@ -154,7 +171,38 @@ namespace Game.Player
             hasHazardPoint = true;
         }
 
-        bool IsDamageFromActiveHeavyPullable(Object source)
+        void NotifyDied()
+        {
+            if (deathNotified) return;
+            deathNotified = true;
+            Died?.Invoke();
+        }
+
+        void BeginLethalDeath()
+        {
+            NotifyDied();
+            if (respawn == null) return;
+            float duration = deathAnimDriver != null
+                ? deathAnimDriver.PlayDeath(tuning != null ? tuning.deathAnimationMaxDuration : 0.65f)
+                : 0f;
+            if (duration <= 0f)
+            {
+                respawn.Kill();
+                return;
+            }
+            respawn.BeginDeathAnimation();
+            if (deathRoutine != null) StopCoroutine(deathRoutine);
+            deathRoutine = StartCoroutine(CompleteDeathAnimation(duration));
+        }
+
+        IEnumerator CompleteDeathAnimation(float duration)
+        {
+            yield return new WaitForSeconds(duration);
+            deathRoutine = null;
+            respawn?.CompleteDeathAnimation();
+        }
+
+        bool IsDamageFromActiveHeavyPullable(UnityEngine.Object source)
         {
             if (!(source is ContactDamage contact)) return false;
             // Çekiş sürerken ve varıştan hemen sonra: oyuncu kendini hedefe çekip ona çarpınca hasar almasın.
@@ -211,6 +259,7 @@ namespace Game.Player
                 currentHealth = Mathf.Max(0f, tuning.maxHealth);
                 PublishHealth();
             }
+            deathAnimDriver?.ResetAfterRespawn();
         }
 
         void PublishHealth() => healthEvent?.Raise(currentHealth, MaxHealth);

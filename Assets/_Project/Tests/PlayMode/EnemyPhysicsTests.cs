@@ -7,6 +7,7 @@ using Game.Hook;
 using Game.Input;
 using Game.Level;
 using Game.Player;
+using Game.Visual;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -21,6 +22,7 @@ namespace Game.Tests
         WalkerBrain brain;
         EnemyBrain activeBrain;
         EnemyHealth health;
+        SpriteRenderer visualRenderer;
         GameObject playerObject;
         PlayerHealth playerHealth;
         PlayerHealthTuning playerTuning;
@@ -52,12 +54,16 @@ namespace Game.Tests
             ;
             enemy.SetActive(false);
             enemy.AddComponent<Rigidbody2D>();
-            enemy.AddComponent<BoxCollider2D>();
+            enemy.AddComponent<BoxCollider2D>().size = new Vector2(1.1f, 1.8f);
             enemy.AddComponent<ContactDamage>();
             enemy.AddComponent<HookPullable>();
             brain = enemy.AddComponent<WalkerBrain>();
             activeBrain = brain;
             health = enemy.AddComponent<EnemyHealth>();
+            GameObject visual = new GameObject("Visual");
+            visual.transform.SetParent(enemy.transform, false);
+            visualRenderer = visual.AddComponent<SpriteRenderer>();
+            visual.AddComponent<SpriteAnimPlayer>();
             SetField(brain, "definition", definition);
             SetField(health, "definition", definition);
             SetField(health, "brain", brain);
@@ -74,24 +80,27 @@ namespace Game.Tests
             floor.transform.position = new Vector2(0f, -0.5f);
             floor.AddComponent<BoxCollider2D>().size = new Vector2(12f, 1f);
             BuildWalker(3f);
-            enemy.transform.position = new Vector2(1.5f, 0.5f);
+            enemy.transform.position = new Vector2(1.2f, 0.9f);
             BuildPlayer();
             playerObject.SetActive(false);
             swordTuning = ScriptableObject.CreateInstance<SwordTuning>();
+            swordTuning.hitLayers = 1 << LayerMask.NameToLayer("Enemy");
             swordAttack = playerObject.AddComponent<SwordAttack>();
             SetField(swordAttack, "tuning", swordTuning);
             SetField(swordAttack, "input", playerObject.GetComponent<PlayerInputReader>());
             SetField(swordAttack, "body", playerObject.GetComponent<PlayerMotor>());
             playerObject.transform.position = new Vector2(0f, 0.9f);
+            playerObject.GetComponent<Rigidbody2D>().position = playerObject.transform.position;
             playerObject.SetActive(true);
             var input = playerObject.GetComponent<PlayerInputReader>();
-            input.SetPointerWorldOverride(new Vector2(5f, 0.9f));
+            input.SetPointerWorldOverride(enemy.transform.position);
+            Physics2D.SyncTransforms();
             yield return new WaitForFixedUpdate();
             input.TriggerAttackForTest();
             for (int i = 0; i < 30 && health.Health == definition.maxHealth; i++) yield return new WaitForFixedUpdate();
             Assert.That(health.Health, Is.LessThan(definition.maxHealth), "kılıç isabeti Walker'a ulaşmalı");
             yield return new WaitForSeconds(1.5f);
-            Assert.That(enemy.transform.position.y, Is.EqualTo(0.5f).Within(0.12f), "yer düşmanı zemine dönmeli");
+            Assert.That(enemy.transform.position.y, Is.EqualTo(0.9f).Within(0.12f), "1,8 u Walker zemine dönmeli");
             Assert.That(enemy.GetComponent<Rigidbody2D>().linearVelocity.y, Is.EqualTo(0f).Within(0.2f));
             Object.Destroy(floor);
         }
@@ -165,6 +174,64 @@ namespace Game.Tests
             Assert.That(enemy.GetComponent<Collider2D>().enabled, Is.True);
         }
 
+        [Test]
+        public void StateChangedPublishesPreviousAndNextInOrder()
+        {
+            BuildWalker();
+            var transitions = new System.Collections.Generic.List<string>();
+            brain.StateChanged += (previous, next) => transitions.Add(previous + "->" + next);
+
+            brain.NotifyHit(new HitInfo(0f, Vector2.right, 0f, enemy.transform, .5f));
+            brain.NotifyHit(new HitInfo(.1f, Vector2.right, 0f, enemy.transform, .5f));
+
+            Assert.That(transitions, Is.EqualTo(new[] { "Patrol->Stunned", "Stunned->Hurt" }));
+        }
+
+        [UnityTest]
+        public IEnumerator LethalHitKeepsVisualUntilDeathClipFinishesThenRespawnRestoresIdle()
+        {
+            BuildWalker();
+            definition.deathHoldSeconds = .6f;
+            var texture = new Texture2D(1, 1);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(.5f, .5f));
+            var idleTexture = new Texture2D(1, 1);
+            var idleSprite = Sprite.Create(idleTexture, new Rect(0, 0, 1, 1), new Vector2(.5f, .5f));
+            var deathSet = ScriptableObject.CreateInstance<SpriteAnimSet>();
+            deathSet.clips = new[]
+            {
+                new SpriteAnimClip { name = "death", frames = new[] { sprite, sprite }, fps = 1f, loop = false },
+                new SpriteAnimClip { name = "idle", frames = new[] { idleSprite }, fps = 1f, loop = true },
+                new SpriteAnimClip { name = "walk", frames = new[] { idleSprite }, fps = 1f, loop = true }
+            };
+            definition.visualSet = deathSet;
+            var player = enemy.GetComponentInChildren<SpriteAnimPlayer>();
+            visualRenderer.sprite = sprite;
+            SetField(player, "set", deathSet);
+            var animator = enemy.AddComponent<EnemyAnimator>();
+
+            health.TakeHit(new HitInfo(definition.maxHealth, Vector2.right, 0f, enemy.transform));
+            Assert.That(enemy.GetComponent<Collider2D>().enabled, Is.False);
+            Assert.That(visualRenderer.enabled, Is.True);
+            yield return new WaitForSeconds(.1f);
+            Assert.That(visualRenderer.enabled, Is.True);
+            yield return new WaitForSeconds(.65f);
+            Assert.That(visualRenderer.enabled, Is.True, "death klibi deathHold süresinden uzun olduğunda erken kapanmamalı");
+            yield return new WaitForSeconds(1.5f);
+            Assert.That(visualRenderer.enabled, Is.False);
+
+            respawnEvent.Raise();
+            Assert.That(visualRenderer.enabled, Is.True, "yeniden doğma renderer'ı açmalı");
+            Assert.That(visualRenderer.sprite, Is.SameAs(idleSprite), "yeniden doğma idle klibini seçmeli");
+            Assert.That(health.Health, Is.EqualTo(definition.maxHealth));
+
+            Object.Destroy(deathSet);
+            Object.Destroy(sprite);
+            Object.Destroy(idleSprite);
+            Object.Destroy(texture);
+            Object.Destroy(idleTexture);
+            Object.Destroy(animator);
+        }
+
         [UnityTest]
         public IEnumerator WalkerTurnsAtGroundEdgeInsteadOfFalling()
         {
@@ -172,10 +239,10 @@ namespace Game.Tests
             floor.transform.position = new Vector2(0f, -.5f);
             floor.AddComponent<BoxCollider2D>().size = new Vector2(2f, 1f);
             BuildWalker();
-            enemy.transform.position = new Vector2(.7f, .5f);
+            enemy.transform.position = new Vector2(.7f, .9f);
             yield return new WaitForFixedUpdate();
             Assert.That(enemy.GetComponent<Rigidbody2D>().linearVelocity.x, Is.LessThan(0f));
-            Assert.That(enemy.transform.position.y, Is.GreaterThanOrEqualTo(.45f));
+            Assert.That(enemy.transform.position.y, Is.GreaterThanOrEqualTo(.85f));
             Object.Destroy(floor);
         }
 

@@ -5,6 +5,7 @@ namespace Game.Enemies
     public class SpitterBrain : EnemyBrain
     {
         [SerializeField] Projectile projectilePrefab;
+        public override float RecoveryDuration => Tuning != null ? Tuning.attackCooldown : 0f;
         protected override void TickState()
         {
             switch (State)

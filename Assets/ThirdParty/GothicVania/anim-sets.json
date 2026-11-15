@@ -1,0 +1,425 @@
+[
+  {
+    "set": "Assets/_Project/Data/Visual/Player.asset",
+    "visualOffset": [
+      0,
+      0
+    ],
+    "spritesFaceLeft": false,
+    "clips": [
+      {
+        "name": "idle",
+        "source": "Assets/ThirdParty/GothicVania/patreon/gothic-hero-idle.png",
+        "fps": 8,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "run",
+        "source": "Assets/ThirdParty/GothicVania/patreon/gothic-hero-run.png",
+        "fps": 12,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "jump",
+        "source": "Assets/ThirdParty/GothicVania/patreon/gothic-hero-jump.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "fall",
+        "source": "Assets/ThirdParty/GothicVania/patreon/gothic-hero-jump.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          3,
+          4
+        ]
+      },
+      {
+        "name": "wall_slide",
+        "source": "Assets/ThirdParty/GothicVania/patreon/gothic-hero-jump.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          2,
+          2
+        ]
+      },
+      {
+        "name": "hurt",
+        "source": "Assets/ThirdParty/GothicVania/patreon/spritesheets/gothic-hero-hurt.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "death",
+        "source": "Assets/ThirdParty/GothicVania/patreon/spritesheets/gothic-hero-hurt.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      }
+    ],
+    "visualScale": 1.24
+  },
+  {
+    "set": "Assets/_Project/Data/Visual/Walker.asset",
+    "visualOffset": [
+      0,
+      0
+    ],
+    "spritesFaceLeft": true,
+    "clips": [
+      {
+        "name": "idle",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/burning-ghoul/sprites/v1/burning-ghoul-1.png",
+        "fps": 8,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "walk",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/burning-ghoul/sprites/v1",
+        "fps": 12,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "windup",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/burning-ghoul/sprites/v1",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          0,
+          2
+        ]
+      },
+      {
+        "name": "attack",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/burning-ghoul/sprites/v1",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": 1,
+        "frames": [
+          3,
+          5
+        ]
+      },
+      {
+        "name": "recover",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/burning-ghoul/sprites/v1",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          6,
+          7
+        ]
+      },
+      {
+        "name": "hurt",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/burning-ghoul/sprites/v1/burning-ghoul-2.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "death",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/fx/enemy-death/enemy-death-sprites",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      }
+    ]
+  },
+  {
+    "set": "Assets/_Project/Data/Visual/Flyer.asset",
+    "visualOffset": [
+      0,
+      0
+    ],
+    "spritesFaceLeft": true,
+    "clips": [
+      {
+        "name": "idle",
+        "source": "Assets/ThirdParty/GothicVania/swamp/ghost/flying/ghost1.png",
+        "fps": 8,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "fly",
+        "source": "Assets/ThirdParty/GothicVania/swamp/ghost/flying",
+        "fps": 12,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "windup",
+        "source": "Assets/ThirdParty/GothicVania/swamp/ghost/flying",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "attack",
+        "source": "Assets/ThirdParty/GothicVania/swamp/ghost/flying",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": 1,
+        "frames": [
+          1,
+          2
+        ]
+      },
+      {
+        "name": "recover",
+        "source": "Assets/ThirdParty/GothicVania/swamp/ghost/flying",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          3,
+          3
+        ]
+      },
+      {
+        "name": "hurt",
+        "source": "Assets/ThirdParty/GothicVania/swamp/ghost/flying/ghost2.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "death",
+        "source": "Assets/ThirdParty/GothicVania/swamp/enemy-death/explosion",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      }
+    ]
+  },
+  {
+    "set": "Assets/_Project/Data/Visual/Spitter.asset",
+    "visualOffset": [
+      0,
+      0
+    ],
+    "spritesFaceLeft": false,
+    "clips": [
+      {
+        "name": "idle",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/wizard/idle-sprites",
+        "fps": 8,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "walk",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/wizard/idle-sprites",
+        "fps": 12,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "windup",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/wizard/fire-sprites",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          0,
+          4
+        ]
+      },
+      {
+        "name": "attack",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/wizard/fire-sprites",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": 2,
+        "frames": [
+          5,
+          9
+        ]
+      },
+      {
+        "name": "recover",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/wizard/idle-sprites",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "hurt",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/wizard/idle-sprites/wizard-idle-1.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "death",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/fx/enemy-death/enemy-death-sprites",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      }
+    ]
+  },
+  {
+    "set": "Assets/_Project/Data/Visual/Brute.asset",
+    "visualOffset": [
+      0,
+      0
+    ],
+    "spritesFaceLeft": true,
+    "clips": [
+      {
+        "name": "idle",
+        "source": "Assets/ThirdParty/GothicVania/patreon/with-stroke/hell-beast-idle.png",
+        "fps": 8,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "walk",
+        "source": "Assets/ThirdParty/GothicVania/patreon/with-stroke/hell-beast-idle.png",
+        "fps": 12,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "windup",
+        "source": "Assets/ThirdParty/GothicVania/patreon/with-stroke/hell-beast-breath.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "attack",
+        "source": "Assets/ThirdParty/GothicVania/patreon/with-stroke/hell-beast-breath.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": 0,
+        "frames": [
+          2,
+          3
+        ]
+      },
+      {
+        "name": "recover",
+        "source": "Assets/ThirdParty/GothicVania/patreon/with-stroke/hell-beast-idle.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "hurt",
+        "source": "Assets/ThirdParty/GothicVania/patreon/with-stroke/hell-beast-idle.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "death",
+        "source": "Assets/ThirdParty/GothicVania/church/sprites/fx/enemy-death/enemy-death-sprites",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      }
+    ]
+  },
+  {
+    "set": "Assets/_Project/Data/Visual/Boss.asset",
+    "visualOffset": [
+      0,
+      0
+    ],
+    "spritesFaceLeft": false,
+    "clips": [
+      {
+        "name": "idle",
+        "source": "Assets/ThirdParty/GothicVania/patreon/demon-idle.png",
+        "fps": 8,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "move",
+        "source": "Assets/ThirdParty/GothicVania/patreon/demon-idle.png",
+        "fps": 12,
+        "loop": true,
+        "eventFrame": -1
+      },
+      {
+        "name": "windup",
+        "source": "Assets/ThirdParty/GothicVania/patreon/demon-attack-no-breath.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1,
+        "frames": [
+          0,
+          3
+        ]
+      },
+      {
+        "name": "attack",
+        "source": "Assets/ThirdParty/GothicVania/patreon/demon-attack.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": 8,
+        "frames": [
+          0,
+          14
+        ]
+      },
+      {
+        "name": "recover",
+        "source": "Assets/ThirdParty/GothicVania/patreon/demon-idle.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "hurt",
+        "source": "Assets/ThirdParty/GothicVania/patreon/demon-idle.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "stagger",
+        "source": "Assets/ThirdParty/GothicVania/patreon/demon-idle.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      },
+      {
+        "name": "death",
+        "source": "Assets/ThirdParty/GothicVania/patreon/demon-idle.png",
+        "fps": 12,
+        "loop": false,
+        "eventFrame": -1
+      }
+    ],
+    "visualScale": 0.69
+  }
+]

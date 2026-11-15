@@ -5,6 +5,9 @@ namespace Game.Enemies
     public class FlyerBrain : EnemyBrain
     {
         Vector2 diveTarget;
+        public override float RecoveryDuration => Tuning != null
+            ? Vector2.Distance(transform.position, Home) / Mathf.Max(0.01f, Tuning.moveSpeed)
+            : 0f;
         protected override void TickState()
         {
             switch (State)

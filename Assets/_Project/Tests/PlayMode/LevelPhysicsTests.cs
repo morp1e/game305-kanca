@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using Game.Combat;
 using Game.Core;
 using Game.Input;
 using Game.Level;
@@ -48,10 +49,21 @@ namespace Game.Tests
         [TearDown]
         public void Clean()
         {
-            if (player != null) Object.Destroy(player);
-            if (tuning != null) Object.Destroy(tuning);
-            if (deathEvent != null) Object.Destroy(deathEvent);
-            if (respawnEvent != null) Object.Destroy(respawnEvent);
+            if (player != null) Object.DestroyImmediate(player);
+            if (tuning != null) Object.DestroyImmediate(tuning);
+            if (deathEvent != null) Object.DestroyImmediate(deathEvent);
+            if (respawnEvent != null) Object.DestroyImmediate(respawnEvent);
+            ResetGlobalPhysicsState();
+        }
+
+        [SetUp]
+        public void ResetStateBeforeTest() => ResetGlobalPhysicsState();
+
+        static void ResetGlobalPhysicsState()
+        {
+            foreach (HitstopService service in Object.FindObjectsByType<HitstopService>(FindObjectsSortMode.None))
+                Object.DestroyImmediate(service);
+            Time.timeScale = 1f;
         }
 
         [UnityTest]

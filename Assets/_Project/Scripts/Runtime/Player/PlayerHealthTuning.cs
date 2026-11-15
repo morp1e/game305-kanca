@@ -15,6 +15,7 @@ namespace Game.Player
         [Tooltip("Hasar anında oyuncu gövdesinin yerel donma süresi, s. Ö: oynayarak ayarlanacak.")] public float damageHitstop = 0.08f;
         [Tooltip("Hasar anındaki kamera travması, 0-1. Ö: oynayarak ayarlanacak.")] [Range(0f, 1f)] public float traumaOnDamage = 0.35f;
         [Tooltip("Dokunulmazlık sırasında görselin yanıp sönme aralığı, s. Ö: oynayarak ayarlanacak.")] public float blinkInterval = 0.08f;
+        [Tooltip("Ölüm animasyonunun üst süre sınırı, s. Ö: oynayarak ayarlanacak.")] [Min(0f)] public float deathAnimationMaxDuration = 0.65f;
         [Header("Dikenler")]
         [Tooltip("Diken teması politikası. Ö: oynayarak ayarlanacak.")] public HazardPolicy hazardPolicy = HazardPolicy.DamageAndReturn;
         [Tooltip("Diken temasında kaybedilecek can. Ö: oynayarak ayarlanacak.")] public float hazardDamage = 1f;

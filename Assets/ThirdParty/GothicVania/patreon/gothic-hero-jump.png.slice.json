@@ -1,0 +1,11 @@
+{
+  "ppu": 24,
+  "frameWidth": 61,
+  "frameHeight": 77,
+  "frames": 5,
+  "columns": 5,
+  "pivot": [
+    0.5,
+    0.012987012987012988
+  ]
+}

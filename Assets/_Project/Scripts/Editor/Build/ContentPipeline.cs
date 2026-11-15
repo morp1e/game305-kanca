@@ -1,6 +1,7 @@
 using Game.Editor.Boss;
 using Game.Editor.Enemies;
 using Game.Editor.Level;
+using Game.Editor.Import;
 using Game.Editor.Sandbox;
 using Game.Editor.UI;
 using UnityEditor;
@@ -18,6 +19,7 @@ namespace Game.Editor.Build
         [MenuItem("Tools/Kanca/Tum Icerigi Kur")]
         public static void BuildAllContent()
         {
+            Step("Animasyon setleri", SpriteAnimSetBuilder.BuildFromMenu);
             Step("Oyuncu ve savaş prefabları", PrefabFactory.BuildMenu);
             Step("Oyuncu canı", PlayerHealthSetup.Apply);
             Step("Arayüz ve sahne akışı", UiFactory.BuildAll);

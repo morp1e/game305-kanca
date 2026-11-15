@@ -25,11 +25,13 @@ namespace Game.Level
         public Vector2 CurrentCheckpoint { get; private set; }
         public bool IsDead { get; private set; }
         public bool IsReturning => returning;
+        public bool IsDeathAnimationPending => deathAnimationPending;
         public event System.Action Respawned;
         Checkpoint activeCheckpoint;
         GrappleHook hook;
         float respawnAt;
         bool returning;
+        bool deathAnimationPending;
         bool bodyWasSimulated;
 
         void Awake()
@@ -53,6 +55,7 @@ namespace Game.Level
                 CompleteReturn();
                 return;
             }
+            if (deathAnimationPending) return;
             if (!IsDead)
             {
                 if (motor != null && motor.Position.y < killHeight) Kill();
@@ -65,7 +68,7 @@ namespace Game.Level
 
         public void Kill()
         {
-            if (IsDead || returning) return;
+            if (IsDead || returning || deathAnimationPending) return;
             IsDead = true;
             respawnAt = Time.time + Mathf.Max(0f, respawnDelay);
             if (deathEvent != null) deathEvent.Raise();
@@ -79,9 +82,28 @@ namespace Game.Level
             if (visual != null) visual.SetActive(false);
         }
 
+        public void BeginDeathAnimation()
+        {
+            if (IsDead || returning || deathAnimationPending) return;
+            deathAnimationPending = true;
+            if (hook != null) hook.ResetToHand();
+            if (motor != null)
+            {
+                motor.ExternalControl = true;
+                motor.Velocity = Vector2.zero;
+            }
+        }
+
+        public void CompleteDeathAnimation()
+        {
+            if (!deathAnimationPending) return;
+            deathAnimationPending = false;
+            Kill();
+        }
+
         public void ReturnTo(Vector2 position, float delay)
         {
-            if (IsDead || returning) return;
+            if (IsDead || returning || deathAnimationPending) return;
             returning = true;
             respawnAt = Time.time + Mathf.Max(0f, delay);
             if (hook != null) hook.ResetToHand();

@@ -8,6 +8,7 @@ namespace Game.Player
     {
         [SerializeField] PlayerRigTuning tuning;
         [SerializeField] Transform bodySprite;
+        [SerializeField] Transform aimCenter;
         [SerializeField] Transform hookArmPivot;
         [SerializeField] Transform swordArmPivot;
         [SerializeField] PlayerInputReader input;
@@ -27,7 +28,8 @@ namespace Game.Player
         {
             if (tuning == null || input == null || aimCamera == null || hookArmPivot == null || swordArmPivot == null) return;
             Vector2 cursor = input.PointerWorld(aimCamera);
-            Vector2 center = bodySprite != null ? (Vector2)bodySprite.position : (Vector2)transform.position;
+            Vector2 center = aimCenter != null ? (Vector2)aimCenter.position :
+                bodySprite != null ? (Vector2)bodySprite.position : (Vector2)transform.position;
             Facing = ArmAimMath.Facing(center, cursor, tuning.facingDeadZone, Facing);
             hookArmPivot.position = Shoulder(center, tuning.backShoulderOffset);
             swordArmPivot.position = Shoulder(center, tuning.frontShoulderOffset);

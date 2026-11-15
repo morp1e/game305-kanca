@@ -38,7 +38,7 @@ Hazırlık süreleri oyuncunun kaçış eylemine göre kuruldu: tepki 0,25 s + k
 
 | Özellik | Başlangıç | Dayanak |
 |---|---:|---|
-| Boss gövdesi / kalkan | 3×3 u / 1×2,5 u | piksel sprite 48×48 hedefi |
+| Boss collider gövdesi / kalkan | 3×3 u / 1×2,5 u | arena ve çarpışma boyutu |
 | Can | 24 (kılıç 1 hasar) | HK'nin ilk boss'larının yaklaşık yarısı; öğretici tek boss |
 | Faz eşiği | 10 can (~%42) | HK eşikleri %50 / %40 aralığında |
 | Saldırılar arası | F1 0,6-1,0 s, F2 0,3-0,6 s | Ö |
@@ -46,6 +46,8 @@ Hazırlık süreleri oyuncunun kaçış eylemine göre kuruldu: tepki 0,25 s + k
 | Arka kombo | 2 s içinde 6 isabet → 1,0 s | HK kombo eşiği kalıbı |
 | Faz geçişi / zafer gecikmesi | 2,0 s / 2,5 s | Ö |
 | Oyuncuya hasar | her isabet 1 (oyuncu canı 5) | oyuncu hasar modeli |
+
+Gothic demon görünür gövdesi PPU 24'te yaklaşık 6,5×5,2 u ölçülür. Animasyon setinin `visualScale` değeri 0,69'dur; 3 u collider yüksekliğine göre görünür yükseklik yaklaşık 3,6 u olur. Görsel ölçek `Visual` transform'una uygulanır ve fizik gövdesini değiştirmez.
 
 ## Arena
 

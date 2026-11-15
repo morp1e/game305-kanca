@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 677b2a0352a5e40608bfd15b619f0adf, type: 3}
+  m_Name: Boss
+  m_EditorClassIdentifier: Game.Runtime::Game.Visual.SpriteAnimSet
+  clips:
+  - name: idle
+    frames:
+    - {fileID: 9083683855015346827, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 4526976818826055507, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 6706057316634897999, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: -7633371085453104933, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 7622220858091088904, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 5287318541332355128, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    fps: 8
+    loop: 1
+    eventFrame: -1
+  - name: move
+    frames:
+    - {fileID: 9083683855015346827, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 4526976818826055507, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 6706057316634897999, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: -7633371085453104933, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 7622220858091088904, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 5287318541332355128, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    fps: 12
+    loop: 1
+    eventFrame: -1
+  - name: windup
+    frames:
+    - {fileID: 1119696102202878521, guid: 2ed51f49710ac42cc94ab6403b2d908a, type: 3}
+    - {fileID: -3021583118361910209, guid: 2ed51f49710ac42cc94ab6403b2d908a, type: 3}
+    - {fileID: -3758352173003776340, guid: 2ed51f49710ac42cc94ab6403b2d908a, type: 3}
+    - {fileID: 4440047075060365722, guid: 2ed51f49710ac42cc94ab6403b2d908a, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: attack
+    frames:
+    - {fileID: 4830101959132194629, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: -4271147063164771560, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: -7799362553759336465, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: 3464098051191881274, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: -485573400809545533, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: 3534393129997317530, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: 7574423355230237855, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: -5612541687579396147, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: -929153436317632263, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: 6143293567109672340, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: 3732180292136803729, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: -443954170725275564, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: -1235301770620420358, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: 8765156206793520063, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    - {fileID: 6541704209189053201, guid: 565ea2a151d6245bd8d16a14509ce25e, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: 8
+  - name: recover
+    frames:
+    - {fileID: 9083683855015346827, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 4526976818826055507, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 6706057316634897999, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: -7633371085453104933, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 7622220858091088904, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 5287318541332355128, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: hurt
+    frames:
+    - {fileID: 9083683855015346827, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 4526976818826055507, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 6706057316634897999, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: -7633371085453104933, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 7622220858091088904, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 5287318541332355128, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: stagger
+    frames:
+    - {fileID: 9083683855015346827, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 4526976818826055507, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 6706057316634897999, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: -7633371085453104933, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 7622220858091088904, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 5287318541332355128, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: death
+    frames:
+    - {fileID: 9083683855015346827, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 4526976818826055507, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 6706057316634897999, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: -7633371085453104933, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 7622220858091088904, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    - {fileID: 5287318541332355128, guid: b9e4c4ad52f60473e8d80b7671ed7bd1, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  visualOffset: {x: 0, y: 0}
+  visualScale: 0.69
+  spritesFaceLeft: 0

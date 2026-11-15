@@ -1,6 +1,7 @@
 using Game.Combat;
 using Game.Hook;
 using Game.Player;
+using System;
 using UnityEngine;
 namespace Game.Enemies
 {
@@ -13,12 +14,18 @@ namespace Game.Enemies
         [SerializeField] PlayerHealth player;
         [SerializeField] LayerMask groundLayers;
         [SerializeField] SpriteRenderer bodyRenderer;
+        [SerializeField] Game.Visual.SpriteAnimPlayer visualPlayer;
         protected Rigidbody2D Body  {
             get;
             private set;
         }
         protected EnemyDefinition Tuning => definition;
         public bool HasTelegraphSuperArmor => State == EnemyState.Telegraph;
+        public event Action<EnemyState, EnemyState> StateChanged;
+        public EnemyState CurrentState => State;
+        public EnemyDefinition Definition => definition;
+        public float StunDuration => hurtRemaining;
+        public virtual float RecoveryDuration => definition != null ? definition.recoverDuration : 0f;
         protected PlayerHealth Target => player;
         protected HookPullable Pullable  {
             get;
@@ -50,6 +57,8 @@ namespace Game.Enemies
             Body = GetComponent<Rigidbody2D>();
             Pullable = GetComponent<HookPullable>();
             Contact = GetComponent<ContactDamage>();
+            if (visualPlayer == null) visualPlayer = GetComponentInChildren<Game.Visual.SpriteAnimPlayer>();
+            if (bodyRenderer == null && visualPlayer != null) bodyRenderer = visualPlayer.GetComponent<SpriteRenderer>();
             if (bodyRenderer == null) bodyRenderer = GetComponentInChildren<SpriteRenderer>();
             if (bodyRenderer != null) baseRendererColor = bodyRenderer.color;
             if (player == null) player = FindFirstObjectByType<PlayerHealth>();
@@ -101,10 +110,13 @@ namespace Game.Enemies
             return hit.collider == null;
         }
         protected void ChangeState(EnemyState state)  {
+            EnemyState previous = State;
+            if (previous == state) return;
             State = state;
             StateTime = 0f;
             Contact.Suppressed = state == EnemyState.Hurt || state == EnemyState.Stunned || state == EnemyState.Pulled || state == EnemyState.Dead;
             OnStateChanged(state);
+            StateChanged?.Invoke(previous, state);
         }
         protected virtual void OnStateChanged(EnemyState state)  {
         }
@@ -117,13 +129,11 @@ namespace Game.Enemies
         void UpdateVisual()
         {
             if (bodyRenderer == null) return;
-            Vector3 scale = bodyRenderer.transform.localScale;
-            scale.x = Mathf.Abs(scale.x) * Facing;
-            bodyRenderer.transform.localScale = scale;
-            // Renderer gövdeyle aynı objede: konumuna dokunmak düşmanı taşır. Uyarı yalnız renkle verilir.
+            if (visualPlayer != null) visualPlayer.SetFlip(Facing < 0);
             if (State == EnemyState.Telegraph)
             {
-                bodyRenderer.color = Color.Lerp(baseRendererColor, Tuning.telegraphColor, Mathf.PingPong(Time.time * 12f, 1f));
+                float strength = Tuning == null || Tuning.visualSet != null ? (Tuning != null ? Tuning.telegraphTintStrength : 0f) : 1f;
+                bodyRenderer.color = Color.Lerp(baseRendererColor, Tuning != null ? Tuning.telegraphColor : Color.yellow, Mathf.PingPong(Time.time * 12f, 1f) * strength);
                 telegraphVisual = true;
             }
             else
@@ -184,9 +194,12 @@ namespace Game.Enemies
         }
         protected bool GroundOrWallAhead()
         {
-            Vector2 origin = (Vector2)transform.position + Vector2.right * Facing * .5f;
+            Collider2D collider = GetComponent<Collider2D>();
+            Bounds bounds = collider != null ? collider.bounds : new Bounds(transform.position, Vector3.one);
+            Vector2 origin = new Vector2(bounds.center.x, bounds.center.y);
+            Vector2 edgeOrigin = new Vector2(bounds.center.x + Facing * (bounds.extents.x + .05f), bounds.min.y + .05f);
             bool wall = Physics2D.Raycast(origin, Vector2.right * Facing, .15f, groundLayers).collider != null;
-            bool ground = Physics2D.Raycast(origin, Vector2.down, .8f, groundLayers).collider != null;
+            bool ground = Physics2D.Raycast(edgeOrigin, Vector2.down, .15f, groundLayers).collider != null;
             bool atPatrolLimit = Mathf.Abs(transform.position.x - Home.x) >= Tuning.patrolRange;
             if (EnemyMath.ShouldTurnAtWall(wall) || EnemyMath.ShouldTurnAtEdge(ground) || atPatrolLimit)  {
                 Facing *= -1;

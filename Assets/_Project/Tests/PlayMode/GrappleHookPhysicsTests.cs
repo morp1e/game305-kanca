@@ -174,11 +174,15 @@ namespace Game.Tests
         {
             var rigObject = new GameObject("ArmRig");
             var bodySprite = new GameObject("Body").transform; bodySprite.SetParent(player.transform, false);
+            bodySprite.localPosition = new Vector3(0f, 4f, 0f);
+            var aimCenter = new GameObject("AimCenter").transform; aimCenter.SetParent(player.transform, false);
             var hookPivot = MakeArm("HookArm", player.transform);
             var swordPivot = MakeArm("SwordArm", player.transform);
             var armRig = rigObject.AddComponent<PlayerArmRig>();
-            SetField(armRig, "tuning", ScriptableObject.CreateInstance<PlayerRigTuning>());
+            var rigTuning = ScriptableObject.CreateInstance<PlayerRigTuning>();
+            SetField(armRig, "tuning", rigTuning);
             SetField(armRig, "bodySprite", bodySprite);
+            SetField(armRig, "aimCenter", aimCenter);
             SetField(armRig, "hookArmPivot", hookPivot);
             SetField(armRig, "swordArmPivot", swordPivot);
             SetField(armRig, "input", input);
@@ -189,7 +193,10 @@ namespace Game.Tests
             for (int i = 0; i < 3; i++) yield return null;
             Assert.That(input.MoveX, Is.EqualTo(1f));
             Assert.That(motor.Facing, Is.EqualTo(-1));
+            Vector2 expectedShoulder = (Vector2)aimCenter.position + new Vector2(-rigTuning.backShoulderOffset.x, rigTuning.backShoulderOffset.y);
+            Assert.That(Vector2.Distance(hookPivot.position, expectedShoulder), Is.LessThan(.001f), "kol omuz merkezi sprite konumundan etkilenmemeli");
             Object.Destroy(rigObject);
+            Object.Destroy(rigTuning);
         }
 
         [UnityTest]

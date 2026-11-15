@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 677b2a0352a5e40608bfd15b619f0adf, type: 3}
+  m_Name: Player
+  m_EditorClassIdentifier: Game.Runtime::Game.Visual.SpriteAnimSet
+  clips:
+  - name: idle
+    frames:
+    - {fileID: 3702383623512059768, guid: 6756c26f2b4b148b694f563b939ce8a1, type: 3}
+    - {fileID: -5654833299211097151, guid: 6756c26f2b4b148b694f563b939ce8a1, type: 3}
+    - {fileID: -5921645933360183524, guid: 6756c26f2b4b148b694f563b939ce8a1, type: 3}
+    - {fileID: 8654194646291298362, guid: 6756c26f2b4b148b694f563b939ce8a1, type: 3}
+    fps: 8
+    loop: 1
+    eventFrame: -1
+  - name: run
+    frames:
+    - {fileID: -6340975805839830933, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: -3991298745443165112, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: 7677731886197083832, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: 7380437498476750783, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: -3646713291993161854, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: 1157674346292121983, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: -150065627806584677, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: -5231704881271510533, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: -6552776000313715405, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: -7729537411479187167, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: 6088148169649431297, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    - {fileID: -6368970444911176205, guid: ab51316353c4c4f4f94269ed8528e9e4, type: 3}
+    fps: 12
+    loop: 1
+    eventFrame: -1
+  - name: jump
+    frames:
+    - {fileID: -7468276728048604513, guid: ba14f66325a2a4ea39a52250b954139f, type: 3}
+    - {fileID: -1528968483713605751, guid: ba14f66325a2a4ea39a52250b954139f, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: fall
+    frames:
+    - {fileID: -3797278990935530344, guid: ba14f66325a2a4ea39a52250b954139f, type: 3}
+    - {fileID: 7556587491855275688, guid: ba14f66325a2a4ea39a52250b954139f, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: wall_slide
+    frames:
+    - {fileID: 2065613693219613588, guid: ba14f66325a2a4ea39a52250b954139f, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: hurt
+    frames:
+    - {fileID: 2190853669689026659, guid: 7ca34eeb19b6f4b349bebb1a026dc82e, type: 3}
+    - {fileID: 1851766425038269912, guid: 7ca34eeb19b6f4b349bebb1a026dc82e, type: 3}
+    - {fileID: 2672976646833291762, guid: 7ca34eeb19b6f4b349bebb1a026dc82e, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  - name: death
+    frames:
+    - {fileID: 2190853669689026659, guid: 7ca34eeb19b6f4b349bebb1a026dc82e, type: 3}
+    - {fileID: 1851766425038269912, guid: 7ca34eeb19b6f4b349bebb1a026dc82e, type: 3}
+    - {fileID: 2672976646833291762, guid: 7ca34eeb19b6f4b349bebb1a026dc82e, type: 3}
+    fps: 12
+    loop: 0
+    eventFrame: -1
+  visualOffset: {x: 0, y: 0}
+  visualScale: 1.24
+  spritesFaceLeft: 0

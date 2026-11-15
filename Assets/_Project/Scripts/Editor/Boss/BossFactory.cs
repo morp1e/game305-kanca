@@ -3,6 +3,7 @@ using Game.Boss;
 using Game.Combat;
 using Game.Core;
 using Game.Hook;
+using Game.Visual;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,6 +17,7 @@ namespace Game.Editor.Boss
         const string PrefabPath = "Assets/_Project/Prefabs/Boss";
         const string GreySpritePath = "Assets/_Project/Art/Pixel/_Greybox/greybox_square.png";
         const string SwordTuningPath = "Assets/_Project/Data/Tuning/SwordTuning.asset";
+        const string BossVisualPath = "Assets/_Project/Data/Visual/Boss.asset";
 
         [MenuItem("Tools/Kanca/Boss'u Kur")]
         public static void BuildAll()
@@ -194,6 +196,7 @@ namespace Game.Editor.Boss
                 try
                 {
                     ConfigureBossHitReaction(contents);
+                    ConfigureBossVisual(contents, definition);
                     return PrefabUtility.SaveAsPrefabAsset(contents, path);
                 }
                 finally { PrefabUtility.UnloadPrefabContents(contents); }
@@ -204,12 +207,7 @@ namespace Game.Editor.Boss
             body.gravityScale = 0f;
             body.freezeRotation = true;
             var collider = root.AddComponent<BoxCollider2D>();
-            collider.size = new Vector2(3f, 3f);
-            var renderer = root.AddComponent<SpriteRenderer>();
-            renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GreySpritePath);
-            renderer.color = new Color(.22f, .24f, .28f);
-            renderer.drawMode = SpriteDrawMode.Sliced;
-            renderer.size = new Vector2(3f, 3f);
+            collider.size = definition.bodySize;
             ConfigureBossHitReaction(root);
             var contact = root.AddComponent<ContactDamage>();
             SetLayerMask(contact, "targetLayers", LayerMask.GetMask("Player"));
@@ -218,11 +216,13 @@ namespace Game.Editor.Boss
             SetObject(brain, "body", body);
             SetObject(brain, "bodyCollider", collider);
             SetObject(brain, "contactDamage", contact);
-            SetObject(brain, "visual", renderer);
             SetObject(brain, "healthEvent", health);
             SetObject(brain, "traumaEvent", trauma);
             SetObject(brain, "defeatedEvent", defeated);
             SetObject(brain, "gameWonEvent", won);
+
+            var visualRoot = ConfigureBossVisual(root, definition);
+            SetObject(brain, "bossAnimator", visualRoot.GetComponent<BossAnimator>());
 
             var shieldRoot = new GameObject("Shield") { layer = LayerMask.NameToLayer("Enemy") };
             shieldRoot.transform.SetParent(root.transform, false);
@@ -237,7 +237,7 @@ namespace Game.Editor.Boss
             shieldRenderer.color = new Color(.72f, .75f, .8f);
             shieldRenderer.drawMode = SpriteDrawMode.Sliced;
             shieldRenderer.size = new Vector2(1f, 2.5f);
-            shieldRenderer.sortingOrder = renderer.sortingOrder + 1;
+            shieldRenderer.sortingOrder = visualRoot.GetComponent<SpriteRenderer>().sortingOrder + 1;
             shieldRoot.AddComponent<NonHookable>();
             var pullable = shieldRoot.AddComponent<HookPullable>();
             SetInt(pullable, "weightClass", (int)HookWeightClass.Light);
@@ -251,6 +251,70 @@ namespace Game.Editor.Boss
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        static Transform ConfigureBossVisual(GameObject root, BossDefinition definition)
+        {
+            root.transform.localScale = Vector3.one;
+            BoxCollider2D bodyCollider = root.GetComponent<BoxCollider2D>();
+            if (bodyCollider == null) bodyCollider = root.AddComponent<BoxCollider2D>();
+            bodyCollider.size = definition.bodySize;
+
+            Transform visualTransform = EnsureVisualChild(root);
+            visualTransform.localScale = Vector3.one;
+            SpriteRenderer renderer = visualTransform.GetComponent<SpriteRenderer>();
+            if (renderer == null) renderer = visualTransform.gameObject.AddComponent<SpriteRenderer>();
+
+            SpriteAnimSet bossVisual = AssetDatabase.LoadAssetAtPath<SpriteAnimSet>(BossVisualPath);
+            if (bossVisual != null)
+            {
+                renderer.drawMode = SpriteDrawMode.Simple;
+                renderer.size = Vector2.zero;
+            }
+            if (definition.useBossTint) renderer.color = definition.bossTint;
+            else if (bossVisual != null) renderer.color = Color.white;
+            else
+            {
+                if (renderer.sprite == null) renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GreySpritePath);
+                renderer.color = new Color(.22f, .24f, .28f);
+                renderer.drawMode = SpriteDrawMode.Sliced;
+                renderer.size = definition.bodySize;
+            }
+
+            float floorOffset = bodyCollider.offset.y - bodyCollider.size.y * 0.5f;
+            visualTransform.localPosition = new Vector3(bodyCollider.offset.x, floorOffset, 0f);
+            var animPlayer = visualTransform.GetComponent<SpriteAnimPlayer>();
+            if (animPlayer == null) animPlayer = visualTransform.gameObject.AddComponent<SpriteAnimPlayer>();
+            SetObject(animPlayer, "spriteRenderer", renderer);
+            SetObject(animPlayer, "set", bossVisual);
+            var animator = visualTransform.GetComponent<BossAnimator>();
+            if (animator == null) animator = visualTransform.gameObject.AddComponent<BossAnimator>();
+            SetObject(animator, "player", animPlayer);
+
+            BossBrain brain = root.GetComponent<BossBrain>();
+            if (brain != null) SetObject(brain, "bossAnimator", animator);
+            return visualTransform;
+        }
+
+        public static Transform EnsureVisualChild(GameObject root)
+        {
+            Transform visualTransform = root.transform.Find("Visual");
+            if (visualTransform == null)
+            {
+                var visualObject = new GameObject("Visual");
+                visualTransform = visualObject.transform;
+                visualTransform.SetParent(root.transform, false);
+            }
+
+            SpriteRenderer rootRenderer = root.GetComponent<SpriteRenderer>();
+            SpriteRenderer renderer = visualTransform.GetComponent<SpriteRenderer>();
+            if (renderer == null) renderer = visualTransform.gameObject.AddComponent<SpriteRenderer>();
+            if (rootRenderer != null && rootRenderer != renderer)
+            {
+                EditorUtility.CopySerialized(rootRenderer, renderer);
+                Object.DestroyImmediate(rootRenderer, true);
+            }
+            return visualTransform;
         }
 
         static void ConfigureBossHitReaction(GameObject root)
