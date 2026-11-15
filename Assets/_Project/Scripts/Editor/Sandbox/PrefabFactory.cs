@@ -19,6 +19,7 @@ namespace Game.Editor.Sandbox
         const string PrefabDir = Root + "/Prefabs";
         const string DataDir = Root + "/Data";
         const string PixelDir = Root + "/Art/Pixel/_Greybox";
+        const string SparkMaterialPath = Root + "/Art/Materials/Mat_SwordSpark.mat";
 
         [MenuItem("Tools/Kanca/Prefabları Üret")]
         public static void BuildMenu()
@@ -33,6 +34,7 @@ namespace Game.Editor.Sandbox
         {
             EnsureFolder(PrefabDir); EnsureFolder(DataDir + "/Events"); EnsureFolder(DataDir + "/Dialogue");
             EnsureFolder(DataDir + "/Tuning");
+            EnsureFolder(Root + "/Art/Materials");
             var square = AssetDatabase.LoadAssetAtPath<Sprite>(PixelDir + "/greybox_square.png");
             var circle = AssetDatabase.LoadAssetAtPath<Sprite>(PixelDir + "/greybox_circle.png");
             var death = Event<GameEvent>(DataDir + "/Events/Event_PlayerDeath.asset");
@@ -43,12 +45,23 @@ namespace Game.Editor.Sandbox
             var lines = Event<SwordLineSet>(DataDir + "/Dialogue/SwordLines.asset");
             var trauma = AssetDatabase.LoadAssetAtPath<FloatEvent>(DataDir + "/Events/Event_CameraTrauma.asset");
             var swordTuning = Event<SwordTuning>(DataDir + "/Tuning/SwordTuning.asset");
+            var sparkMaterial = GetOrCreateSparkMaterial();
+            SetIfEmpty(swordTuning,
+                ("slash1Audio", AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/Placeholder/sfx_sword_slash1.wav")),
+                ("slash2Audio", AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/Placeholder/sfx_sword_slash2.wav")),
+                ("slash3Audio", AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/Placeholder/sfx_sword_slash3.wav")),
+                ("hitAudio", AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/Placeholder/sfx_sword_hit.wav")),
+                ("finisherHitAudio", AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/Placeholder/sfx_sword_finisher.wav")),
+                ("killAudio", AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/Placeholder/sfx_sword_kill.wav")),
+                ("sparkMaterial", sparkMaterial));
+            if (swordTuning.sparkMaterial != null) sparkMaterial = swordTuning.sparkMaterial;
+            EditorUtility.SetDirty(swordTuning);
             var dummyTuning = Event<TrainingDummyTuning>(DataDir + "/Tuning/TrainingDummyTuning.asset");
             var healthTuning = Event<PlayerHealthTuning>(DataDir + "/Tuning/PlayerHealthTuning.asset");
             lines.EnsureCombatCues(); EditorUtility.SetDirty(lines);
             var rig = new GameObject("PlayerRig");
             if (armTuning == null) armTuning = Tuning(DataDir + "/Tuning/PlayerRigTuning.asset");
-            var player = CreatePlayer(square, movement, tuning, armTuning, trauma, healthTuning, healthEvent, damagedEvent);
+            var player = CreatePlayer(square, movement, tuning, armTuning, trauma, healthTuning, healthEvent, damagedEvent, swordTuning, kick);
             player.transform.SetParent(rig.transform, false);
             player.transform.localPosition = Vector3.zero;
             var hookVisual = CreateHookVisual(square); hookVisual.transform.SetParent(rig.transform, false);
@@ -65,21 +78,33 @@ namespace Game.Editor.Sandbox
             var voiceEvents = player.AddComponent<SwordVoiceEvents>();
             Set(voice, ("lines", lines), ("hook", hook), ("swordEvents", voiceEvents), ("hookVisual", hookVisual.transform), ("deathEvent", death), ("respawnEvent", respawn));
             var attack = player.AddComponent<SwordAttack>();
-            Set(attack, ("tuning", swordTuning), ("input", player.GetComponent<PlayerInputReader>()), ("armRig", player.GetComponent<PlayerArmRig>()), ("body", player.GetComponent<PlayerMotor>()), ("traumaEvent", trauma), ("voiceEvents", voiceEvents));
+            player.AddComponent<HitstopService>();
+            var swordVisualObject = new GameObject("SwordVisual"); swordVisualObject.transform.SetParent(player.transform, false);
+            swordVisualObject.AddComponent<MeshFilter>(); swordVisualObject.AddComponent<MeshRenderer>();
+            var spriteVisualObject = new GameObject("SpriteVisual"); spriteVisualObject.transform.SetParent(swordVisualObject.transform, false);
+            var swordSpriteRenderer = spriteVisualObject.AddComponent<SpriteRenderer>();
+            var swordAnimator = spriteVisualObject.AddComponent<Animator>();
+            var sparkObject = new GameObject("HitSparks"); sparkObject.transform.SetParent(swordVisualObject.transform, false);
+            var sparkSystem = sparkObject.AddComponent<ParticleSystem>();
+            var sparkRenderer = sparkObject.GetComponent<ParticleSystemRenderer>();
+            if (sparkRenderer != null) sparkRenderer.sharedMaterial = sparkMaterial;
+            var swordVisual = swordVisualObject.AddComponent<SwordVisual>();
+            Set(swordVisual, ("tuning", swordTuning), ("sparkMaterial", sparkMaterial), ("spriteRenderer", swordSpriteRenderer), ("animator", swordAnimator), ("spark", sparkSystem));
+            Set(attack, ("tuning", swordTuning), ("input", player.GetComponent<PlayerInputReader>()), ("armRig", player.GetComponent<PlayerArmRig>()), ("body", player.GetComponent<PlayerMotor>()), ("traumaEvent", trauma), ("kickEvent", kick), ("voiceEvents", voiceEvents));
             SavePrefab(player, PrefabDir + "/Player.prefab");
             SavePrefab(rig, PrefabDir + "/PlayerRig.prefab");
             UnityEngine.Object.DestroyImmediate(rig);
 
             CreateHazardPrefab(square);
             CreateCheckpointPrefab(square);
-            CreateTargetPrefab(square, "TrainingDummy", true, false, dummyTuning);
-            CreateTargetPrefab(square, "HeavyDummy", true, true, dummyTuning);
-            CreateTargetPrefab(square, "Crate", false, false, dummyTuning);
+            CreateTargetPrefab(square, "TrainingDummy", true, false, dummyTuning, swordTuning);
+            CreateTargetPrefab(square, "HeavyDummy", true, true, dummyTuning, swordTuning);
+            CreateTargetPrefab(square, "Crate", false, false, dummyTuning, swordTuning);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
 
-        static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, GrappleHookTuning tuning, PlayerRigTuning armTuning, FloatEvent trauma, PlayerHealthTuning healthTuning, HealthEvent healthEvent, GameEvent damagedEvent)
+        static GameObject CreatePlayer(Sprite sprite, PlayerMovementTuning movement, GrappleHookTuning tuning, PlayerRigTuning armTuning, FloatEvent trauma, PlayerHealthTuning healthTuning, HealthEvent healthEvent, GameEvent damagedEvent, SwordTuning swordTuning, Vector2Event kick)
         {
             var player = new GameObject("Player"); player.layer = LayerMask.NameToLayer("Player");
             var rb = player.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Dynamic; rb.gravityScale = 0f; rb.interpolation = RigidbodyInterpolation2D.Interpolate;
@@ -141,7 +166,7 @@ namespace Game.Editor.Sandbox
             go.AddComponent<Checkpoint>(); SavePrefab(go, PrefabDir + "/Checkpoint.prefab"); UnityEngine.Object.DestroyImmediate(go);
         }
 
-        static void CreateTargetPrefab(Sprite sprite, string name, bool damageable, bool heavy, TrainingDummyTuning dummyTuning)
+        static void CreateTargetPrefab(Sprite sprite, string name, bool damageable, bool heavy, TrainingDummyTuning dummyTuning, SwordTuning swordTuning)
         {
             var go = new GameObject(name) { layer = damageable ? LayerMask.NameToLayer("Enemy") : 0 };
             var renderer = go.AddComponent<SpriteRenderer>(); renderer.sprite = sprite;
@@ -157,8 +182,10 @@ namespace Game.Editor.Sandbox
             serialized.ApplyModifiedPropertiesWithoutUndo();
             if (damageable)
             {
+                go.AddComponent<CombatHitReaction>();
                 var dummy = go.AddComponent<TrainingDummy>();
                 var dummySerialized = new SerializedObject(dummy); dummySerialized.FindProperty("tuning").objectReferenceValue = dummyTuning; dummySerialized.ApplyModifiedPropertiesWithoutUndo();
+                var reaction = new SerializedObject(go.GetComponent<CombatHitReaction>()); reaction.FindProperty("tuning").objectReferenceValue = swordTuning; reaction.ApplyModifiedPropertiesWithoutUndo();
             }
             SavePrefab(go, PrefabDir + "/" + name + ".prefab"); UnityEngine.Object.DestroyImmediate(go);
         }
@@ -199,6 +226,30 @@ namespace Game.Editor.Sandbox
             var serialized = new SerializedObject(target);
             var property = serialized.FindProperty(name);
             if (property != null) { property.objectReferenceValue = value; serialized.ApplyModifiedPropertiesWithoutUndo(); }
+        }
+
+        static void SetIfEmpty(UnityEngine.Object target, params (string name, UnityEngine.Object value)[] values)
+        {
+            var serialized = new SerializedObject(target);
+            foreach (var pair in values)
+            {
+                var property = serialized.FindProperty(pair.name);
+                if (property != null && property.objectReferenceValue == null && pair.value != null)
+                    property.objectReferenceValue = pair.value;
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        static Material GetOrCreateSparkMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(SparkMaterialPath);
+            if (material != null) return material;
+            Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default");
+            if (shader == null) { Debug.LogError("[PrefabFactory] URP 2D Sprite shader bulunamadı."); return null; }
+            material = new Material(shader) { name = "Mat_SwordSpark" };
+            AssetDatabase.CreateAsset(material, SparkMaterialPath);
+            return material;
         }
 
         static void EnsureFolder(string path)

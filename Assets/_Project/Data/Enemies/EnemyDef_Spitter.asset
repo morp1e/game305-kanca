@@ -29,7 +29,7 @@ MonoBehaviour:
   knockbackResistance: 0
   gravityScale: 3
   shieldArcDegrees: 0
-  projectile: {fileID: 0}
+  projectile: {fileID: 11400000, guid: c7b8b0b188174f3429cec107681a996e, type: 2}
   hitFlashColor: {r: 1, g: 1, b: 1, a: 1}
   hitFlashDuration: 0.12
   telegraphColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}

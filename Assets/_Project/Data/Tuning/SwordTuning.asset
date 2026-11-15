@@ -12,19 +12,69 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9cf66549b9245b18e855f526792bfb7, type: 3}
   m_Name: SwordTuning
   m_EditorClassIdentifier: Game.Runtime::Game.Combat.SwordTuning
-  windupSeconds: 0.05
-  activeSeconds: 0.14
-  recoverySeconds: 0.06
-  swingInterval: 0.4
-  comboWindow: 0.35
-  swingArcDegrees: 100
-  windupPullbackDegrees: 8
+  comboSteps:
+  - windup: 0.04
+    active: 0.12
+    recovery: 0.14
+    arcDegrees: 105
+    damage: 1
+    knockback: 7
+    knockbackUpBias: 0.15
+    hitstop: 0.055
+    stun: 0.18
+  - windup: 0.04
+    active: 0.12
+    recovery: 0.14
+    arcDegrees: 110
+    damage: 1
+    knockback: 7
+    knockbackUpBias: 0.15
+    hitstop: 0.055
+    stun: 0.18
+  - windup: 0.05
+    active: 0.16
+    recovery: 0.24
+    arcDegrees: 145
+    damage: 2
+    knockback: 11
+    knockbackUpBias: 0.2
+    hitstop: 0.1
+    stun: 0.32
+  comboStartInterval: 0.3
+  finisherComboWindow: 0.45
   bladeLength: 1.4
   bladeRadius: 0.12
   maxSweepStepDegrees: 4
-  damage: 1
-  knockback: 8
-  knockbackUpBias: 0.15
-  hitstop: 0.07
-  traumaOnHit: 0.2
+  windupPullbackDegrees: 8
+  hitFlashDuration: 0.12
+  hitShakeDistance: 0.035
   inputBuffer: 0.3
+  aimAssistRange: 2.2
+  aimAssistDegrees: 12
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 1025
+  aimAssistBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  smearColor: {r: 1, g: 0.88, b: 0.52, a: 0.8}
+  smearThickness: 0.12
+  smearFadeSeconds: 0.05
+  spriteFrameSeconds: 0.035
+  sparkLifetime: 0.18
+  sparkSize: 0.08
+  sparkSpeed: 2
+  sparkMaterial: {fileID: 2100000, guid: 332e2b56fc81642cd8ccad1705385bee, type: 2}
+  sparkCount: 7
+  finisherSparkCount: 12
+  killSlowDuration: 0.25
+  killSlowScale: 0.35
+  hitstopScale: 0.05
+  traumaOnHit: 0.2
+  cameraKick: 0.15
+  slash1Audio: {fileID: 8300000, guid: 0e013b47891b44e359154f7aebddd969, type: 3}
+  slash2Audio: {fileID: 8300000, guid: f07c0f437e77b4cb59157bf093473d14, type: 3}
+  slash3Audio: {fileID: 8300000, guid: 9f85fa1e3a3e544bd877e4c63aa46f22, type: 3}
+  hitAudio: {fileID: 8300000, guid: 663860c92b8db4491afff4d97aaa4dda, type: 3}
+  finisherHitAudio: {fileID: 8300000, guid: e66c9ab0766264ac1827b8cb24401c56, type: 3}
+  killAudio: {fileID: 8300000, guid: b52feb1559ea24235b404e722879843d, type: 3}

@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 2424727261252960483}
   - component: {fileID: 2597591869496837255}
   - component: {fileID: 9159344288193439554}
+  - component: {fileID: 3080857741378368387}
   m_Layer: 10
   m_Name: Walker
   m_TagString: Untagged
@@ -234,3 +235,16 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   bodyRenderer: {fileID: 0}
+--- !u!114 &3080857741378368387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2645002643656162777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69691e30dad5431da69b5ba1e0e86f4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Combat.CombatHitReaction
+  tuning: {fileID: 11400000, guid: de6e8f45a55eec947bb723887d6a2a6f, type: 2}

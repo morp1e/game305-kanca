@@ -15,6 +15,7 @@ namespace Game.Editor.Boss
         const string EventPath = "Assets/_Project/Data/Events";
         const string PrefabPath = "Assets/_Project/Prefabs/Boss";
         const string GreySpritePath = "Assets/_Project/Art/Pixel/_Greybox/greybox_square.png";
+        const string SwordTuningPath = "Assets/_Project/Data/Tuning/SwordTuning.asset";
 
         [MenuItem("Tools/Kanca/Boss'u Kur")]
         public static void BuildAll()
@@ -187,7 +188,16 @@ namespace Game.Editor.Boss
         {
             string path = PrefabPath + "/ChainedWarden.prefab";
             GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (existing != null) return existing;
+            if (existing != null)
+            {
+                GameObject contents = PrefabUtility.LoadPrefabContents(path);
+                try
+                {
+                    ConfigureBossHitReaction(contents);
+                    return PrefabUtility.SaveAsPrefabAsset(contents, path);
+                }
+                finally { PrefabUtility.UnloadPrefabContents(contents); }
+            }
             var root = new GameObject("ChainedWarden") { layer = LayerMask.NameToLayer("Enemy") };
             var body = root.AddComponent<Rigidbody2D>();
             body.bodyType = RigidbodyType2D.Kinematic;
@@ -200,6 +210,7 @@ namespace Game.Editor.Boss
             renderer.color = new Color(.22f, .24f, .28f);
             renderer.drawMode = SpriteDrawMode.Sliced;
             renderer.size = new Vector2(3f, 3f);
+            ConfigureBossHitReaction(root);
             var contact = root.AddComponent<ContactDamage>();
             SetLayerMask(contact, "targetLayers", LayerMask.GetMask("Player"));
             var brain = root.AddComponent<BossBrain>();
@@ -240,6 +251,14 @@ namespace Game.Editor.Boss
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        static void ConfigureBossHitReaction(GameObject root)
+        {
+            var reaction = root.GetComponent<CombatHitReaction>();
+            if (reaction == null) reaction = root.AddComponent<CombatHitReaction>();
+            var tuning = AssetDatabase.LoadAssetAtPath<SwordTuning>(SwordTuningPath);
+            if (tuning != null) SetObject(reaction, "tuning", tuning);
         }
 
         static void BuildArenaPrefab(GameObject bossPrefab, BossDefinition definition, StringEvent started, HealthEvent health, GameEvent respawn, GameEvent defeated)

@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 4721082536017620586}
   - component: {fileID: 1272464082135620762}
   - component: {fileID: 2449786109505080087}
+  - component: {fileID: 806280846474352578}
   m_Layer: 10
   m_Name: Brute
   m_TagString: Untagged
@@ -235,6 +236,19 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   bodyRenderer: {fileID: 0}
+--- !u!114 &806280846474352578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3048644055913702398}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69691e30dad5431da69b5ba1e0e86f4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Combat.CombatHitReaction
+  tuning: {fileID: 11400000, guid: de6e8f45a55eec947bb723887d6a2a6f, type: 2}
 --- !u!1 &7231272867709625217
 GameObject:
   m_ObjectHideFlags: 0

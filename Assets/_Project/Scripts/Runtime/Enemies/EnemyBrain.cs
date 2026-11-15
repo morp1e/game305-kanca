@@ -18,6 +18,7 @@ namespace Game.Enemies
             private set;
         }
         protected EnemyDefinition Tuning => definition;
+        public bool HasTelegraphSuperArmor => State == EnemyState.Telegraph;
         protected PlayerHealth Target => player;
         protected HookPullable Pullable  {
             get;
@@ -135,6 +136,7 @@ namespace Game.Enemies
             }
         }
         void ConfigureBody()  {
+            Body.bodyType = RigidbodyType2D.Dynamic;
             Body.gravityScale = Tuning.gravityScale;
             Body.constraints = RigidbodyConstraints2D.FreezeRotation;
             // Geri itmeyi kılıç dürtüyle verir; direnç kütleyle uygulanır (1 = neredeyse kıpırdamaz, oyuncu da itemez).
@@ -160,7 +162,7 @@ namespace Game.Enemies
             if (State == EnemyState.Dead || State == EnemyState.Telegraph) return;
             if (hit.Damage > 0f)
             {
-                hurtRemaining = Tuning.hurtStunDuration;
+                hurtRemaining = hit.StunDuration > 0f ? hit.StunDuration : Tuning.hurtStunDuration;
                 ChangeState(EnemyState.Hurt);
                 return;
             }

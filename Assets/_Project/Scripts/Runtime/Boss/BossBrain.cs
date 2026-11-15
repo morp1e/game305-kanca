@@ -20,6 +20,7 @@ namespace Game.Boss
         [SerializeField] BossArena arena;
         [SerializeField] ContactDamage contactDamage;
         [SerializeField] SpriteRenderer visual;
+        CombatHitReaction hitReaction;
         [SerializeField] Transform player;
         [SerializeField] HealthEvent healthEvent;
         [SerializeField] FloatEvent traumaEvent;
@@ -59,6 +60,7 @@ namespace Game.Boss
             if (shield == null) shield = GetComponentInChildren<BossShield>();
             if (contactDamage == null) contactDamage = GetComponent<ContactDamage>();
             if (visual == null) visual = GetComponentInChildren<SpriteRenderer>();
+            hitReaction = GetComponent<CombatHitReaction>();
             random = new System.Random(randomSeed);
             playerFilter = new ContactFilter2D();
             playerFilter.SetLayerMask(LayerMask.GetMask("Player"));
@@ -190,6 +192,7 @@ namespace Game.Boss
                 QueuePhaseIfNeeded();
                 if (health <= 0f) Die();
             }
+            hitReaction?.Play(hit.Hitstop);
         }
 
         bool HitFromFront(UnityEngine.Object source)

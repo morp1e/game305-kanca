@@ -22,6 +22,7 @@ namespace Game.Hook
         [SerializeField] Transform reticle;
 
         public HookState State { get; private set; } = HookState.InHand;
+        public LayerMask HookableLayers => tuning != null ? tuning.hookableLayers : 0;
         public HookPullable ActivePullable => activePullable;
         public Vector2 AimPoint => input != null && aimCamera != null ? input.PointerWorld(aimCamera) : (Vector2)transform.position;
         public Vector2 ActivePoint { get; private set; }

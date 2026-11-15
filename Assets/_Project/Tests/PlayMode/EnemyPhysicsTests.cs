@@ -25,6 +25,8 @@ namespace Game.Tests
         PlayerHealth playerHealth;
         PlayerHealthTuning playerTuning;
         PlayerMovementTuning movementTuning;
+        SwordTuning swordTuning;
+        SwordAttack swordAttack;
         GameEvent playerRespawnEvent;
         ProjectileDefinition projectileDefinition;
         // Alan temel sınıfta private olabilir (EnemyBrain.definition); GetField türetilmiş türde onu görmez, zinciri yürü.
@@ -39,10 +41,10 @@ namespace Game.Tests
             }
             throw new System.MissingFieldException(target.GetType().Name, name);
         }
-        void BuildWalker()
+        void BuildWalker(float gravityScale = 0f)
         {
             definition = ScriptableObject.CreateInstance<EnemyDefinition>();
-            definition.gravityScale = 0f;
+            definition.gravityScale = gravityScale;
             respawnEvent = ScriptableObject.CreateInstance<GameEvent>();
             enemy = new GameObject("Walker")  {
                 layer = LayerMask.NameToLayer("Enemy")
@@ -61,6 +63,37 @@ namespace Game.Tests
             SetField(health, "brain", brain);
             SetField(health, "playerRespawnEvent", respawnEvent);
             enemy.SetActive(true);
+        }
+
+        [UnityTest]
+        public IEnumerator SwordHitWalkerFallsBackToGroundAfterKnockback()
+        {
+            Time.timeScale = 1f;
+            foreach (var service in Object.FindObjectsByType<HitstopService>(FindObjectsSortMode.None)) Object.DestroyImmediate(service);
+            GameObject floor = new GameObject("Ground") { layer = LayerMask.NameToLayer("Ground") };
+            floor.transform.position = new Vector2(0f, -0.5f);
+            floor.AddComponent<BoxCollider2D>().size = new Vector2(12f, 1f);
+            BuildWalker(3f);
+            enemy.transform.position = new Vector2(1.5f, 0.5f);
+            BuildPlayer();
+            playerObject.SetActive(false);
+            swordTuning = ScriptableObject.CreateInstance<SwordTuning>();
+            swordAttack = playerObject.AddComponent<SwordAttack>();
+            SetField(swordAttack, "tuning", swordTuning);
+            SetField(swordAttack, "input", playerObject.GetComponent<PlayerInputReader>());
+            SetField(swordAttack, "body", playerObject.GetComponent<PlayerMotor>());
+            playerObject.transform.position = new Vector2(0f, 0.9f);
+            playerObject.SetActive(true);
+            var input = playerObject.GetComponent<PlayerInputReader>();
+            input.SetPointerWorldOverride(new Vector2(5f, 0.9f));
+            yield return new WaitForFixedUpdate();
+            input.TriggerAttackForTest();
+            for (int i = 0; i < 30 && health.Health == definition.maxHealth; i++) yield return new WaitForFixedUpdate();
+            Assert.That(health.Health, Is.LessThan(definition.maxHealth), "kılıç isabeti Walker'a ulaşmalı");
+            yield return new WaitForSeconds(1.5f);
+            Assert.That(enemy.transform.position.y, Is.EqualTo(0.5f).Within(0.12f), "yer düşmanı zemine dönmeli");
+            Assert.That(enemy.GetComponent<Rigidbody2D>().linearVelocity.y, Is.EqualTo(0f).Within(0.2f));
+            Object.Destroy(floor);
         }
 
         void BuildPlayer()
@@ -95,6 +128,9 @@ namespace Game.Tests
             if (playerObject != null) Object.Destroy(playerObject);
             if (playerTuning != null) Object.Destroy(playerTuning);
             if (movementTuning != null) Object.Destroy(movementTuning);
+            if (swordTuning != null) Object.Destroy(swordTuning);
+            foreach (var service in Object.FindObjectsByType<HitstopService>(FindObjectsSortMode.None)) Object.DestroyImmediate(service);
+            Time.timeScale = 1f;
             if (playerRespawnEvent != null) Object.Destroy(playerRespawnEvent);
             if (projectileDefinition != null) Object.Destroy(projectileDefinition);
             // Hedefini ıskalayan mermi 4 s yaşar; sonraki test sınıflarının oyuncusuna çarpmasın.

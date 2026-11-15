@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1725972446764798657}
   - component: {fileID: 6648662851369192074}
   - component: {fileID: 1684089099918708525}
+  - component: {fileID: 343551716403432254}
   m_Layer: 10
   m_Name: ChainedWarden
   m_TagString: Untagged
@@ -210,6 +211,19 @@ MonoBehaviour:
   defeatedEvent: {fileID: 11400000, guid: ea646301286d8774e8ef80af3cef9bf0, type: 2}
   gameWonEvent: {fileID: 11400000, guid: 322e87e3b64deb6478db5c1f183bae61, type: 2}
   randomSeed: 0
+--- !u!114 &343551716403432254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6387421326582002547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69691e30dad5431da69b5ba1e0e86f4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Combat.CombatHitReaction
+  tuning: {fileID: 11400000, guid: de6e8f45a55eec947bb723887d6a2a6f, type: 2}
 --- !u!1 &6926753953515021969
 GameObject:
   m_ObjectHideFlags: 0

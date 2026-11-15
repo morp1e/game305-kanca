@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 3767970673011463396}
   - component: {fileID: 3122683427091158805}
   - component: {fileID: 2433230354908444149}
+  - component: {fileID: 5117919733129798519}
   m_Layer: 10
   m_Name: Spitter
   m_TagString: Untagged
@@ -235,3 +236,16 @@ MonoBehaviour:
     m_Bits: 0
   bodyRenderer: {fileID: 0}
   projectilePrefab: {fileID: 554040394082237422, guid: 1175c7da6bdd69b42a405694413f09d4, type: 3}
+--- !u!114 &5117919733129798519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1706641372082152193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69691e30dad5431da69b5ba1e0e86f4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Combat.CombatHitReaction
+  tuning: {fileID: 11400000, guid: de6e8f45a55eec947bb723887d6a2a6f, type: 2}

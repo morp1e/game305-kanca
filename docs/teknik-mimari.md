@@ -157,27 +157,56 @@ Birim: 1 unit = 1 kare. Kaynak: C = Celeste kodu (piksel/sn, 8 px = 1 kare olara
 Celeste karakteri 8 px'lik karelerde koşuyor, bizim karelerimiz 16 px. Bu yüzden çevrilmiş değerler başlangıç noktasıdır, doğru değer değildir.
 
 ### Kılıç savuruşu
-Savuruş üç fazdır: hazırlık (`windupSeconds`), hasar veren vuruş (`activeSeconds`), toparlanma (`recoverySeconds`). Vuruş sırasında bıçak, omuz pivotundan uzanan bir kapsüldür (`bladeLength`, `bladeRadius`); iki fizik adımı arasındaki açı farkı `maxSweepStepDegrees` adımlarla taranır, böylece hızlı savuruş ince hedefin içinden geçmez. Aynı savuruş bir hedefe bir kez vurur.
 
-- İsabette oyuncu ve hedef birlikte `hitstop` kadar donar; geri itme donma bittikten sonra nişan yönünde (`knockbackUpBias` kadar yukarı eğik) uygulanır.
-- Savuruş başlangıçları arasında en az `swingInterval` geçer. Önceki savuruş bittikten sonra `comboWindow` içinde gelen saldırı ters yönde savrulur.
-- Toparlanma fazını zıplama keser; kanca kesmez (kanca girdiyi kılıçtan önce tüketir).
-- Kılıç hareket taşımaz: pogo ve oyuncuyu ileri taşıyan vuruş yoktur (Özenç, 2026-10-26).
+`SwordAttack` yalnızca girdi, kombo zamanlaması ve hitbox mantığını yönetir. Görsel `SwordVisual` savuruş ve isabet olaylarını dinler. Hitbox, sağ kol pivotundan çıkan kapsüldür; aktif pencere, görsel etkin yayla aynı sürede çalışır. Fizik adımları arasındaki açı farkı `maxSweepStepDegrees` ile örneklenir ve aynı hedef bir adımda bir kez vurulur.
+
+Kombo zamanlaması `ComboSequence` saf mantık sınıfındadır. Başlangıçtan başlangıca süre ve adımın hazırlık, aktif ve toparlanma süreleri `SwordTuning` içindeki üç `ComboStep` alanından okunur. Birinci vuruş yukarıdan aşağı, ikinci aşağıdan yukarı, üçüncü daha geniş yaylı ve daha ağır bitiriş olarak çalışır. Sonraki basış pencereyi kaçırırsa zincir ilk adıma döner. Erken basış `inputBuffer` boyunca saklanır. Kılıç sağ elde sol fareyle çalışır, kanca sol elde sağ fareyle çalışır. Kollar nişana döner.
+
+Vuruş yönü, nişan yönüne eklenen `knockbackUpBias` ile belirlenir. `IDamageable.TakeHit` hasar, yön, sersemletme süresi ve hitstop bilgisini alır. Geri itme hitstop tamamlandıktan sonra bir kez uygulanır. Hitstop yalnızca zaman ölçeğini düşürür ve oyuncu Rigidbody hızına dokunmaz; hız snapshot'ı veya geri yüklemesi yoktur. Pogo, ileri taşıma ve oyuncu geri tepmesi yoktur. Zıplama toparlanmayı anında keser. Kanca aktif vuruşu kesmez, toparlanma başladığında veya sonrasında savuruşu bitirir.
+
+`HitstopService` sahne çapında tek servistir. `Time.timeScale` değerini tuning'deki düşük ölçeğe alır, süreyi gerçek zamanla ölçer ve önceki ölçeği geri yükler. İç içe vuruşlarda en uzun kalan süre kazanır. Pause menüsü hitstop sırasında açılırsa duraklatmanın ardından hitstop kaldığı yerden sürer. Öldüren vuruşta hitstop sonrasında ayarlanabilir kısa yavaşlama uygulanır. Pause sırasında yeni hitstop başlatılmaz. Servis veya pause menüsü sahneyle birlikte kapanınca zaman ölçeği 1'e döner.
+
+`CombatHitReaction` düşman, TrainingDummy ve boss üzerinde ortaktır. Reaksiyon yalnız hasar alıcısında bir kez başlatılır. Beyaz flaş ayarlanan süre sürer; TrainingDummy kendi flaş süresini ve rengini kullanır. Hitstop sırasında kök veya Rigidbody2D taşıyan SpriteRenderer konum olarak sarsılmaz. Ayrı görsel çocuk varsa yalnız mevcut konumuna göre küçük bir ofset uygulanır ve bitince yalnız bu ofset geri alınır. Kamera yönlü darbeyi ve travmayı yalnız isabette alır. Boşa savuruşta darbe ve travma üretilmez. Düşman Telegraph sırasında hasar alabilir, ancak itilmez veya sersemlemez.
+
+Kılıç sorgusu `hitLayers` maskesindeki katmanlarda `IDamageable` arar. Varsayılan maske Enemy ve Default katmanlarını kapsar; böylece düşmanların yanında kukla, sandık ve kancalanabilir hedefler de vurulabilir. Spitter mermisi sektirmesi ayrı hit yolunda korunur. Nişan yardımı savuruş başında aynı maskede bulunan, `aimAssistDegrees` konisinin ve `aimAssistRange` menzilinin içindeki en yakın `IDamageable` hedefe yönelir. `aimAssistBlockingLayers` ve kancalanabilir katman maskeleri arasındaki collider'lar hedefe görüşü keser. Açı sıfır olduğunda yardım kapanır.
+
+`SwordVisual` prosedürel modda runtime mesh ile ince uçlu hilal üretir; aktif pencere boyunca yay açılır, sonra kısa sürede solar. Bu mod varsayılandır ve sprite gerektirmez. Adıma `Sprite[]` kareleri veya `AnimationClip` atanırsa yalnız o adımda prosedürel hilal kapanır. Aseprite tag adları `slash1`, `slash2`, `slash3` animasyon adlarına eşlenir. İsabet noktasında küçük particle kıvılcımı oynatılır.
+
+Ses yuvaları savuruşun her adımı, normal isabet, bitiriş isabeti ve öldürme için ayrıdır. `Tools/Kanca/Tum Icerigi Kur` placeholder WAV dosyalarını `SwordTuning` alanlarına yalnız alan boşsa atar. `SwordVoiceEvents` mevcut sesli replik olayları için korunur.
 
 ### `SwordTuning` başlangıç değerleri
-Saldırılar arası süre 0,4 s için Hollow Knight nail referans alındı (Ö). Diğer değerler oynayarak ayarlanacak.
 
-| Parametre | Başlangıç | Birim | Kaynak |
-|---|---:|---|---|
-| windupSeconds / activeSeconds / recoverySeconds | 0,05 / 0,14 / 0,06 | s | Ö |
-| swingInterval | 0,4 | s | Ö, Hollow Knight referansı |
-| comboWindow | 0,35 | s | Ö |
-| swingArcDegrees / windupPullbackDegrees | 100 / 8 | derece | Ö |
-| bladeLength / bladeRadius | 1,4 / 0,12 | u | Ö |
-| maxSweepStepDegrees | 4 | derece | Ö |
-| damage / knockback / knockbackUpBias | 1 / 8 / 0,15 | can / dürtü / × | Ö |
-| hitstop / traumaOnHit | 0,07 / 0,2 | s / 0-1 | Ö |
-| inputBuffer | 0,3 | s | Ö |
+Birim: 1 unit = 1 kare. Tüm başlangıçlar Ö: oynayarak ayarlanacak. Kombo içi hedef başlangıç aralığı yaklaşık 0,3 s, üçüncü vuruştan sonra yeni zincir penceresi 0,45 s'tir. Hazırlık süreleri 0,05 s değerini aşmaz.
+
+| Ayar | 1. vuruş | 2. vuruş | 3. vuruş | Birim |
+|---|---:|---:|---:|---|
+| hazırlık / aktif / toparlanma | 0,04 / 0,12 / 0,14 | 0,04 / 0,12 / 0,14 | 0,05 / 0,16 / 0,24 | s |
+| yay | 105 | 110 | 145 | derece |
+| hasar | 1 | 1 | 2 | can |
+| geri itme / yukarı eğim | 7 / 0,15 | 7 / 0,15 | 11 / 0,2 | dürtü / katsayı |
+| hitstop / sersemletme | 0,055 / 0,18 | 0,055 / 0,18 | 0,1 / 0,32 | s |
+
+| Genel ayar | Başlangıç | Birim |
+|---|---:|---|
+| comboStartInterval | 0,3 | s |
+| finisherComboWindow | 0,45 | s |
+| bladeLength / bladeRadius | 1,4 / 0,12 | u |
+| maxSweepStepDegrees | 4 | derece |
+| windupPullbackDegrees | 8 | derece |
+| inputBuffer | 0,3 | s |
+| aimAssistRange / aimAssistDegrees | 2,2 / 12 | u / derece |
+| hitLayers | Enemy + Default | katman maskesi |
+| aimAssistBlockingLayers | Ground + hookable | katman maskesi |
+| hitstopScale | 0,05 | ölçek |
+| hitFlashDuration / hitShakeDistance | 0,12 / 0,035 | s / u |
+| killSlowDuration / killSlowScale | 0,25 / 0,35 | s / ölçek |
+| traumaOnHit / cameraKick | 0,2 / 0,15 | 0-1 |
+| smearThickness / smearFadeSeconds | 0,12 / 0,05 | u / s |
+| spriteFrameSeconds | 0,035 | s |
+| sparkLifetime / sparkSize / sparkSpeed | 0,18 / 0,08 / 2 | s / u / u/s |
+| sparkCount / finisherSparkCount | 7 / 12 | parçacık |
+
+`smearColor`, `sparkLifetime` ve altı ses yuvası da tuning asset'indedir. Placeholder sesleri kısa whoosh, düşük frekanslı darbe, derin bitiriş ve öldürme kuyruğu içerir. Gerçek vuruş hissi, görsel yön ve animasyon eşzamanı Unity'de oynanarak doğrulanacaktır.
 
 ## 6. Kamera ve karışık çözünürlük
 

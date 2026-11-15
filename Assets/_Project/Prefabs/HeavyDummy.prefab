@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 572201699005796935}
   - component: {fileID: 4859751958854163130}
   - component: {fileID: 1549341372908206744}
+  - component: {fileID: 4538303750967682294}
   - component: {fileID: 5895057148779082935}
   m_Layer: 10
   m_Name: HeavyDummy
@@ -183,6 +184,19 @@ MonoBehaviour:
   weightClass: 1
   pullSpeedOverride: 0
   body: {fileID: 572201699005796935}
+--- !u!114 &4538303750967682294
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 452530901727006992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69691e30dad5431da69b5ba1e0e86f4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Combat.CombatHitReaction
+  tuning: {fileID: 11400000, guid: de6e8f45a55eec947bb723887d6a2a6f, type: 2}
 --- !u!114 &5895057148779082935
 MonoBehaviour:
   m_ObjectHideFlags: 0

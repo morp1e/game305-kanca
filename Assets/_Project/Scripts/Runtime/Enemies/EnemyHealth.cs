@@ -1,4 +1,3 @@
-using System.Collections;
 using Game.Combat;
 using Game.Core;
 using UnityEngine;
@@ -17,7 +16,7 @@ namespace Game.Enemies
         Vector3 spawnPosition;
         Quaternion spawnRotation;
         float health;
-        Coroutine flashRoutine;
+        CombatHitReaction reaction;
         bool dead;
         public float Health => health;
         public float MaxHealth => definition != null ? definition.maxHealth : 0f;
@@ -41,6 +40,7 @@ namespace Game.Enemies
             baseColors = new Color[renderers.Length];
             for (int i = 0; i < renderers.Length; i++) baseColors[i] = renderers[i].color;
             if (brain == null) brain = GetComponent<EnemyBrain>();
+            reaction = GetComponent<CombatHitReaction>();
             spawnPosition = transform.position;
             spawnRotation = transform.rotation;
         }
@@ -54,12 +54,11 @@ namespace Game.Enemies
                 Die();
                 return;
             }
-            StartFlash();
+            reaction?.Play(hit.Hitstop);
         }
         void Die()
         {
             dead = true;
-            if (flashRoutine != null) StopCoroutine(flashRoutine);
             if (brain != null) brain.SetDead();
             foreach (var col in colliders) col.enabled = false;
             foreach (var renderer in renderers) renderer.enabled = false;
@@ -88,19 +87,6 @@ namespace Game.Enemies
                 renderers[i].color = baseColors[i];
             }
             brain?.ResetBrain();
-        }
-        void StartFlash()
-        {
-            if (flashRoutine != null) StopCoroutine(flashRoutine);
-            flashRoutine = StartCoroutine(Flash());
-        }
-        IEnumerator Flash()
-        {
-            Color color = definition.hitFlashColor;
-            foreach (var renderer in renderers) renderer.color = color;
-            yield return new WaitForSeconds(definition.hitFlashDuration);
-            for (int i = 0; i < renderers.Length; i++) renderers[i].color = baseColors[i];
-            flashRoutine = null;
         }
     }
 }

@@ -1,4 +1,5 @@
 using Game.Flow;
+using Game.Combat;
 using Game.Input;
 using Game.Level;
 using TMPro;
@@ -62,7 +63,7 @@ namespace Game.UI
         {
             if (IsPaused) return;
             IsPaused = true;
-            previousTimeScale = Time.timeScale;
+            previousTimeScale = HitstopService.Instance != null ? HitstopService.Instance.ScaleForPauseResume : Time.timeScale;
             Time.timeScale = 0f;
             if (panel != null) panel.SetActive(true);
             if (resumeButton != null && EventSystem.current != null) EventSystem.current.SetSelectedGameObject(resumeButton.gameObject);
@@ -105,7 +106,7 @@ namespace Game.UI
         {
             if (!IsPaused) return;
             IsPaused = false;
-            Time.timeScale = previousTimeScale;
+            Time.timeScale = 1f;
         }
     }
 }

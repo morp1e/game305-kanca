@@ -67,8 +67,7 @@ namespace Game.Tests
 
         void PointAt(Vector2 point)
         {
-            var screen = ((Camera)cameraObject.GetComponent<Camera>()).WorldToScreenPoint(point);
-            SetField(input, "<PointerScreen>k__BackingField", (Vector2)screen);
+            input.SetPointerWorldOverride(point);
         }
 
         void FireAt(Vector2 point)

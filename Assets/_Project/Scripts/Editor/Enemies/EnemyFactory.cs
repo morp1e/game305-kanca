@@ -13,6 +13,7 @@ namespace Game.Editor.Enemies
         const string PrefabPath = "Assets/_Project/Prefabs/Enemies";
         const string SpritePath = "Assets/_Project/Art/Pixel/_Greybox/greybox_square.png";
         const string EventPath = "Assets/_Project/Data/Events/Event_PlayerRespawn.asset";
+        const string SwordTuningPath = "Assets/_Project/Data/Tuning/SwordTuning.asset";
         [MenuItem("Tools/Kanca/Dusmanlari Kur")]
         public static void BuildAll()
         {
@@ -23,15 +24,16 @@ namespace Game.Editor.Enemies
             ProjectileDefinition projectileDefinition = GetAsset<ProjectileDefinition>(DataPath + "/ProjectileDef_Spit.asset");
             Projectile projectilePrefab = BuildProjectile(projectileDefinition);
             GameEvent respawn = AssetDatabase.LoadAssetAtPath<GameEvent>(EventPath);
-            BuildEnemy("Walker", typeof(WalkerBrain), new Color(1f, .48f, .12f), new Vector2(1f, .8f), 2f, 2f, 5f, 6f, .4f, .8f, 1f, 3f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn);
-            BuildEnemy("Flyer", typeof(FlyerBrain), new Color(.65f, .32f, .9f), new Vector2(.8f, .8f), 2f, 3f, 6f, 7f, .35f, .7f, .8f, 0f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn);
-            BuildEnemy("Spitter", typeof(SpitterBrain), new Color(.24f, .8f, .28f), new Vector2(1f, 1.2f), 3f, 0f, 0f, 9f, .5f, .2f, 1.8f, 3f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn);
-            BuildEnemy("Brute", typeof(BruteBrain), new Color(.48f, .12f, .15f), new Vector2(1.6f, 2.2f), 5f, 1.5f, 1.5f, 6f, .6f, .2f, 1.5f, 3f, HookWeightClass.Heavy, projectileDefinition, projectilePrefab, respawn);
+            SwordTuning swordTuning = AssetDatabase.LoadAssetAtPath<SwordTuning>(SwordTuningPath);
+            BuildEnemy("Walker", typeof(WalkerBrain), new Color(1f, .48f, .12f), new Vector2(1f, .8f), 2f, 2f, 5f, 6f, .4f, .8f, 1f, 3f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn, swordTuning);
+            BuildEnemy("Flyer", typeof(FlyerBrain), new Color(.65f, .32f, .9f), new Vector2(.8f, .8f), 2f, 3f, 6f, 7f, .35f, .7f, .8f, 0f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn, swordTuning);
+            BuildEnemy("Spitter", typeof(SpitterBrain), new Color(.24f, .8f, .28f), new Vector2(1f, 1.2f), 3f, 0f, 0f, 9f, .5f, .2f, 1.8f, 3f, HookWeightClass.Light, projectileDefinition, projectilePrefab, respawn, swordTuning);
+            BuildEnemy("Brute", typeof(BruteBrain), new Color(.48f, .12f, .15f), new Vector2(1.6f, 2.2f), 5f, 1.5f, 1.5f, 6f, .6f, .2f, 1.5f, 3f, HookWeightClass.Heavy, projectileDefinition, projectilePrefab, respawn, swordTuning);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Düşman tanımları ve prefabları kuruldu.");
         }
-        static void BuildEnemy(string name, System.Type brainType, Color color, Vector2 size, float health, float speed, float chase, float radius, float telegraph, float attack, float recover, float gravity, HookWeightClass weight, ProjectileDefinition projectile, Projectile projectilePrefab, GameEvent respawn)
+        static void BuildEnemy(string name, System.Type brainType, Color color, Vector2 size, float health, float speed, float chase, float radius, float telegraph, float attack, float recover, float gravity, HookWeightClass weight, ProjectileDefinition projectile, Projectile projectilePrefab, GameEvent respawn, SwordTuning swordTuning)
         {
             string definitionPath = DataPath + "/EnemyDef_" + name + ".asset";
             bool newDefinition = AssetDatabase.LoadAssetAtPath<EnemyDefinition>(definitionPath) == null;
@@ -39,7 +41,6 @@ namespace Game.Editor.Enemies
             if (newDefinition)
             {
                 definition.maxHealth = health;
-                definition.projectile = projectile;
                 definition.gravityScale = gravity;
                 definition.moveSpeed = speed;
                 definition.chaseSpeed = chase;
@@ -54,7 +55,7 @@ namespace Game.Editor.Enemies
                 definition.attackBoxSize = new Vector2(2f, 1.5f);
                 if (name == "Brute") definition.attackDamage = 2f;
             }
-            if (definition.projectile == null) definition.projectile = projectile;
+            definition.projectile = name == "Spitter" ? projectile : null;
             // Alanlar CreateAsset'ten sonra C# ile yazıldı; işaretlenmezse Unity diske varsayılanları kaydeder
             // (2026-10-30: dört tanımın hepsi Walker değerleriyle kalmıştı).
             EditorUtility.SetDirty(definition);
@@ -71,11 +72,9 @@ namespace Game.Editor.Enemies
                 renderer.color = color;
             }
             Rigidbody2D body = Ensure<Rigidbody2D>(root);
-            if (newPrefab)  {
-                body.bodyType = RigidbodyType2D.Dynamic;
-                body.gravityScale = gravity;
-                body.constraints = RigidbodyConstraints2D.FreezeRotation;
-            }
+            body.bodyType = RigidbodyType2D.Dynamic;
+            body.gravityScale = definition.gravityScale;
+            body.constraints = RigidbodyConstraints2D.FreezeRotation;
             BoxCollider2D collider = Ensure<BoxCollider2D>(root);
             if (newPrefab) collider.isTrigger = false;
             ContactDamage contact = Ensure<ContactDamage>(root);
@@ -90,6 +89,8 @@ namespace Game.Editor.Enemies
             Set(enemyHealth, "definition", definition);
             Set(enemyHealth, "brain", brain);
             Set(enemyHealth, "playerRespawnEvent", respawn);
+            CombatHitReaction reaction = Ensure<CombatHitReaction>(root);
+            if (swordTuning != null) Set(reaction, "tuning", swordTuning);
             if (newPrefab) collider.size = Vector2.one;
             if (name == "Spitter")  {
                 var spitter = (SpitterBrain)brain;

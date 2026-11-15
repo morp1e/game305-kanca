@@ -105,8 +105,12 @@ namespace Game.Input
             jumpActionPressedAt = double.NegativeInfinity;
             return true;
         }
+        public bool HasJumpActionAfter(double pressedAfter, float bufferSeconds) =>
+            jumpActionPressedAt >= pressedAfter && Now - jumpActionPressedAt <= bufferSeconds;
+        public void ConsumeJumpAction() => jumpActionPressedAt = double.NegativeInfinity;
         public bool ConsumeThrow(float bufferSeconds) => Consume(ref throwPressedAt, bufferSeconds);
         public bool ConsumeAttack(float bufferSeconds) => Consume(ref attackPressedAt, bufferSeconds);
+        public bool HasBufferedAttack(float bufferSeconds) => Now - attackPressedAt <= bufferSeconds;
 
         /// <summary>Harcamadan bakar.</summary>
         public bool HasBufferedJump(float bufferSeconds) => Now - jumpPressedAt <= bufferSeconds;

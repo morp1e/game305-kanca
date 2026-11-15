@@ -18,6 +18,7 @@ namespace Game.Editor.Build
         [MenuItem("Tools/Kanca/Tum Icerigi Kur")]
         public static void BuildAllContent()
         {
+            Step("Oyuncu ve savaş prefabları", PrefabFactory.BuildMenu);
             Step("Oyuncu canı", PlayerHealthSetup.Apply);
             Step("Arayüz ve sahne akışı", UiFactory.BuildAll);
             Step("Düşmanlar", EnemyFactory.BuildAll);
