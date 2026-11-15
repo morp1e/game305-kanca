@@ -8,8 +8,8 @@
     <ProjectReference Include="Runtime.csproj" />
     <Compile Include="$(RepoRoot)\Assets\_Project\Scripts\Editor\**\*.cs" />
     <Compile Include="$(RepoRoot)\Assets\_Project\Tests\**\*.cs" />
-    <Reference Include="$(UnityEditorDir)\Data\Managed\UnityEditor*.dll" Private="false" />
-    <Reference Include="$(UnityEditorDir)\Data\Managed\UnityEngine\UnityEditor*.dll" Private="false" />
+    <Reference Include="$(UnityDataDir)\Managed\UnityEditor*.dll" Private="false" />
+    <Reference Include="$(UnityDataDir)\Managed\UnityEngine\UnityEditor*.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\UnityEngine.TestRunner.dll" Private="false" Condition="Exists('$(ScriptAssembliesDir)\UnityEngine.TestRunner.dll')" />
     <Reference Include="$(ScriptAssembliesDir)\UnityEditor.TestRunner.dll" Private="false" Condition="Exists('$(ScriptAssembliesDir)\UnityEditor.TestRunner.dll')" />
     <Reference Include="$(PackageCacheDir)\com.unity.ext.nunit@*\net40\unity-custom\nunit.framework.dll" Private="false" />

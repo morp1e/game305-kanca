@@ -2,11 +2,16 @@
   <!-- Unity'yi açmadan derleme kontrolü. Unity'nin kendi referans kütüphanelerini kullanır.
        ScriptAssemblies paket DLL'leri için projenin en az bir kez Unity'de açılmış olması gerekir. -->
   <PropertyGroup>
-    <UnityEditorDir Condition="'$(UnityEditorDir)' == ''">C:\Program Files\Unity\Hub\Editor\6000.3.26f1\Editor</UnityEditorDir>
+    <UnityVersion Condition="'$(UnityVersion)' == ''">6000.3.28f1</UnityVersion>
+    <!-- Windows: Editor\Data, macOS: Unity.app/Contents/Resources/Scripting -->
+    <UnityEditorDir Condition="'$(UnityEditorDir)' == '' And '$(OS)' == 'Windows_NT'">C:\Program Files\Unity\Hub\Editor\$(UnityVersion)\Editor</UnityEditorDir>
+    <UnityEditorDir Condition="'$(UnityEditorDir)' == ''">/Applications/Unity/Hub/Editor/$(UnityVersion)/Unity.app/Contents</UnityEditorDir>
+    <UnityDataDir Condition="'$(UnityDataDir)' == '' And '$(OS)' == 'Windows_NT'">$(UnityEditorDir)\Data</UnityDataDir>
+    <UnityDataDir Condition="'$(UnityDataDir)' == ''">$(UnityEditorDir)/Resources/Scripting</UnityDataDir>
     <RepoRoot Condition="'$(RepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..'))</RepoRoot>
     <ScriptAssembliesDir Condition="'$(ScriptAssembliesDir)' == ''">$(RepoRoot)\Library\ScriptAssemblies</ScriptAssembliesDir>
     <PackageCacheDir Condition="'$(PackageCacheDir)' == ''">$(RepoRoot)\Library\PackageCache</PackageCacheDir>
-    <ApiDir>$(UnityEditorDir)\Data\UnityReferenceAssemblies\unity-4.8-api</ApiDir>
+    <ApiDir>$(UnityDataDir)\UnityReferenceAssemblies\unity-4.8-api</ApiDir>
     <TargetFramework>net471</TargetFramework>
     <FrameworkPathOverride>$(ApiDir)</FrameworkPathOverride>
     <NoStdLib>true</NoStdLib>
@@ -26,7 +31,7 @@
     <Reference Include="$(ApiDir)\System.dll" Private="false" />
     <Reference Include="$(ApiDir)\System.Core.dll" Private="false" />
     <Reference Include="$(ApiDir)\Facades\netstandard.dll" Private="false" />
-    <Reference Include="$(UnityEditorDir)\Data\Managed\UnityEngine\UnityEngine*.dll" Private="false" />
+    <Reference Include="$(UnityDataDir)\Managed\UnityEngine\UnityEngine*.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.InputSystem.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.Cinemachine.dll" Private="false" />
     <Reference Include="$(ScriptAssembliesDir)\Unity.TextMeshPro.dll" Private="false" />
