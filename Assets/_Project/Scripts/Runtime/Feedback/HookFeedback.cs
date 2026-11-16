@@ -18,7 +18,9 @@ namespace Game.Feedback
         [SerializeField, Tooltip("İz rengi. Ö")]
         Color trailColor = new Color(0.35f, 0.85f, 1f, 1f);
         [SerializeField, Tooltip("Kanca izinin süresi, saniye. Ö")]
-        float trailTime = 0.12f;
+        float trailTime = 0.3f;
+        [SerializeField, Tooltip("Kancanın uçuş süresini görünür kılmak için gereken en kısa iz süresi, saniye. Ö")]
+        float minimumTrailTime = 0.3f;
         [SerializeField, Tooltip("Nişan çizgisinin kalınlığı, 1/16 unit. Ö")]
         float aimWidth = 1f / 16f;
         [SerializeField, Tooltip("Kesikli doku genişliği, piksel. Ö")]
@@ -69,7 +71,14 @@ namespace Game.Feedback
         void Update()
         {
             UpdateAimLine();
+            UpdateTrailPosition();
             ApplyTrailState();
+        }
+
+        void UpdateTrailPosition()
+        {
+            if (trail != null && hookVisual != null)
+                trail.transform.position = hookVisual.position;
         }
 
         void OnStateChanged(HookState state)
@@ -131,7 +140,7 @@ namespace Game.Feedback
                     trail.sharedMaterial = generatedTrailMaterial;
                 }
             }
-            trail.time = trailTime;
+            trail.time = Mathf.Max(trailTime, minimumTrailTime);
             trail.widthMultiplier = HookThickness();
             trail.widthCurve = HookFeedbackMath.TrailWidth;
             var gradient = new Gradient();
@@ -172,8 +181,14 @@ namespace Game.Feedback
             {
                 trail.emitting = false;
                 trail.Clear();
+                UpdateTrailPosition();
                 trail.emitting = shouldEmit;
                 trailWasEmitting = shouldEmit;
+            }
+            else if (trail != null && !shouldEmit)
+            {
+                trail.emitting = false;
+                trail.Clear();
             }
         }
 

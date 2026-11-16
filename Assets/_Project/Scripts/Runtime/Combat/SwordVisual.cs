@@ -116,6 +116,12 @@ namespace Game.Combat
             StopSprites();
             hasSmearGeometry = false;
             ClearMesh();
+            if (UsesProceduralStep(step))
+            {
+                float initialArc = arc * Mathf.SmoothStep(0.15f, 1f, 0f);
+                BuildMesh(aimAngle, initialArc, 1f, handTipDistance);
+                if (meshRenderer != null) meshRenderer.enabled = true;
+            }
             proceduralRoutine = StartCoroutine(RenderAfterWindup(step, aimAngle, arc, windup,
                 activeDuration, handTipDistance));
         }

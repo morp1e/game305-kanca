@@ -13,12 +13,13 @@ namespace Game.Tests
     public class SwordAndPullablePhysicsTests
     {
         const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
-        GameObject player, visual, target, hookVisual, cameraObject;
+        GameObject player, visual, target, hookVisual, cameraObject, swordVisualObject;
         PlayerInputReader input;
         PlayerMotor motor;
         GrappleHook hook;
         GrappleHookTuning hookTuning;
         SwordAttack attack;
+        SwordVisual swordVisual;
         SwordTuning swordTuning;
         TrainingDummyTuning dummyTuning;
 
@@ -41,9 +42,15 @@ namespace Game.Tests
             swordTuning = ScriptableObject.CreateInstance<SwordTuning>();
             dummyTuning = ScriptableObject.CreateInstance<TrainingDummyTuning>();
             attack = player.AddComponent<SwordAttack>();
+            swordVisualObject = new GameObject("SwordVisual");
+            swordVisualObject.transform.SetParent(player.transform, false);
+            swordVisualObject.AddComponent<MeshFilter>();
+            swordVisualObject.AddComponent<MeshRenderer>();
+            swordVisual = swordVisualObject.AddComponent<SwordVisual>();
             SetField(motor, "tuning", movement); SetField(motor, "input", input);
             SetField(hook, "tuning", hookTuning); SetField(hook, "input", input); SetField(hook, "body", motor); SetField(hook, "hookVisual", hookVisual.transform); SetField(hook, "aimCamera", camera);
             SetField(attack, "tuning", swordTuning); SetField(attack, "input", input); SetField(attack, "body", motor); SetField(attack, "aimCamera", camera);
+            SetField(swordVisual, "tuning", swordTuning);
             player.SetActive(true);
         }
 
@@ -82,6 +89,22 @@ namespace Game.Tests
             Assert.That(velocityAfterStop.x, Is.GreaterThan(0f), "geri itme hitstop bittikten sonra uygulanmalı");
             Assert.That(target.GetComponent<Rigidbody2D>().linearVelocity.x, Is.GreaterThan(0f), "isabet geri itiş uygulamadı");
             Assert.AreEqual(playerVelocity, motor.Velocity, "oyuncu hızı hitstop bitince aynı kalmalı");
+        }
+
+        [UnityTest]
+        public IEnumerator SwordHitBeforeFirstUpdateHasSmearGeometry()
+        {
+            var swingStarted = (System.Delegate)typeof(SwordAttack).GetField("SlashStarted", Private)
+                .GetValue(attack);
+            swingStarted.DynamicInvoke(0, Vector2.zero, 35f, 110f, 0.04f, 0.16f, 0.7f);
+            var hitOccurred = (System.Delegate)typeof(SwordAttack).GetField("HitOccurred", Private)
+                .GetValue(attack);
+            hitOccurred.DynamicInvoke(Vector2.right, Vector2.right, false);
+
+            var mesh = swordVisualObject.GetComponent<MeshFilter>().sharedMesh;
+            Assert.That(mesh.vertexCount, Is.GreaterThan(0),
+                "ilk Update gelmeden savuruş başlangıç izi kurulmuş olmalı");
+            yield return null;
         }
 
         [UnityTest]

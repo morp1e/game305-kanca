@@ -176,17 +176,30 @@ namespace Game.Tests
         public IEnumerator WallSlideStateTracksTheExistingSlideCondition()
         {
             wall = new GameObject("Wall") { layer = LayerMask.NameToLayer("Ground") };
-            // Kapsülün sağ kenarından küçük bir mesafe bırak: tam temas anındaki Cast sonucu
-            // Unity fizik adımının eşzamanlama sırasına bağlı kalmasın.
+            // Duvar cast sorgusu ilk fizik adımından önce çalıştığı için transformları eşitle.
             wall.transform.position = new Vector3(0.7f, 2f, 0f);
             wall.AddComponent<BoxCollider2D>().size = new Vector2(0.5f, 5f);
             player.transform.position = new Vector3(0f, 2f, 0f);
             motor.Velocity = new Vector2(0f, -1f);
-            player.GetComponent<PlayerInputReader>().SetMoveXOverride(1f);
+            var input = player.GetComponent<PlayerInputReader>();
+            input.SetMoveXOverride(1f);
+            input.SetDownHeldOverride(false);
+            yield return null;
+            Assert.That(input.MoveX, Is.EqualTo(1f), "sabit adımdan önce yatay girdi Update tarafından okunmalı");
+            Assert.IsFalse(input.DownHeld, "duvar kayması denemesinde aşağı girdisi kapalı olmalı");
+            Physics2D.SyncTransforms();
+            bool wallCast = (bool)typeof(PlayerMotor).GetMethod("IsWallInDirection",
+                BindingFlags.Instance | BindingFlags.NonPublic).Invoke(motor, new object[] { 1f });
+            Assert.IsTrue(wallCast, "başlangıç fizik adımından önce sağ duvar cast mesafesinde olmalı");
             yield return new WaitForFixedUpdate();
+            Assert.IsFalse(motor.IsGrounded, "duvar kayması denemesi yerde başlamamalı");
+            Assert.That(input.MoveX, Is.EqualTo(1f), "duvar kayması sabit adımında duvara doğru girdi olmalı");
+            Assert.That(motor.Velocity.y, Is.LessThanOrEqualTo(0f), "oyuncu duvar kaymasında aşağı veya sabit olmalı");
             Assert.IsTrue(motor.IsWallSliding);
 
-            player.GetComponent<PlayerInputReader>().SetMoveXOverride(0f);
+            input.SetMoveXOverride(0f);
+            yield return null;
+            Assert.That(input.MoveX, Is.EqualTo(0f), "kaymayı bitirmeden önce sıfır yatay girdi Update tarafından okunmalı");
             yield return new WaitForFixedUpdate();
             Assert.IsFalse(motor.IsWallSliding);
             Object.DestroyImmediate(wall);

@@ -49,6 +49,7 @@ namespace Game.Tests
             SetField(feedback, "hook", hook); SetField(feedback, "hookVisual", hookVisual.transform); SetField(feedback, "kickEvent", kickEvent);
             player.SetActive(true); trail = feedback.GetComponentInChildren<TrailRenderer>();
             Assert.That(hookVisual.activeSelf, Is.False, "InHand durumunda kanca görseli gizli olmalı");
+            Assert.That(trail.time, Is.GreaterThanOrEqualTo(0.28f), "iz en az kancanın uçuş süresini kapsamalı");
         }
 
         [TearDown]
@@ -64,6 +65,13 @@ namespace Game.Tests
             for (var i = 0; i < 30; i++) yield return new WaitForFixedUpdate();
             var screen = (Vector2)cameraObject.GetComponent<Camera>().WorldToScreenPoint(new Vector2(12f, 1f));
             SetField(input, "<PointerScreen>k__BackingField", screen);
+            Vector3 trailStart = trail.transform.position;
+            hookVisual.transform.position += Vector3.right;
+            typeof(HookFeedback).GetMethod("UpdateTrailPosition", Private).Invoke(feedback, null);
+            Assert.That(trail.transform.position, Is.EqualTo(hookVisual.transform.position),
+                "iz yayıcısı her zaman kanca ucu konumunu izlemeli");
+            hookVisual.transform.position -= Vector3.right;
+            trail.transform.position = trailStart;
             bool sawThrown = false;
             bool sawThrownVisual = false;
             hook.StateChanged += state =>
