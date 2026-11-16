@@ -19,6 +19,23 @@ namespace Game.Player
 
         public string ActiveClipName { get; private set; }
 
+        public static string SelectClip(
+            Vector2 velocity,
+            bool isGrounded,
+            bool isWallSliding,
+            bool isHurt,
+            bool isDead,
+            float runSpeedThreshold)
+        {
+            if (isDead) return "death";
+            if (isHurt) return "hurt";
+            if (isWallSliding) return "wall_slide";
+            if (!isGrounded) return velocity.y > 0.01f ? "jump" : "fall";
+            return Mathf.Abs(velocity.x) > runSpeedThreshold ? "run" : "idle";
+        }
+
+        public static bool IsFacingLeft(int facing) => facing < 0;
+
         public float PlayDeath(float maximumDuration)
         {
             if (animPlayer == null) return 0f;
@@ -70,7 +87,7 @@ namespace Game.Player
         void Update()
         {
             if (animPlayer == null || motor == null) return;
-            animPlayer.SetFlip(armRig != null && armRig.Facing < 0);
+            animPlayer.SetFlip(armRig != null && IsFacingLeft(armRig.Facing));
             if (respawn == null) respawn = GetComponentInParent<RespawnController>();
             if (respawn != null && respawn.IsDead) dead = true;
             if (dead && respawn != null && !respawn.IsDead)
@@ -81,32 +98,40 @@ namespace Game.Player
             }
 
             if (health != null && health.CurrentHealth <= 0f) dead = true;
+            string clip;
             if (dead)
             {
-                Play("death");
-                return;
+                clip = SelectClip(
+                    motor.Velocity,
+                    motor.IsGrounded,
+                    motor.IsWallSliding,
+                    false,
+                    true,
+                    runSpeedThreshold);
             }
-
-            hurtRemaining = Mathf.Max(0f, hurtRemaining - Time.deltaTime);
-            if (hurtRemaining > 0f)
+            else
             {
-                Play("hurt", hurtRemaining);
-                return;
+                hurtRemaining = Mathf.Max(0f, hurtRemaining - Time.deltaTime);
+                clip = SelectClip(
+                    motor.Velocity,
+                    motor.IsGrounded,
+                    motor.IsWallSliding,
+                    hurtRemaining > 0f,
+                    false,
+                    runSpeedThreshold);
             }
 
-            if (motor.IsWallSliding)
+            if (clip == "death")
             {
-                Play("wall_slide");
+                Play(clip);
                 return;
             }
-
-            if (!motor.IsGrounded)
+            if (clip == "hurt")
             {
-                Play(motor.Velocity.y > 0.01f ? "jump" : "fall");
+                Play(clip, hurtRemaining);
                 return;
             }
-
-            Play(Mathf.Abs(motor.Velocity.x) > runSpeedThreshold ? "run" : "idle");
+            Play(clip);
         }
 
         void HandleDamaged()

@@ -17,6 +17,7 @@ namespace Game.Tests
     {
         const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
         GameObject enemy;
+        GameObject floor;
         EnemyDefinition definition;
         GameEvent respawnEvent;
         WalkerBrain brain;
@@ -31,6 +32,9 @@ namespace Game.Tests
         SwordAttack swordAttack;
         GameEvent playerRespawnEvent;
         ProjectileDefinition projectileDefinition;
+        SpriteAnimSet playerAnimationSet;
+        Texture2D playerAnimationTexture;
+        Sprite playerAnimationSprite;
         // Alan temel sınıfta private olabilir (EnemyBrain.definition); GetField türetilmiş türde onu görmez, zinciri yürü.
         static void SetField(object target, string name, object value)
         {
@@ -59,7 +63,7 @@ namespace Game.Tests
             enemy.AddComponent<HookPullable>();
             brain = enemy.AddComponent<WalkerBrain>();
             activeBrain = brain;
-            health = enemy.AddComponent<EnemyHealth>();
+            health = enemy.GetComponent<EnemyHealth>();
             GameObject visual = new GameObject("Visual");
             visual.transform.SetParent(enemy.transform, false);
             visualRenderer = visual.AddComponent<SpriteRenderer>();
@@ -76,7 +80,7 @@ namespace Game.Tests
         {
             Time.timeScale = 1f;
             foreach (var service in Object.FindObjectsByType<HitstopService>(FindObjectsSortMode.None)) Object.DestroyImmediate(service);
-            GameObject floor = new GameObject("Ground") { layer = LayerMask.NameToLayer("Ground") };
+            floor = new GameObject("Ground") { layer = LayerMask.NameToLayer("Ground") };
             floor.transform.position = new Vector2(0f, -0.5f);
             floor.AddComponent<BoxCollider2D>().size = new Vector2(12f, 1f);
             BuildWalker(3f);
@@ -107,10 +111,39 @@ namespace Game.Tests
                     hitstop = 0f
                 }
             };
+            bool slashStarted = false;
+            bool hitOccurred = false;
+            swordAttack.SlashStarted += (_, _, _, _, _, _, _) => slashStarted = true;
+            swordAttack.HitOccurred += (_, _, _) => hitOccurred = true;
             Physics2D.SyncTransforms();
             yield return new WaitForFixedUpdate();
+            Vector2 pivot = playerObject.GetComponent<Rigidbody2D>().position;
+            Vector2 targetDelta = (Vector2)enemy.transform.position - pivot;
+            float aimAngle = Mathf.Atan2(targetDelta.y, targetDelta.x) * Mathf.Rad2Deg;
+            float firstSweepAngle = SwordAttack.SwingAngle(aimAngle, 30f, 0f, 1);
+            SwordAttack.BladeEndpoints(pivot, firstSweepAngle, swordTuning.bladeLength,
+                out Vector2 bladeStart, out Vector2 bladeTip);
+            ContactFilter2D hitFilter = new ContactFilter2D();
+            hitFilter.SetLayerMask(swordTuning.hitLayers.value);
+            hitFilter.useTriggers = true;
+            Collider2D[] overlapHits = new Collider2D[8];
+            int overlapCount = Physics2D.OverlapCapsule((bladeStart + bladeTip) * 0.5f,
+                new Vector2(swordTuning.bladeLength + swordTuning.bladeRadius * 2f,
+                    swordTuning.bladeRadius * 2f), CapsuleDirection2D.Horizontal,
+                firstSweepAngle, hitFilter, overlapHits);
+            Assert.That(overlapCount, Is.GreaterThan(0),
+                $"Testin ilk OverlapCapsule sorgusu isabet etmedi. layer={enemy.layer}, " +
+                $"mask={swordTuning.hitLayers.value}, pivot={pivot}, target={enemy.transform.position}, " +
+                $"angle={firstSweepAngle}, queriesStartInColliders={Physics2D.queriesStartInColliders}; " +
+                "Physics2D.SyncTransforms sorgudan önce çağrıldı.");
             input.TriggerAttackForTest();
             for (int i = 0; i < 30 && health.Health == definition.maxHealth; i++) yield return new WaitForFixedUpdate();
+            Assert.That(slashStarted, Is.True, "test girdisi kılıç savuruşunu başlatmadı");
+            Assert.That(hitOccurred, Is.True,
+                $"OverlapCapsule isabet üretmedi. walkerLayer={enemy.layer}, hitLayers={swordTuning.hitLayers.value}, " +
+                $"player={playerObject.GetComponent<Rigidbody2D>().position}, walker={enemy.transform.position}, " +
+                $"queriesStartInColliders={Physics2D.queriesStartInColliders}; " +
+                "Physics2D.SyncTransforms sorgudan önce çağrıldı.");
             Assert.That(health.Health, Is.LessThan(definition.maxHealth), "kılıç isabeti Walker'a ulaşmalı");
             yield return new WaitForSeconds(1.5f);
             Assert.That(enemy.transform.position.y, Is.EqualTo(0.9f).Within(0.12f), "1,8 u Walker zemine dönmeli");
@@ -145,6 +178,7 @@ namespace Game.Tests
         [TearDown] public void Clean()
         {
             if (enemy != null) Object.Destroy(enemy);
+            if (floor != null) Object.DestroyImmediate(floor);
             if (definition != null) Object.Destroy(definition);
             if (respawnEvent != null) Object.Destroy(respawnEvent);
             if (playerObject != null) Object.Destroy(playerObject);
@@ -155,6 +189,9 @@ namespace Game.Tests
             Time.timeScale = 1f;
             if (playerRespawnEvent != null) Object.Destroy(playerRespawnEvent);
             if (projectileDefinition != null) Object.Destroy(projectileDefinition);
+            if (playerAnimationSet != null) Object.Destroy(playerAnimationSet);
+            if (playerAnimationSprite != null) Object.Destroy(playerAnimationSprite);
+            if (playerAnimationTexture != null) Object.Destroy(playerAnimationTexture);
             // Hedefini ıskalayan mermi 4 s yaşar; sonraki test sınıflarının oyuncusuna çarpmasın.
             foreach (var projectile in Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None)) Object.DestroyImmediate(projectile.gameObject);
             // Assertion düşünce testin sonundaki Destroy satırları çalışmaz; sahnede kalan düşman sonraki testin oyuncusuna temas hasarı verir.
@@ -270,6 +307,47 @@ namespace Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator PlayerAnimDriverPlaysSelectedClipInPlayMode()
+        {
+            BuildPlayer();
+            PlayerMotor motor = playerObject.GetComponent<PlayerMotor>();
+            motor.ExternalControl = true;
+
+            playerAnimationTexture = new Texture2D(1, 1);
+            playerAnimationSprite = Sprite.Create(
+                playerAnimationTexture,
+                new Rect(0f, 0f, 1f, 1f),
+                new Vector2(0.5f, 0.5f));
+            playerAnimationSet = ScriptableObject.CreateInstance<SpriteAnimSet>();
+            string[] names = { "idle", "run", "jump", "fall", "wall_slide", "hurt", "death" };
+            var clips = new SpriteAnimClip[names.Length];
+            for (int i = 0; i < names.Length; i++)
+            {
+                clips[i] = new SpriteAnimClip
+                {
+                    name = names[i],
+                    frames = new[] { playerAnimationSprite },
+                    fps = 10f,
+                    loop = i < 5
+                };
+            }
+            playerAnimationSet.clips = clips;
+
+            var visual = new GameObject("Visual");
+            visual.transform.SetParent(playerObject.transform, false);
+            SpriteRenderer renderer = visual.AddComponent<SpriteRenderer>();
+            SpriteAnimPlayer animPlayer = visual.AddComponent<SpriteAnimPlayer>();
+            SetField(animPlayer, "set", playerAnimationSet);
+            SetField(animPlayer, "spriteRenderer", renderer);
+            PlayerAnimDriver driver = visual.AddComponent<PlayerAnimDriver>();
+
+            yield return null;
+
+            Assert.That(driver.ActiveClipName, Is.EqualTo("fall"));
+            Assert.That(renderer.sprite, Is.SameAs(playerAnimationSprite));
+        }
+
+        [UnityTest]
         public IEnumerator BruteBlocksFrontDamageAndAcceptsRearDamage()
         {
             definition = ScriptableObject.CreateInstance<EnemyDefinition>();
@@ -284,7 +362,7 @@ namespace Game.Tests
             enemy.AddComponent<HookPullable>();
             BruteBrain brute = enemy.AddComponent<BruteBrain>();
             activeBrain = brute;
-            health = enemy.AddComponent<EnemyHealth>();
+            health = enemy.GetComponent<EnemyHealth>();
             SetField(brute, "definition", definition);
             SetField(health, "definition", definition);
             SetField(health, "brain", brute);
@@ -324,7 +402,7 @@ namespace Game.Tests
             HookPullable pullable = enemy.AddComponent<HookPullable>();
             FlyerBrain flyer = enemy.AddComponent<FlyerBrain>();
             activeBrain = flyer;
-            health = enemy.AddComponent<EnemyHealth>();
+            health = enemy.GetComponent<EnemyHealth>();
             SetField(flyer, "definition", definition);
             SetField(flyer, "player", playerHealth);
             SetField(health, "definition", definition);
@@ -404,7 +482,7 @@ namespace Game.Tests
             spitter.AddComponent<ContactDamage>();
             spitter.AddComponent<HookPullable>();
             SpitterBrain spitterBrain = spitter.AddComponent<SpitterBrain>();
-            EnemyHealth spitterHealth = spitter.AddComponent<EnemyHealth>();
+            EnemyHealth spitterHealth = spitter.GetComponent<EnemyHealth>();
             SetField(spitterBrain, "definition", definition);
             SetField(spitterBrain, "player", playerHealth);
             SetField(spitterBrain, "projectilePrefab", projectilePrefab);

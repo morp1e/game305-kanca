@@ -48,6 +48,7 @@ namespace Game.Tests
             SetField(hook, "body", motor); SetField(hook, "hookVisual", hookVisual.transform); SetField(hook, "aimCamera", cam);
             SetField(feedback, "hook", hook); SetField(feedback, "hookVisual", hookVisual.transform); SetField(feedback, "kickEvent", kickEvent);
             player.SetActive(true); trail = feedback.GetComponentInChildren<TrailRenderer>();
+            Assert.That(hookVisual.activeSelf, Is.False, "InHand durumunda kanca görseli gizli olmalı");
         }
 
         [TearDown]
@@ -64,10 +65,17 @@ namespace Game.Tests
             var screen = (Vector2)cameraObject.GetComponent<Camera>().WorldToScreenPoint(new Vector2(12f, 1f));
             SetField(input, "<PointerScreen>k__BackingField", screen);
             bool sawThrown = false;
-            hook.StateChanged += state => { if (state == HookState.Thrown) sawThrown = trail.emitting; };
+            bool sawThrownVisual = false;
+            hook.StateChanged += state =>
+            {
+                if (state != HookState.Thrown) return;
+                sawThrown = trail.emitting;
+                sawThrownVisual = hookVisual.activeSelf;
+            };
             typeof(GrappleHook).GetMethod("FireHook", Private).Invoke(hook, null);
             for (var i = 0; i < 100 && hook.State != HookState.InHand; i++) yield return new WaitForFixedUpdate();
             Assert.That(sawThrown, Is.True, "Thrown durumunda iz açık olmalı");
+            Assert.That(sawThrownVisual, Is.True, "Thrown durumunda kanca görseli görünür olmalı");
             Assert.That(kickCount, Is.EqualTo(1), "yüzey çekiş itkisi bir kez yükseltilmeli");
             Assert.That(hook.State, Is.EqualTo(HookState.InHand));
             Assert.That(trail.emitting, Is.False, "InHand durumunda iz kapalı olmalı");

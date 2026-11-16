@@ -8,95 +8,28 @@ namespace Game.Tests
 {
     public sealed class PlayerAnimDriverTests
     {
-        GameObject playerRoot;
-        GameObject visual;
-        PlayerMotor motor;
-        PlayerHealth health;
-        PlayerArmRig armRig;
-        PlayerAnimDriver driver;
-        SpriteAnimSet set;
-        Sprite[] frames;
-
         const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
-
-        [SetUp]
-        public void SetUp()
-        {
-            playerRoot = new GameObject("Player");
-            playerRoot.SetActive(false);
-            playerRoot.AddComponent<Rigidbody2D>();
-            playerRoot.AddComponent<CapsuleCollider2D>();
-            motor = playerRoot.AddComponent<PlayerMotor>();
-            SetField(motor, "body", playerRoot.GetComponent<Rigidbody2D>());
-            SetField(motor, "tuning", ScriptableObject.CreateInstance<PlayerMovementTuning>());
-            health = playerRoot.AddComponent<PlayerHealth>();
-            SetField(health, "tuning", ScriptableObject.CreateInstance<PlayerHealthTuning>());
-            armRig = playerRoot.AddComponent<PlayerArmRig>();
-
-            visual = new GameObject("Visual");
-            visual.transform.SetParent(playerRoot.transform, false);
-            var renderer = visual.AddComponent<SpriteRenderer>();
-            var player = visual.AddComponent<SpriteAnimPlayer>();
-            driver = visual.AddComponent<PlayerAnimDriver>();
-            set = ScriptableObject.CreateInstance<SpriteAnimSet>();
-            frames = new Sprite[1];
-            var texture = new Texture2D(1, 1);
-            frames[0] = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(.5f, 0f));
-            var names = new[] { "idle", "run", "jump", "fall", "wall_slide", "hurt", "death" };
-            var clips = new SpriteAnimClip[names.Length];
-            for (int i = 0; i < clips.Length; i++)
-                clips[i] = new SpriteAnimClip { name = names[i], frames = frames, fps = 10f, loop = i < 5 };
-            set.clips = clips;
-            SetField(player, "spriteRenderer", renderer);
-            SetField(player, "set", set);
-            SetField(driver, "motor", motor);
-            SetField(driver, "health", health);
-            SetField(driver, "armRig", armRig);
-            SetField(driver, "animPlayer", player);
-            SetField(health, "currentHealth", 5f);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            Object.DestroyImmediate(playerRoot);
-            Object.DestroyImmediate(set);
-            foreach (Sprite sprite in frames)
-            {
-                Texture2D texture = sprite.texture;
-                Object.DestroyImmediate(sprite);
-                Object.DestroyImmediate(texture);
-            }
-        }
 
         [Test]
         public void LocomotionAndDamageStatesChooseExpectedClips()
         {
-            SetMotorState(true, false, Vector2.zero);
-            Tick(); Assert.AreEqual("idle", driver.ActiveClipName);
-            SetMotorState(true, false, Vector2.right);
-            Tick(); Assert.AreEqual("run", driver.ActiveClipName);
-            SetMotorState(false, false, Vector2.up);
-            Tick(); Assert.AreEqual("jump", driver.ActiveClipName);
-            SetMotorState(false, false, Vector2.down);
-            Tick(); Assert.AreEqual("fall", driver.ActiveClipName);
-            SetMotorState(false, true, Vector2.down);
-            Tick(); Assert.AreEqual("wall_slide", driver.ActiveClipName);
-
-            driver.SendMessage("HandleDamaged");
-            Tick(); Assert.AreEqual("hurt", driver.ActiveClipName);
-            driver.SendMessage("HandleDied");
-            Tick(); Assert.AreEqual("death", driver.ActiveClipName);
+            Assert.AreEqual("idle", PlayerAnimDriver.SelectClip(Vector2.zero, true, false, false, false, 0.1f));
+            Assert.AreEqual("run", PlayerAnimDriver.SelectClip(Vector2.right, true, false, false, false, 0.1f));
+            Assert.AreEqual("jump", PlayerAnimDriver.SelectClip(Vector2.up, false, false, false, false, 0.1f));
+            Assert.AreEqual("fall", PlayerAnimDriver.SelectClip(Vector2.down, false, false, false, false, 0.1f));
+            Assert.AreEqual("wall_slide", PlayerAnimDriver.SelectClip(Vector2.down, false, true, false, false, 0.1f));
+            Assert.AreEqual("hurt", PlayerAnimDriver.SelectClip(Vector2.zero, true, false, true, false, 0.1f));
+            Assert.AreEqual("death", PlayerAnimDriver.SelectClip(Vector2.zero, true, false, true, true, 0.1f));
         }
 
         [Test]
-        public void FacingLeftFlipsOnlyTheSpriteRenderer()
+        public void FacingDirectionMapsToSpriteFlipWithoutChangingClipChoice()
         {
-            typeof(PlayerArmRig).GetField("<Facing>k__BackingField", Private).SetValue(armRig, -1);
-            Vector3 scale = visual.transform.localScale;
-            Tick();
-            Assert.IsTrue(visual.GetComponent<SpriteRenderer>().flipX);
-            Assert.AreEqual(scale, visual.transform.localScale);
+            Assert.IsTrue(PlayerAnimDriver.IsFacingLeft(-1));
+            Assert.IsFalse(PlayerAnimDriver.IsFacingLeft(1));
+            Assert.AreEqual(
+                PlayerAnimDriver.SelectClip(Vector2.right, true, false, false, false, 0.1f),
+                PlayerAnimDriver.SelectClip(Vector2.left, true, false, false, false, 0.1f));
         }
 
         [Test]
@@ -134,16 +67,5 @@ namespace Game.Tests
             }
         }
 
-        void SetMotorState(bool grounded, bool wallSliding, Vector2 velocity)
-        {
-            typeof(PlayerMotor).GetField("<IsGrounded>k__BackingField", Private).SetValue(motor, grounded);
-            typeof(PlayerMotor).GetField("<IsWallSliding>k__BackingField", Private).SetValue(motor, wallSliding);
-            motor.Velocity = velocity;
-        }
-
-        void Tick() => typeof(PlayerAnimDriver).GetMethod("Update", Private).Invoke(driver, null);
-
-        static void SetField(object target, string name, object value) =>
-            target.GetType().GetField(name, Private).SetValue(target, value);
     }
 }

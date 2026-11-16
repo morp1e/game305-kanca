@@ -4,6 +4,7 @@ using UnityEngine;
 namespace Game.Enemies
 {
     /// <summary>Düşman mekanik durumlarını görsel animasyon kliplerine bağlar.</summary>
+    [DefaultExecutionOrder(-100)]
     public sealed class EnemyAnimator : MonoBehaviour
     {
         [SerializeField, Tooltip("Durum değişikliklerini bildiren düşman beyni.")]
@@ -19,7 +20,8 @@ namespace Game.Enemies
             if (player == null) player = GetComponentInChildren<SpriteAnimPlayer>();
             if (player != null) spriteRenderer = player.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-            if (spriteRenderer != null) fallbackSprite = spriteRenderer.sprite;
+            if (fallbackSprite == null && spriteRenderer != null)
+                fallbackSprite = spriteRenderer.sprite;
         }
 
         void OnEnable()

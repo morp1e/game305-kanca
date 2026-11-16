@@ -90,11 +90,12 @@ namespace Game.Tests
         [TestCase(1.4f)]
         [TestCase(2.3f)]
         [TestCase(3.7f)]
-        public void SmearRadiiScaleFromTheBladePivotToItsTip(float bladeLength)
+        public void SmearStartsAtTheHandAndScalesWithBladeLength(float bladeLength)
         {
-            SwordVisual.GetSmearRadii(bladeLength, out float inner, out float outer);
+            float handTipDistance = 0.25f;
+            SwordVisual.GetSmearRadii(bladeLength, handTipDistance, out float inner, out float outer);
 
-            Assert.That(inner, Is.EqualTo(bladeLength * 0.35f).Within(0.0001f));
+            Assert.That(inner, Is.EqualTo(Mathf.Min(handTipDistance, bladeLength * 0.12f)).Within(0.0001f));
             Assert.That(outer, Is.EqualTo(bladeLength).Within(0.0001f));
         }
 

@@ -31,8 +31,10 @@ namespace Game.Combat
         double recoveryStartedAt = double.NegativeInfinity;
         bool swinging, waitingForHitstop, hookCancelPending;
         public bool IsSwinging => swinging;
+        public bool IsSlashActive => swinging && elapsed >= CurrentTuning.windup &&
+            elapsed < CurrentTuning.windup + CurrentTuning.active;
         public int CurrentStep => stepIndex;
-        public event Action<int, Vector2, float, float, float, float> SlashStarted;
+        public event Action<int, Vector2, float, float, float, float, float> SlashStarted;
         public event Action<Vector2, Vector2, bool> HitOccurred;
 
         sealed class PendingKnockback { public Rigidbody2D body; public Vector2 impulse; }
@@ -108,7 +110,11 @@ namespace Game.Combat
             elapsed = previousElapsed = 0f; recoveryStartedAt = double.NegativeInfinity; hookCancelPending = false; hitIds.Clear(); swinging = true;
             ComboStep settings = CurrentTuning;
             armRig?.SetSwordArmOverride(AngleAtTime(aimAngle, settings.arcDegrees, 0f, settings.windup, settings.active, swingDirection, tuning.windupPullbackDegrees));
-            SlashStarted?.Invoke(step, pivot, aimAngle, settings.arcDegrees, settings.windup, settings.active);
+            float handTipDistance = armRig != null && armRig.SwordHandTip != null
+                ? Vector2.Distance(pivot, armRig.SwordHandTip.position)
+                : 0.12f * tuning.bladeLength;
+            SlashStarted?.Invoke(step, pivot, aimAngle, settings.arcDegrees, settings.windup,
+                settings.active, handTipDistance);
             PlaySlashAudio(step);
         }
 
@@ -200,6 +206,16 @@ namespace Game.Combat
         }
 
         Vector2 PivotPosition() => armRig != null && armRig.SwordArmPivot != null ? (Vector2)armRig.SwordArmPivot.position : body.Position;
+
+        public Vector2 SlashTrailPosition
+        {
+            get
+            {
+                if (armRig != null && armRig.SwordHandTip != null)
+                    return armRig.SwordHandTip.position;
+                return PivotPosition();
+            }
+        }
         public static Vector2 ApplyAimAssist(Vector2 origin, Vector2 aim, float coneDegrees, float range, int targetLayers = ~0, int blockingLayers = 0)
         {
             if (coneDegrees <= 0f || range <= 0f) return aim.normalized;

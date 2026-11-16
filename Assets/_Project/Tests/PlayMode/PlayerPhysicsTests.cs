@@ -176,7 +176,9 @@ namespace Game.Tests
         public IEnumerator WallSlideStateTracksTheExistingSlideCondition()
         {
             wall = new GameObject("Wall") { layer = LayerMask.NameToLayer("Ground") };
-            wall.transform.position = new Vector3(0.65f, 2f, 0f);
+            // Kapsülün sağ kenarından küçük bir mesafe bırak: tam temas anındaki Cast sonucu
+            // Unity fizik adımının eşzamanlama sırasına bağlı kalmasın.
+            wall.transform.position = new Vector3(0.7f, 2f, 0f);
             wall.AddComponent<BoxCollider2D>().size = new Vector2(0.5f, 5f);
             player.transform.position = new Vector3(0f, 2f, 0f);
             motor.Velocity = new Vector2(0f, -1f);

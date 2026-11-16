@@ -27,6 +27,11 @@ namespace Game.Combat
         Coroutine spriteRoutine;
         Coroutine proceduralRoutine;
         SwordAttack attack;
+        float lastAimAngle;
+        float lastArc;
+        float lastAlpha;
+        float lastHandTipDistance;
+        bool hasSmearGeometry;
 
         void Awake()
         {
@@ -38,7 +43,7 @@ namespace Game.Combat
             if (meshFilter != null) meshFilter.sharedMesh = mesh;
             if (meshRenderer != null)
             {
-                Shader shader = Shader.Find("Sprites/Default");
+                Shader shader = FindSpriteShader();
                 if (shader != null) { generatedMaterial = new Material(shader); meshRenderer.sharedMaterial = generatedMaterial; }
                 meshRenderer.sortingOrder = 3;
             }
@@ -81,11 +86,17 @@ namespace Game.Combat
 
         Material CreateSparkMaterial()
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
-            if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default");
+            Shader shader = FindSpriteShader();
             if (shader == null) return null;
             generatedSparkMaterial = new Material(shader) { name = "SwordSparkRuntime" };
             return generatedSparkMaterial;
+        }
+
+        static Shader FindSpriteShader()
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default");
+            return shader;
         }
 
         public bool UsesSpriteStep(int step) => spriteSteps != null && step >= 0 && step < spriteSteps.Length && spriteSteps[step].frames != null && spriteSteps[step].frames.Length > 0;
@@ -97,16 +108,20 @@ namespace Game.Combat
         public static int StepFromTag(string tag) => tag == "slash1" ? 0 : tag == "slash2" ? 1 : tag == "slash3" ? 2 : -1;
         public static int StepFromAnimationName(string name) => StepFromTag(name);
 
-        public void BeginSlash(int step, Vector2 origin, float aimAngle, float arc, float windup, float activeDuration)
+        public void BeginSlash(int step, Vector2 origin, float aimAngle, float arc, float windup,
+            float activeDuration, float handTipDistance)
         {
             transform.position = origin;
             if (proceduralRoutine != null) StopCoroutine(proceduralRoutine);
             StopSprites();
+            hasSmearGeometry = false;
             ClearMesh();
-            proceduralRoutine = StartCoroutine(RenderAfterWindup(step, aimAngle, arc, windup, activeDuration));
+            proceduralRoutine = StartCoroutine(RenderAfterWindup(step, aimAngle, arc, windup,
+                activeDuration, handTipDistance));
         }
 
-        IEnumerator RenderAfterWindup(int step, float aim, float arc, float windup, float active)
+        IEnumerator RenderAfterWindup(int step, float aim, float arc, float windup, float active,
+            float handTipDistance)
         {
             if (windup > 0f) yield return new WaitForSeconds(windup);
             if (UsesSpriteStep(step))
@@ -139,12 +154,12 @@ namespace Game.Combat
             {
                 transform.rotation = Quaternion.identity;
                 if (meshRenderer != null) meshRenderer.enabled = true;
-                yield return Procedural(aim, arc, active);
+                yield return Procedural(aim, arc, active, handTipDistance);
             }
             ClearMesh(); proceduralRoutine = null;
         }
 
-        IEnumerator Procedural(float aimAngle, float arc, float duration)
+        IEnumerator Procedural(float aimAngle, float arc, float duration, float handTipDistance)
         {
             float elapsed = 0f;
             float visible = Mathf.Max(0.001f, duration);
@@ -154,21 +169,30 @@ namespace Game.Combat
                 float openArc = arc * Mathf.SmoothStep(0.15f, 1f, progress);
                 float fadeStart = Mathf.Clamp01(1f - (tuning != null ? tuning.smearFadeSeconds : 0.05f) / visible);
                 float fade = progress < fadeStart ? 1f : 1f - (progress - fadeStart) / Mathf.Max(0.001f, 1f - fadeStart);
-                BuildMesh(aimAngle, openArc, fade);
+                BuildMesh(aimAngle, openArc, fade, handTipDistance);
                 elapsed += Time.deltaTime;
                 yield return null;
             }
+
+            while (HitstopService.Instance != null && HitstopService.Instance.IsActive)
+                yield return null;
+
             ClearMesh();
         }
 
-        void BuildMesh(float aim, float arc, float alpha)
+        void BuildMesh(float aim, float arc, float alpha, float handTipDistance)
         {
             if (mesh == null || tuning == null) return;
+            lastAimAngle = aim;
+            lastArc = arc;
+            lastAlpha = alpha;
+            lastHandTipDistance = handTipDistance;
+            hasSmearGeometry = true;
             int segments = Mathf.Max(3, Mathf.CeilToInt(arc / 8f));
             var vertices = new Vector3[(segments + 1) * 2];
             var colors = new Color[vertices.Length];
             var triangles = new int[segments * 6];
-            GetSmearRadii(tuning.bladeLength, out float inner, out float outer);
+            GetSmearRadii(tuning.bladeLength, handTipDistance, out float inner, out float outer);
             for (int i = 0; i <= segments; i++)
             {
                 float angle = (aim - arc * 0.5f + arc * i / segments) * Mathf.Deg2Rad;
@@ -198,13 +222,40 @@ namespace Game.Combat
         }
         void StopSprites() { if (spriteRoutine != null) StopCoroutine(spriteRoutine); spriteRoutine = null; if (spriteRenderer != null) spriteRenderer.sprite = null; }
         void OnHit(Vector2 point, Vector2 direction, bool killed)
-        { transform.position = point; if (spark != null) { spark.transform.position = point; spark.transform.right = direction; spark.Emit(killed ? (tuning != null ? tuning.finisherSparkCount : 12) : (tuning != null ? tuning.sparkCount : 7)); } }
+        {
+            if (spark != null)
+            {
+                spark.transform.position = point;
+                spark.transform.right = direction;
+                spark.Emit(killed ? (tuning != null ? tuning.finisherSparkCount : 12) :
+                    (tuning != null ? tuning.sparkCount : 7));
+            }
+
+            if (HitstopService.Instance != null && HitstopService.Instance.IsActive)
+            {
+                if (proceduralRoutine != null && mesh != null && mesh.vertexCount == 0 && hasSmearGeometry)
+                {
+                    BuildMesh(lastAimAngle, lastArc, lastAlpha, lastHandTipDistance);
+                    if (meshRenderer != null) meshRenderer.enabled = true;
+                }
+                StartCoroutine(ClearHeldMeshAfterHitstop());
+            }
+        }
+
+        IEnumerator ClearHeldMeshAfterHitstop()
+        {
+            while (HitstopService.Instance != null && HitstopService.Instance.IsActive)
+                yield return null;
+
+            if (proceduralRoutine == null) ClearMesh();
+        }
         void ClearMesh() { if (mesh != null) mesh.Clear(); if (meshRenderer != null) meshRenderer.enabled = false; }
 
-        public static void GetSmearRadii(float bladeLength, out float inner, out float outer)
+        public static void GetSmearRadii(float bladeLength, float handTipDistance,
+            out float inner, out float outer)
         {
             outer = Mathf.Max(0f, bladeLength);
-            inner = Mathf.Min(outer, Mathf.Max(0.05f, outer * 0.35f));
+            inner = Mathf.Min(outer, Mathf.Max(0f, Mathf.Min(handTipDistance, outer * 0.12f)));
         }
     }
 }

@@ -73,6 +73,7 @@ namespace Game.Tests
         public void BruteShieldVisualMirrorsWithFacingWithoutChangingShieldArcMath()
         {
             var root = new GameObject("Brute");
+            root.SetActive(false);
             var body = root.AddComponent<SpriteRenderer>();
             var shield = new GameObject("Shield");
             shield.transform.SetParent(root.transform, false);
@@ -84,15 +85,21 @@ namespace Game.Tests
             root.AddComponent<ContactDamage>();
             root.AddComponent<HookPullable>();
             var brain = root.AddComponent<BruteBrain>();
+            root.SetActive(true);
 
             try
             {
                 var facing = typeof(EnemyBrain).GetProperty("Facing", BindingFlags.Instance | BindingFlags.NonPublic);
                 var updateVisual = typeof(EnemyBrain).GetMethod("UpdateVisual", PrivateInstance);
+                var shieldCache = typeof(EnemyBrain).GetField("shieldVisual", PrivateInstance);
+                if (shieldCache.GetValue(brain) == null)
+                    typeof(EnemyBrain).GetMethod("Awake", PrivateInstance).Invoke(brain, null);
                 facing.GetSetMethod(true).Invoke(brain, new object[] { -1 });
+                Assert.That(facing.GetValue(brain), Is.EqualTo(-1), "test düşman yönünü sola ayarlamalı");
                 updateVisual.Invoke(brain, null);
 
                 Assert.That(shield.transform.localPosition.x, Is.EqualTo(-.5f).Within(.0001f));
+                Assert.That(shield.transform.position.x, Is.EqualTo(-.5f).Within(.0001f));
                 Assert.That(shield.transform.localScale.x, Is.EqualTo(-.3f).Within(.0001f));
                 Assert.That(ShieldMath.IsBlocked(Vector2.right, Vector2.zero, Vector2.right, 120f), Is.True);
                 Assert.That(ShieldMath.IsBlocked(Vector2.left, Vector2.zero, Vector2.right, 120f), Is.False);
@@ -142,7 +149,7 @@ namespace Game.Tests
             root.AddComponent<ContactDamage>();
             root.AddComponent<HookPullable>();
             var brain = root.AddComponent<WalkerBrain>();
-            var health = root.AddComponent<EnemyHealth>();
+            var health = root.GetComponent<EnemyHealth>();
             SetField(brain, "definition", definition);
             SetField(health, "definition", definition);
             SetField(health, "brain", brain);
@@ -156,11 +163,14 @@ namespace Game.Tests
             var animator = root.AddComponent<EnemyAnimator>();
             SetField(animator, "brain", brain);
             SetField(animator, "player", player);
-            SetField(animator, "fallbackSprite", sprites[names.Length]);
 
             try
             {
                 root.SetActive(true);
+                FieldInfo rendererCache = typeof(EnemyAnimator).GetField("spriteRenderer", PrivateInstance);
+                if (rendererCache.GetValue(animator) == null)
+                    typeof(EnemyAnimator).GetMethod("Awake", PrivateInstance).Invoke(animator, null);
+
                 MethodInfo handle = typeof(EnemyAnimator).GetMethod("HandleStateChanged", PrivateInstance);
                 foreach (EnemyState state in new[] { EnemyState.Patrol, EnemyState.Chase, EnemyState.Notice, EnemyState.Telegraph, EnemyState.Attack, EnemyState.Recover, EnemyState.Hurt, EnemyState.Stunned, EnemyState.Dead })
                 {

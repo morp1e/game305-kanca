@@ -1,3 +1,4 @@
+using System.Reflection;
 using Game.Combat;
 using NUnit.Framework;
 using UnityEngine;
@@ -77,6 +78,26 @@ namespace Game.Tests
             Assert.AreEqual(2, SwordVisual.StepFromTag("slash3"));
             Assert.AreEqual(2, SwordVisual.StepFromAnimationName("slash3"));
             Assert.AreEqual(-1, SwordVisual.StepFromTag("unknown"));
+            Object.DestroyImmediate(go);
+        }
+
+        [Test]
+        public void SwordHitSparksDoNotMoveTheSmearPivot()
+        {
+            var go = new GameObject("SwordVisualPivotTest");
+            go.transform.position = new Vector2(1f, 2f);
+            var visual = go.AddComponent<SwordVisual>();
+            var sparkObject = new GameObject("HitSparks");
+            sparkObject.transform.SetParent(go.transform, false);
+            var spark = sparkObject.AddComponent<ParticleSystem>();
+            typeof(SwordVisual).GetField("spark", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(visual, spark);
+
+            typeof(SwordVisual).GetMethod("OnHit", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(visual, new object[] { new Vector2(4f, 5f), Vector2.right, false });
+
+            Assert.That(go.transform.position, Is.EqualTo(new Vector3(1f, 2f, 0f)));
+            Assert.That(spark.transform.position, Is.EqualTo(new Vector3(4f, 5f, 0f)));
             Object.DestroyImmediate(go);
         }
 

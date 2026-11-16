@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 
 namespace Game.Feedback
 {
-    /// <summary>Kancanın görsel geri bildirimi: nişan çizgisi, kılıç izi ve çekiş itkisi.</summary>
+    /// <summary>Kancanın görsel geri bildirimi: nişan çizgisi, kanca izi ve çekiş itkisi.</summary>
     public class HookFeedback : MonoBehaviour
     {
         [SerializeField] GrappleHook hook;
@@ -17,7 +17,7 @@ namespace Game.Feedback
         Color aimColor = Color.yellow;
         [SerializeField, Tooltip("İz rengi. Ö")]
         Color trailColor = new Color(0.35f, 0.85f, 1f, 1f);
-        [SerializeField, Tooltip("Kılıç izinin süresi, saniye. Ö")]
+        [SerializeField, Tooltip("Kanca izinin süresi, saniye. Ö")]
         float trailTime = 0.12f;
         [SerializeField, Tooltip("Nişan çizgisinin kalınlığı, 1/16 unit. Ö")]
         float aimWidth = 1f / 16f;
@@ -28,6 +28,8 @@ namespace Game.Feedback
 
         Texture2D dashTexture;
         Material generatedMaterial;
+        Material generatedTrailMaterial;
+        bool trailWasEmitting;
 
         void Awake()
         {
@@ -36,39 +38,44 @@ namespace Game.Feedback
             ConfigureAimLine();
             ConfigureTrail();
             ApplyTrailState();
+            SetHookVisualVisible(hook != null && hook.State != HookState.InHand);
         }
 
         void OnEnable()
         {
             if (hook != null) hook.StateChanged += OnStateChanged;
             ApplyTrailState();
+            SetHookVisualVisible(hook != null && hook.State != HookState.InHand);
         }
 
         void OnDisable()
         {
             if (hook != null) hook.StateChanged -= OnStateChanged;
+            if (trail != null)
+            {
+                trail.emitting = false;
+                trail.Clear();
+                trailWasEmitting = false;
+            }
         }
 
         void OnDestroy()
         {
             if (dashTexture != null) Destroy(dashTexture);
             if (generatedMaterial != null) Destroy(generatedMaterial);
+            if (generatedTrailMaterial != null) Destroy(generatedTrailMaterial);
         }
 
         void Update()
         {
             UpdateAimLine();
-            if (trail != null && hookVisual != null)
-            {
-                trail.transform.position = hookVisual.position;
-                trail.transform.rotation = hookVisual.rotation;
-            }
+            ApplyTrailState();
         }
 
         void OnStateChanged(HookState state)
         {
-            if (state == HookState.Thrown && trail != null) trail.Clear();
-            ApplyTrailState();
+            ApplyTrailState(state);
+            SetHookVisualVisible(state != HookState.InHand);
             // Yön saplanılan yüzey noktasından alınır.
             if (state == HookState.Pulling && kickEvent != null)
             {
@@ -86,7 +93,7 @@ namespace Game.Feedback
 
         TrailRenderer CreateTrail()
         {
-            var child = new GameObject("SwordTrail");
+            var child = new GameObject("HookTrail");
             child.transform.SetParent(transform, false);
             return child.AddComponent<TrailRenderer>();
         }
@@ -102,7 +109,7 @@ namespace Game.Feedback
             aimLine.startColor = aimColor;
             aimLine.endColor = aimColor;
             dashTexture = HookFeedbackMath.CreateDashTexture(dashTextureWidth, dashLength);
-            var shader = Shader.Find("Sprites/Default");
+            var shader = FindSpriteShader();
             if (shader != null)
             {
                 generatedMaterial = new Material(shader);
@@ -114,6 +121,16 @@ namespace Game.Feedback
 
         void ConfigureTrail()
         {
+            if (trail.sharedMaterial == null)
+            {
+                Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+                if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default");
+                if (shader != null)
+                {
+                    generatedTrailMaterial = new Material(shader) { name = "HookTrailRuntime" };
+                    trail.sharedMaterial = generatedTrailMaterial;
+                }
+            }
             trail.time = trailTime;
             trail.widthMultiplier = HookThickness();
             trail.widthCurve = HookFeedbackMath.TrailWidth;
@@ -123,6 +140,13 @@ namespace Game.Feedback
                 new[] { new GradientAlphaKey(trailColor.a, 0f), new GradientAlphaKey(0f, 1f) });
             trail.colorGradient = gradient;
             trail.emitting = false;
+        }
+
+        static Shader FindSpriteShader()
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default");
+            return shader;
         }
 
         float HookThickness()
@@ -137,7 +161,26 @@ namespace Game.Feedback
 
         void ApplyTrailState()
         {
-            if (trail != null) trail.emitting = hook != null && HookFeedbackMath.ShouldEmitTrail(hook.State);
+            ApplyTrailState(hook != null ? hook.State : HookState.InHand);
+        }
+
+        void ApplyTrailState(HookState state)
+        {
+            bool shouldEmit = state == HookState.Thrown || state == HookState.Pulling ||
+                state == HookState.Returning;
+            if (trail != null && shouldEmit != trailWasEmitting)
+            {
+                trail.emitting = false;
+                trail.Clear();
+                trail.emitting = shouldEmit;
+                trailWasEmitting = shouldEmit;
+            }
+        }
+
+        void SetHookVisualVisible(bool visible)
+        {
+            if (hookVisual != null && hookVisual.gameObject.activeSelf != visible)
+                hookVisual.gameObject.SetActive(visible);
         }
 
         void UpdateAimLine()
