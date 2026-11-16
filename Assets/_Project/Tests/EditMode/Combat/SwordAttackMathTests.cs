@@ -87,6 +87,17 @@ namespace Game.Tests
             Assert.That(tip.y, Is.EqualTo(4.5f).Within(0.001f));
         }
 
+        [TestCase(1.4f)]
+        [TestCase(2.3f)]
+        [TestCase(3.7f)]
+        public void SmearRadiiScaleFromTheBladePivotToItsTip(float bladeLength)
+        {
+            SwordVisual.GetSmearRadii(bladeLength, out float inner, out float outer);
+
+            Assert.That(inner, Is.EqualTo(bladeLength * 0.35f).Within(0.0001f));
+            Assert.That(outer, Is.EqualTo(bladeLength).Within(0.0001f));
+        }
+
         [Test]
         public void SweepSamplesCoverTheIntermediateArc()
         {

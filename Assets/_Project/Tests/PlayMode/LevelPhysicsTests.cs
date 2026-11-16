@@ -64,6 +64,11 @@ namespace Game.Tests
             foreach (HitstopService service in Object.FindObjectsByType<HitstopService>(FindObjectsSortMode.None))
                 Object.DestroyImmediate(service);
             Time.timeScale = 1f;
+            Time.fixedDeltaTime = 0.02f;
+            Physics2D.simulationMode = SimulationMode2D.FixedUpdate;
+            Physics2D.queriesHitTriggers = true;
+            Physics2D.queriesStartInColliders = false;
+            Physics2D.gravity = new Vector2(0f, -9.81f);
         }
 
         [UnityTest]

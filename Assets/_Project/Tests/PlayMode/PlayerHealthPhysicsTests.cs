@@ -111,6 +111,27 @@ namespace Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator DamageBlinkKeepsInitiallyHiddenArmRendererDisabled()
+        {
+            BuildPlayer(Vector2.zero);
+            var hiddenArm = new GameObject("HiddenArm");
+            hiddenArm.transform.SetParent(visual.transform, false);
+            var hiddenRenderer = hiddenArm.AddComponent<SpriteRenderer>();
+            hiddenRenderer.enabled = false;
+
+            health.TakeHit(new HitInfo(1f, Vector2.right, 0f, player));
+            Assert.That(hiddenRenderer.enabled, Is.False);
+            for (int i = 0; i < 3; i++)
+            {
+                yield return new WaitForSeconds(.04f);
+                Assert.That(hiddenRenderer.enabled, Is.False, "yanıp sönme gizli kolu açmamalı");
+            }
+
+            yield return new WaitForSeconds(.2f);
+            Assert.That(hiddenRenderer.enabled, Is.False, "yanıp sönme bitince renderer önceki durumuna dönmeli");
+        }
+
+        [UnityTest]
         public IEnumerator LethalHitRaisesDeathAndRespawnRefillsHealthEvent()
         {
             BuildPlayer(Vector2.zero);

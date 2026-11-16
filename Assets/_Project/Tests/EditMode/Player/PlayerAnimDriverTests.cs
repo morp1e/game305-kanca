@@ -53,7 +53,6 @@ namespace Game.Tests
             SetField(driver, "health", health);
             SetField(driver, "armRig", armRig);
             SetField(driver, "animPlayer", player);
-            playerRoot.SetActive(true);
             SetField(health, "currentHealth", 5f);
         }
 
@@ -142,7 +141,7 @@ namespace Game.Tests
             motor.Velocity = velocity;
         }
 
-        void Tick() => driver.SendMessage("Update");
+        void Tick() => typeof(PlayerAnimDriver).GetMethod("Update", Private).Invoke(driver, null);
 
         static void SetField(object target, string name, object value) =>
             target.GetType().GetField(name, Private).SetValue(target, value);

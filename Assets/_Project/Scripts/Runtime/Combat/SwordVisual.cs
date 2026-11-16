@@ -19,6 +19,7 @@ namespace Game.Combat
         [SerializeField] MeshRenderer meshRenderer;
         [SerializeField] ParticleSystem spark;
         [SerializeField] SwordTuning tuning;
+        [SerializeField, Tooltip("Atanmış oyuncu gövde seti kılıcı çiziyorsa gri kutu bıçağı gizle.")] bool hideBladeSprite;
         [SerializeField] Material sparkMaterial;
         Mesh mesh;
         Material generatedMaterial;
@@ -32,6 +33,7 @@ namespace Game.Combat
             if (meshFilter == null) meshFilter = GetComponent<MeshFilter>();
             if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
             if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+            if (hideBladeSprite && spriteRenderer != null) spriteRenderer.enabled = false;
             mesh = new Mesh { name = "SwordProceduralSmear" };
             if (meshFilter != null) meshFilter.sharedMesh = mesh;
             if (meshRenderer != null)
@@ -112,6 +114,7 @@ namespace Game.Combat
                 StartSprites(step);
                 yield return new WaitForSeconds(active);
                 StopSprites();
+                if (hideBladeSprite && spriteRenderer != null) spriteRenderer.enabled = false;
             }
             else if (UsesClipStep(step) && clipGraph.IsValid())
             {
@@ -123,6 +126,7 @@ namespace Game.Combat
                 yield return new WaitForSeconds(active);
                 clipGraph.Stop();
                 clipGraph.DestroySubgraph(playable);
+                if (hideBladeSprite && spriteRenderer != null) spriteRenderer.enabled = false;
             }
             else if (animator != null && animator.runtimeAnimatorController != null && animator.HasState(0, Animator.StringToHash("slash" + (step + 1))))
             {
@@ -164,8 +168,7 @@ namespace Game.Combat
             var vertices = new Vector3[(segments + 1) * 2];
             var colors = new Color[vertices.Length];
             var triangles = new int[segments * 6];
-            float inner = Mathf.Max(0.05f, tuning.bladeLength - tuning.smearThickness);
-            float outer = tuning.bladeLength + tuning.smearThickness;
+            GetSmearRadii(tuning.bladeLength, out float inner, out float outer);
             for (int i = 0; i <= segments; i++)
             {
                 float angle = (aim - arc * 0.5f + arc * i / segments) * Mathf.Deg2Rad;
@@ -182,6 +185,7 @@ namespace Game.Combat
         {
             StopSprites();
             if (spriteRenderer == null) return;
+            spriteRenderer.enabled = true;
             if (meshRenderer != null) meshRenderer.enabled = false;
             spriteRoutine = StartCoroutine(AnimateSprites(step));
         }
@@ -196,5 +200,11 @@ namespace Game.Combat
         void OnHit(Vector2 point, Vector2 direction, bool killed)
         { transform.position = point; if (spark != null) { spark.transform.position = point; spark.transform.right = direction; spark.Emit(killed ? (tuning != null ? tuning.finisherSparkCount : 12) : (tuning != null ? tuning.sparkCount : 7)); } }
         void ClearMesh() { if (mesh != null) mesh.Clear(); if (meshRenderer != null) meshRenderer.enabled = false; }
+
+        public static void GetSmearRadii(float bladeLength, out float inner, out float outer)
+        {
+            outer = Mathf.Max(0f, bladeLength);
+            inner = Mathf.Min(outer, Mathf.Max(0.05f, outer * 0.35f));
+        }
     }
 }

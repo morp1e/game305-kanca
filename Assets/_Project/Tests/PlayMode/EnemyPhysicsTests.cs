@@ -94,6 +94,19 @@ namespace Game.Tests
             playerObject.SetActive(true);
             var input = playerObject.GetComponent<PlayerInputReader>();
             input.SetPointerWorldOverride(enemy.transform.position);
+            swordTuning.bladeLength = 2.3f;
+            swordTuning.aimAssistDegrees = 0f;
+            swordTuning.comboSteps = new[]
+            {
+                new ComboStep
+                {
+                    windup = 0f,
+                    active = 0.2f,
+                    recovery = 0.1f,
+                    arcDegrees = 30f,
+                    hitstop = 0f
+                }
+            };
             Physics2D.SyncTransforms();
             yield return new WaitForFixedUpdate();
             input.TriggerAttackForTest();

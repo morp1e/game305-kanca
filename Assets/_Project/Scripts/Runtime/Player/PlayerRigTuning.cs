@@ -13,5 +13,6 @@ namespace Game.Player
         [Tooltip("Ö: Kol açısı adımı. Sıfır serbest dönüş, 22.5 = 16 yön, 45 = 8 yön.")] [Range(0f, 360f)] public float angleSnapDegrees = 0f;
         [Tooltip("Ö: Gövde merkezi çevresinde bakış yönünün değişmediği yarıçap, unit.")] [Min(0f)] public float facingDeadZone = 0.15f;
         [Tooltip("Ö: Bu açı içinde kılıç kolunun dinlenme açısı, derece.")] public float swordRestAngle = 0f;
+        [Tooltip("Ö: Animasyonlu oyuncu gövdesine göre kanca el ucunun konum farkı, unit.")] public Vector2 hookHandOffset = new Vector2(0f, -0.5f);
     }
 }

@@ -44,6 +44,7 @@ namespace Game.Enemies
             if (player == null || brain == null) return;
             if (brain.Definition == null || brain.Definition.visualSet == null || brain.Definition.visualSet.Find("idle") == null)
             {
+                player.Stop();
                 if (spriteRenderer != null) spriteRenderer.sprite = fallbackSprite;
                 return;
             }
@@ -56,6 +57,7 @@ namespace Game.Enemies
             string clip = ClipName(state, brain is FlyerBrain);
             if (brain.Definition == null || brain.Definition.visualSet == null || brain.Definition.visualSet.Find(clip) == null)
             {
+                player.Stop();
                 if (spriteRenderer != null) spriteRenderer.sprite = fallbackSprite;
                 return;
             }

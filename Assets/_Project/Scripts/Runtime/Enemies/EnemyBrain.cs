@@ -50,6 +50,9 @@ namespace Game.Enemies
         protected int Facing { get; set; } = 1;
         bool telegraphVisual;
         Color baseRendererColor;
+        Transform shieldVisual;
+        Vector3 shieldBasePosition;
+        Vector3 shieldBaseScale;
         protected bool HasTarget => player != null && (player.GetComponent<Game.Level.RespawnController>() == null || !player.GetComponent<Game.Level.RespawnController>().IsDead);
         protected Vector2 TargetPosition => player != null ? player.transform.position : transform.position;
         protected virtual void Awake()
@@ -61,6 +64,12 @@ namespace Game.Enemies
             if (bodyRenderer == null && visualPlayer != null) bodyRenderer = visualPlayer.GetComponent<SpriteRenderer>();
             if (bodyRenderer == null) bodyRenderer = GetComponentInChildren<SpriteRenderer>();
             if (bodyRenderer != null) baseRendererColor = bodyRenderer.color;
+            shieldVisual = transform.Find("Shield");
+            if (shieldVisual != null)
+            {
+                shieldBasePosition = shieldVisual.localPosition;
+                shieldBaseScale = shieldVisual.localScale;
+            }
             if (player == null) player = FindFirstObjectByType<PlayerHealth>();
             if (groundLayers.value == 0) groundLayers = LayerMask.GetMask("Ground");
             Home = transform.position;
@@ -128,6 +137,11 @@ namespace Game.Enemies
         }
         void UpdateVisual()
         {
+            if (shieldVisual != null)
+            {
+                shieldVisual.localPosition = new Vector3(Mathf.Abs(shieldBasePosition.x) * Facing, shieldBasePosition.y, shieldBasePosition.z);
+                shieldVisual.localScale = new Vector3(Mathf.Abs(shieldBaseScale.x) * Facing, shieldBaseScale.y, shieldBaseScale.z);
+            }
             if (bodyRenderer == null) return;
             if (visualPlayer != null) visualPlayer.SetFlip(Facing < 0);
             if (State == EnemyState.Telegraph)

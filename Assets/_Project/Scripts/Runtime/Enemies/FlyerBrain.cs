@@ -32,7 +32,9 @@ namespace Game.Enemies
                 Facing = direction.x >= 0f ? 1 : -1;
                 if (StateTime >= Tuning.attackDuration) ChangeState(EnemyState.Recover);
                 break;
-                case EnemyState.Recover: Body.linearVelocity = ((Vector2)transform.position - Home).sqrMagnitude > .1f ? (Home - (Vector2)transform.position).normalized * Tuning.moveSpeed : Vector2.zero;
+                case EnemyState.Recover: Vector2 homeDelta = Home - (Vector2)transform.position;
+                if (Mathf.Abs(homeDelta.x) > .01f) Facing = homeDelta.x > 0f ? 1 : -1;
+                Body.linearVelocity = homeDelta.sqrMagnitude > .1f ? homeDelta.normalized * Tuning.moveSpeed : Vector2.zero;
                 if (Vector2.Distance(transform.position, Home) < .2f) ChangeState(EnemyState.Patrol);
                 break;
                 case EnemyState.Chase: ChangeState(EnemyState.Patrol);

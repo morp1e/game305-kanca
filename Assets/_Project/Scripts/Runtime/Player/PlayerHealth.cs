@@ -36,6 +36,8 @@ namespace Game.Player
         Vector2 hazardPoint;
         Vector2 pendingKnockback;
         Coroutine blinkRoutine;
+        SpriteRenderer[] blinkRenderers = Array.Empty<SpriteRenderer>();
+        bool[] blinkRendererWasEnabled = Array.Empty<bool>();
         Coroutine deathRoutine;
         Transform heavyPullTarget;
         float heavyPullGraceUntil;
@@ -267,6 +269,7 @@ namespace Game.Player
         void StartBlink()
         {
             if (blinkRoutine != null) StopCoroutine(blinkRoutine);
+            CacheBlinkRenderers();
             if (isActiveAndEnabled) blinkRoutine = StartCoroutine(BlinkWhileInvulnerable());
         }
 
@@ -279,14 +282,37 @@ namespace Game.Player
                 SetVisualVisible(visible);
                 yield return new WaitForSeconds(Mathf.Max(0.01f, tuning != null ? tuning.blinkInterval : 0.08f));
             }
-            SetVisualVisible(true);
+            RestoreVisualVisibility();
             blinkRoutine = null;
+        }
+
+        void CacheBlinkRenderers()
+        {
+            if (visual == null)
+            {
+                blinkRenderers = Array.Empty<SpriteRenderer>();
+                blinkRendererWasEnabled = Array.Empty<bool>();
+                return;
+            }
+
+            blinkRenderers = visual.GetComponentsInChildren<SpriteRenderer>(true);
+            blinkRendererWasEnabled = new bool[blinkRenderers.Length];
+            for (int i = 0; i < blinkRenderers.Length; i++)
+                blinkRendererWasEnabled[i] = blinkRenderers[i] != null && blinkRenderers[i].enabled;
         }
 
         void SetVisualVisible(bool visible)
         {
-            if (visual == null) return;
-            foreach (var renderer in visual.GetComponentsInChildren<SpriteRenderer>(true)) renderer.enabled = visible;
+            for (int i = 0; i < blinkRenderers.Length; i++)
+                if (blinkRenderers[i] != null && blinkRendererWasEnabled[i])
+                    blinkRenderers[i].enabled = visible;
+        }
+
+        void RestoreVisualVisibility()
+        {
+            for (int i = 0; i < blinkRenderers.Length; i++)
+                if (blinkRenderers[i] != null)
+                    blinkRenderers[i].enabled = blinkRendererWasEnabled[i];
         }
     }
 }

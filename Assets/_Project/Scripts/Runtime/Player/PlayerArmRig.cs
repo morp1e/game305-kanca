@@ -13,6 +13,7 @@ namespace Game.Player
         [SerializeField] Transform swordArmPivot;
         [SerializeField] PlayerInputReader input;
         [SerializeField] Camera aimCamera;
+        [SerializeField, Tooltip("Animasyonlu gövde seti atanmışsa kanca el ucuna tuning ofsetini uygula.")] bool useHookHandOffset;
 
         float? swordOverride;
         float hookAngle;
@@ -33,6 +34,12 @@ namespace Game.Player
             Facing = ArmAimMath.Facing(center, cursor, tuning.facingDeadZone, Facing);
             hookArmPivot.position = Shoulder(center, tuning.backShoulderOffset);
             swordArmPivot.position = Shoulder(center, tuning.frontShoulderOffset);
+            if (useHookHandOffset)
+            {
+                Transform hookHandTip = HookHandTip;
+                if (hookHandTip != null)
+                    hookHandTip.localPosition = Vector3.right * tuning.armLength + (Vector3)tuning.hookHandOffset;
+            }
             // Sola bakarken Y aynalanır: dönüş dünya açısıyla kalır, sprite baş aşağı görünmez.
             hookArmPivot.localScale = new Vector3(1f, Facing, 1f);
             swordArmPivot.localScale = new Vector3(1f, Facing, 1f);

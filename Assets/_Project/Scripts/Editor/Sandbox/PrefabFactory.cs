@@ -91,6 +91,7 @@ namespace Game.Editor.Sandbox
             Set(voice, ("lines", lines), ("hook", hook), ("swordEvents", voiceEvents), ("hookVisual", hookVisual.transform), ("deathEvent", death), ("respawnEvent", respawn));
             var attack = player.AddComponent<SwordAttack>();
             player.AddComponent<HitstopService>();
+            bool hasPlayerVisualSet = AssetDatabase.LoadAssetAtPath<SpriteAnimSet>(DataDir + "/Visual/Player.asset") != null;
             var swordVisualObject = new GameObject("SwordVisual"); swordVisualObject.transform.SetParent(player.transform, false);
             swordVisualObject.AddComponent<MeshFilter>(); swordVisualObject.AddComponent<MeshRenderer>();
             var spriteVisualObject = new GameObject("SpriteVisual"); spriteVisualObject.transform.SetParent(swordVisualObject.transform, false);
@@ -102,6 +103,7 @@ namespace Game.Editor.Sandbox
             if (sparkRenderer != null) sparkRenderer.sharedMaterial = sparkMaterial;
             var swordVisual = swordVisualObject.AddComponent<SwordVisual>();
             Set(swordVisual, ("tuning", swordTuning), ("sparkMaterial", sparkMaterial), ("spriteRenderer", swordSpriteRenderer), ("animator", swordAnimator), ("spark", sparkSystem));
+            Set(swordVisual, "hideBladeSprite", hasPlayerVisualSet);
             Set(attack, ("tuning", swordTuning), ("input", player.GetComponent<PlayerInputReader>()), ("armRig", player.GetComponent<PlayerArmRig>()), ("body", player.GetComponent<PlayerMotor>()), ("traumaEvent", trauma), ("kickEvent", kick), ("voiceEvents", voiceEvents));
             SavePrefab(player, PrefabDir + "/Player.prefab");
             SavePrefab(rig, PrefabDir + "/PlayerRig.prefab");
@@ -152,6 +154,7 @@ namespace Game.Editor.Sandbox
             ConfigureArmSpriteVisibility(hookArm, swordArm, playerVisualSet != null);
             var armRig = player.AddComponent<PlayerArmRig>();
             Set(armRig, ("tuning", armTuning), ("bodySprite", bodyTransform), ("aimCenter", aimCenter), ("hookArmPivot", hookArm.transform), ("swordArmPivot", swordArm.transform), ("input", input));
+            Set(armRig, "useHookHandOffset", playerVisualSet != null);
             Set(animDriver, ("motor", motor), ("health", health), ("armRig", armRig), ("animPlayer", animPlayer));
             Set(motor, ("tuning", movement), ("input", input), ("armRig", armRig));
             Set(hook, ("tuning", tuning), ("input", input), ("body", motor), ("armRig", armRig), ("traumaEvent", trauma));
@@ -268,6 +271,13 @@ namespace Game.Editor.Sandbox
             var serialized = new SerializedObject(target);
             var property = serialized.FindProperty(name);
             if (property != null) { property.objectReferenceValue = value; serialized.ApplyModifiedPropertiesWithoutUndo(); }
+        }
+
+        static void Set(UnityEngine.Object target, string name, bool value)
+        {
+            var serialized = new SerializedObject(target);
+            var property = serialized.FindProperty(name);
+            if (property != null) { property.boolValue = value; serialized.ApplyModifiedPropertiesWithoutUndo(); }
         }
 
         static Sprite FirstSprite(string path)

@@ -69,6 +69,40 @@ namespace Game.Tests
             }
         }
 
+        [Test]
+        public void BruteShieldVisualMirrorsWithFacingWithoutChangingShieldArcMath()
+        {
+            var root = new GameObject("Brute");
+            var body = root.AddComponent<SpriteRenderer>();
+            var shield = new GameObject("Shield");
+            shield.transform.SetParent(root.transform, false);
+            shield.transform.localPosition = new Vector3(.5f, .2f, 0f);
+            shield.transform.localScale = new Vector3(.3f, .8f, 1f);
+            shield.AddComponent<SpriteRenderer>();
+            root.AddComponent<Rigidbody2D>();
+            root.AddComponent<BoxCollider2D>();
+            root.AddComponent<ContactDamage>();
+            root.AddComponent<HookPullable>();
+            var brain = root.AddComponent<BruteBrain>();
+
+            try
+            {
+                var facing = typeof(EnemyBrain).GetProperty("Facing", BindingFlags.Instance | BindingFlags.NonPublic);
+                var updateVisual = typeof(EnemyBrain).GetMethod("UpdateVisual", PrivateInstance);
+                facing.GetSetMethod(true).Invoke(brain, new object[] { -1 });
+                updateVisual.Invoke(brain, null);
+
+                Assert.That(shield.transform.localPosition.x, Is.EqualTo(-.5f).Within(.0001f));
+                Assert.That(shield.transform.localScale.x, Is.EqualTo(-.3f).Within(.0001f));
+                Assert.That(ShieldMath.IsBlocked(Vector2.right, Vector2.zero, Vector2.right, 120f), Is.True);
+                Assert.That(ShieldMath.IsBlocked(Vector2.left, Vector2.zero, Vector2.right, 120f), Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
         [TestCase(EnemyState.Patrol, false, "walk")]
         [TestCase(EnemyState.Chase, false, "walk")]
         [TestCase(EnemyState.Patrol, true, "fly")]

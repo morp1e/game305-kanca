@@ -50,6 +50,14 @@ namespace Game.Visual
             PlayInternal(clipName, durationSeconds, true, true);
         }
 
+        public void Stop()
+        {
+            currentClip = null;
+            elapsed = 0f;
+            currentFrame = -1;
+            durationOverride = false;
+        }
+
         void PlayInternal(string clipName, float durationSeconds, bool useDuration, bool restart)
         {
             if (set == null || spriteRenderer == null) return;
